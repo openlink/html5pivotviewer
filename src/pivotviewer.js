@@ -1,4 +1,4 @@
-﻿//PivotViewer jQuery extension
+//PivotViewer jQuery extension
 (function ($) {
 	var _views = [],
 		_facetItemTotals = [],

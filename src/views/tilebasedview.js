@@ -1,4 +1,4 @@
-﻿PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
+PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 	OffsetTiles: function (offsetX, offsetY) {
 		for (var i = 0; i < this.tiles.length; i++) {
 			var filterindex = $.inArray(this.tiles[i].facetItem.Id, this.currentFilter);

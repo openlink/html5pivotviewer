@@ -1,4 +1,4 @@
-﻿//Data View
+//Data View
 PivotViewer.Views.DataView = PivotViewer.Views.IPivotViewerView.subClass({
 	init: function () {
 		this._super();

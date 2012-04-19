@@ -1,7 +1,6 @@
-﻿///
-/// Deep Zoom Controller
-/// used to create the initial deep zoom tiles and their animation based on the locations set in the views
-///
+// Deep Zoom Controller
+// used to create the initial deep zoom tiles and their animation based on the locations set in the views
+//
 PivotViewer.Views.DeepZoomController = function () {
 	var _tiles = [],
 		_started = false,

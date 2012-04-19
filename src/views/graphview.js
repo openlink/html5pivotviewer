@@ -1,4 +1,3 @@
-﻿///
 /// Graph (histogram) View
 ///
 PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({

@@ -1,4 +1,4 @@
-﻿//Map View
+//Map View
 PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 	init: function () {
 		this._super();

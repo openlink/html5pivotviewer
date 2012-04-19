@@ -1,4 +1,4 @@
-﻿//Collection loader interface - used so that different types of data sources can be used
+//Collection loader interface - used so that different types of data sources can be used
 PivotViewer.Models.Loaders.ICollectionLoader = Object.subClass({
 	init: function () { },
 	LoadCollection: function (collection) {

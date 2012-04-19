@@ -1,4 +1,4 @@
-﻿//Views interface - all views must implement this
+//Views interface - all views must implement this
 PivotViewer.Views.IPivotViewerView = Object.subClass({
 	init: function () {
 		this.isActive = false;

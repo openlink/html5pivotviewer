@@ -1,4 +1,3 @@
-﻿///
 /// Grid view
 ///
 PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
