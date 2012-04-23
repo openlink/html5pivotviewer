@@ -40,12 +40,14 @@
         defaults._self.append("<div class='pv-loading'><img src='Content/images/loading.gif' alt='Loading' /><span>Loading...</span></div>");
         $('.pv-loading').css('top', ($('.pv-wrapper').height() / 2) - 33 + 'px');
         $('.pv-loading').css('left', ($('.pv-wrapper').width() / 2) - 43 + 'px');
-};  
+    };
 
     InitDeepZoom = function () {
         InitUI();
         //init DZ Controller
-        var DZXML = defaults.PivotCollection.CXMLBase.substring(0, defaults.PivotCollection.CXMLBase.lastIndexOf('/') + 1) + defaults.PivotCollection.ImageBase;
+        var DZXML = defaults.PivotCollection.ImageBase;
+        if(!(DZXML.indexOf('http', 0) >= 0 || DZXML.indexOf('www.', 0) >= 0))
+            DZXML = defaults.PivotCollection.CXMLBase.substring(0, defaults.PivotCollection.CXMLBase.lastIndexOf('/') + 1) + DZXML;
         var canvasContext = $('.pv-viewarea-canvas')[0].getContext("2d");
         _deepZoomController = new PivotViewer.Views.DeepZoomController();
         _deepZoomTiles = _deepZoomController.Init(defaults.PivotCollection.Items, DZXML, canvasContext);
