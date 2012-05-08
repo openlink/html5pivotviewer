@@ -115,7 +115,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 			var filterindex = $.inArray(this.tiles[i].facetItem.Id, currentFilter);
 			//set outer location for all tiles not in the filter
 			if (filterindex < 0) {
-				SetOuterTileDestination(this.width, this.height, this.tiles[i]);
+				this.SetOuterTileDestination(this.width, this.height, this.tiles[i]);
 				this.tiles[i].start = PivotViewer.Utils.Now();
 				this.tiles[i].end = this.tiles[i].start + 1000;
 			}
