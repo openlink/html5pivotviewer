@@ -1,3 +1,4 @@
+///
 /// Graph (histogram) View
 ///
 PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
@@ -72,7 +73,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
 		//Sort
 		this.tiles = dzTiles.sort(this.SortBy(this.sortFacet, false, function (a) {
-			return a.toUpperCase()
+		    return $.isNumeric(a) ? a : a.toUpperCase();
 		}));
 		this.currentFilter = currentFilter;
 
@@ -115,7 +116,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 			//set outer location for all tiles not in the filter
 			if (filterindex < 0) {
 				SetOuterTileDestination(this.width, this.height, this.tiles[i]);
-				this.tiles[i].start = Now();
+				this.tiles[i].start = PivotViewer.Utils.Now();
 				this.tiles[i].end = this.tiles[i].start + 1000;
 			}
 		}
@@ -139,10 +140,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 			return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
 	},
 	GetButtonImage: function () {
-		return '../media/GraphView.png';
+		return 'Content/images/GraphView.png';
 	},
 	GetButtonImageSelected: function () {
-		return '../media/GraphViewSelected.png';
+		return 'Content/images/GraphViewSelected.png';
 	},
 	GetViewName: function () {
 		return 'Graph View';
@@ -171,7 +172,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 					this.tiles[j].destinationheight = rowscols.TileHeight;
 					this.tiles[j].destinationx = (i * this.columnWidth) + (currentColumn * rowscols.TileWidth) + offsetX;
 					this.tiles[j].destinationy = this.canvasHeightUIAdjusted - rowscols.TileHeight - (currentRow * rowscols.TileHeight) + offsetY;
-					this.tiles[j].start = Now();
+					this.tiles[j].start = PivotViewer.Utils.Now();
 					this.tiles[j].end = this.tiles[j].start + 1000;
 
 					if (currentColumn == rowscols.Columns - 1) {

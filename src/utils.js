@@ -37,6 +37,54 @@ PivotViewer.Utils.EscapeItemId = function (itemId) {
             .replace(/\./gi, "");
 };
 
+PivotViewer.Utils.Now = function () {
+    if (Date.now)
+        return Date.now();
+    else
+        return (new Date().getTime());
+};
+
+// Provided the minimum number is < 1000000
+PivotViewer.Utils.Min = function (values) {
+    var min = 1000000;
+    for (var i = 0, _iLen = values.length; i < _iLen; i++)
+        min = min > values[i] ? values[i] : min;
+    return min;
+}
+
+// Provided the maximum number is > -1000000
+PivotViewer.Utils.Max = function (values) {
+    var max = -1000000;
+    for (var i = 0, _iLen = values.length; i < _iLen; i++)
+        max = max < values[i] ? values[i] : max;
+    return max;
+}
+
+PivotViewer.Utils.Histogram = function (values) {
+    if (!values instanceof Array)
+        return null;
+
+    var min = PivotViewer.Utils.Min(values);
+    var max = PivotViewer.Utils.Max(values);
+
+    var bins = (Math.floor(Math.pow(2 * values.length, 1 / 3)) + 1) * 2;
+    if (bins > 10)
+        bins = 10;
+    var stepSize = ((max + 1) - (min - 1)) / bins;
+
+    var histogram = [];
+    for (var i = 0; i < bins; i++) {
+        var minRange = min + (i * stepSize);
+        var maxRange = min + ((i + 1) * stepSize);
+        histogram.push([]);
+        for (var j = 0, _jLen = values.length; j < _jLen; j++) {
+            if (minRange <= values[j] && maxRange > values[j])
+                histogram[i].push(values[j]);
+        }
+    }
+    return { Histogram: histogram, Min: min, Max: max, BinCount: bins };
+};
+
 // A simple class creation library.
 // From Secrets of the JavaScript Ninja
 // Inspired by base2 and Prototype

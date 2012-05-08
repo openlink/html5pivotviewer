@@ -1,4 +1,9 @@
-//PivotViewer 0.4.4
+//
+// Copyright © 2011 LobsterPot Solutions - www.lobsterpot.com.au
+// enquiries@lobsterpot.com.au
+// 
+
+//PivotViewer
 var PivotViewer = PivotViewer || {};
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};

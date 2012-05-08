@@ -6,6 +6,7 @@ PivotViewer.Models.Collection = Object.subClass({
 		this.BrandImage = "";
 		this.FacetCategories = [];
 		this.Items = [];
+		this.CXMLBase = "";
 		this.ImageBase = "";
 	},
 	GetItemById: function (Id) {
@@ -30,18 +31,11 @@ PivotViewer.Models.FacetCategory = Object.subClass({
 	init: function (Name, Format, Type, IsFilterVisible, IsMetaDataVisible, IsWordWheelVisible, CustomSort) {
 		this.Name = Name;
 		this.Format = Format;
-		this._type = Type != null && Type != undefined ? Type : PivotViewer.Models.FacetType.String;
+		this.Type = Type != null && Type != undefined ? Type : PivotViewer.Models.FacetType.String;
 		this.IsFilterVisible = IsFilterVisible != null && IsFilterVisible != undefined ? IsFilterVisible : true;
 		this.IsMetaDataVisible = IsMetaDataVisible != null && IsMetaDataVisible != undefined ? IsMetaDataVisible : true;
 		this.IsWordWheelVisible = IsWordWheelVisible != null && IsWordWheelVisible != undefined ? IsWordWheelVisible : true;
 		this.CustomSort;
-	},
-	getType: function () {
-		switch (this._type) {
-			case "String":
-				return PivotViewer.Models.FacetType.String;
-				break;
-		}
 	}
 });
 
