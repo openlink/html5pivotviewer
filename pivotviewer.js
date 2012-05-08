@@ -1,18 +1,28 @@
-//PivotViewer 0.4.4
+//
+// Copyright © 2011 LobsterPot Solutions - www.lobsterpot.com.au
+// enquiries@lobsterpot.com.au
+// 
+
+//PivotViewer
 var PivotViewer = PivotViewer || {};
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
 PivotViewer.Views = {};
 //Debug
-var Debug = Debug || {};
-(function (d) {
+var Debug = Debug || {};/*	
+http://higginsforpresident.net/js/static/jq.pubsub.js
+jQuery pub/sub plugin by Peter Higgins (dante@dojotoolkit.org)
+Loosely based on Dojo publish/subscribe API, limited in scope. Rewritten blindly.
+Original is (c) Dojo Foundation 2004-2010. Released under either AFL or new BSD, see:
+http://dojofoundation.org/license for more information.
+*/
+; (function (d) {
 
 	// the topic/subscription hash
 	var cache = {};
 
-	// String: topic, Array?: args
-	d.publish = function (topic, args) {
+	d.publish = function (/* String */topic, /* Array? */args) {
 		// summary: 
 		//		Publish some data on a named topic.
 		// topic: String
@@ -110,6 +120,54 @@ PivotViewer.Utils.EscapeItemId = function (itemId) {
             .replace(/\./gi, "");
 };
 
+PivotViewer.Utils.Now = function () {
+    if (Date.now)
+        return Date.now();
+    else
+        return (new Date().getTime());
+};
+
+// Provided the minimum number is < 1000000
+PivotViewer.Utils.Min = function (values) {
+    var min = 1000000;
+    for (var i = 0, _iLen = values.length; i < _iLen; i++)
+        min = min > values[i] ? values[i] : min;
+    return min;
+}
+
+// Provided the maximum number is > -1000000
+PivotViewer.Utils.Max = function (values) {
+    var max = -1000000;
+    for (var i = 0, _iLen = values.length; i < _iLen; i++)
+        max = max < values[i] ? values[i] : max;
+    return max;
+}
+
+PivotViewer.Utils.Histogram = function (values) {
+    if (!values instanceof Array)
+        return null;
+
+    var min = PivotViewer.Utils.Min(values);
+    var max = PivotViewer.Utils.Max(values);
+
+    var bins = (Math.floor(Math.pow(2 * values.length, 1 / 3)) + 1) * 2;
+    if (bins > 10)
+        bins = 10;
+    var stepSize = ((max + 1) - (min - 1)) / bins;
+
+    var histogram = [];
+    for (var i = 0; i < bins; i++) {
+        var minRange = min + (i * stepSize);
+        var maxRange = min + ((i + 1) * stepSize);
+        histogram.push([]);
+        for (var j = 0, _jLen = values.length; j < _jLen; j++) {
+            if (minRange <= values[j] && maxRange > values[j])
+                histogram[i].push(values[j]);
+        }
+    }
+    return { Histogram: histogram, Min: min, Max: max, BinCount: bins };
+};
+
 // A simple class creation library.
 // From Secrets of the JavaScript Ninja
 // Inspired by base2 and Prototype
@@ -178,6 +236,7 @@ PivotViewer.Utils.EscapeItemId = function (itemId) {
 		this.BrandImage = "";
 		this.FacetCategories = [];
 		this.Items = [];
+		this.CXMLBase = "";
 		this.ImageBase = "";
 	},
 	GetItemById: function (Id) {
@@ -202,18 +261,11 @@ PivotViewer.Models.FacetCategory = Object.subClass({
 	init: function (Name, Format, Type, IsFilterVisible, IsMetaDataVisible, IsWordWheelVisible, CustomSort) {
 		this.Name = Name;
 		this.Format = Format;
-		this._type = Type != null && Type != undefined ? Type : PivotViewer.Models.FacetType.String;
+		this.Type = Type != null && Type != undefined ? Type : PivotViewer.Models.FacetType.String;
 		this.IsFilterVisible = IsFilterVisible != null && IsFilterVisible != undefined ? IsFilterVisible : true;
 		this.IsMetaDataVisible = IsMetaDataVisible != null && IsMetaDataVisible != undefined ? IsMetaDataVisible : true;
 		this.IsWordWheelVisible = IsWordWheelVisible != null && IsWordWheelVisible != undefined ? IsWordWheelVisible : true;
 		this.CustomSort;
-	},
-	getType: function () {
-		switch (this._type) {
-			case "String":
-				return PivotViewer.Models.FacetType.String;
-				break;
-		}
 	}
 });
 
@@ -305,7 +357,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                     var facetCategory = new PivotViewer.Models.FacetCategory(
                     facetElement.attr("Name"),
                         facetElement.attr("Format"),
-                        PivotViewer.Models.FacetType.String,
+                        facetElement.attr("Type"),
                         facetElement.attr(namespacePrefix + ":IsFilterVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsFilterVisible").toLowerCase() == "true" ? true : false) : false,
                         facetElement.attr(namespacePrefix + ":IsMetaDataVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsMetaDataVisible").toLowerCase() == "true" ? true : false) : false,
                         facetElement.attr(namespacePrefix + ":IsWordWheelVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsWordWheelVisible").toLowerCase() == "true" ? true : false) : false
@@ -463,365 +515,363 @@ PivotViewer.Views.IPivotViewerView = Object.subClass({
 			return (A < B ? -1 : (A > B ? 1 : 0)) * [1, -1][+!!reverse];
 		}
 	}
-});/// Grid view
+});///
+/// Grid view
 ///
 PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
-	init: function () {
-		this._super();
-		var that = this;
-		//Event Handlers
-		$.subscribe("/PivotViewer/Views/Canvas/Click", function (evt) {
-			if (!that.isActive)
-				return;
+    init: function () {
+        this._super();
+        var that = this;
+        //Event Handlers
+        $.subscribe("/PivotViewer/Views/Canvas/Click", function (evt) {
+            if (!that.isActive)
+                return;
 
-			var selectedItem = "";
-			var selectedCol = 0;
-			var selectedRow = 0;
-			var offsetX = 0, offsetY = 0;
-			for (var i = 0; i < that.tiles.length; i++) {
-				if (that.tiles[i].Contains(evt.x, evt.y)) {
-					selectedItem = that.tiles[i].facetItem.Id;
-					//determine row and column that tile is in in relation to the first tile
-					selectedCol = Math.round((that.tiles[i].x - that.currentOffsetX) / that.tiles[i].width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
-					selectedRow = Math.round((that.tiles[i].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
-					that.tiles[i].Selected(true);
-					offsetX = that.tiles[i].x;
-					offsetY = that.tiles[i].y;
-				} else {
-					that.tiles[i].Selected(false);
-				}
-			}
-			//zoom in on selected tile
-			if (selectedItem.length > 0 && that.selected != selectedItem) {
-				that.selected = selectedItem;
-				//set the max width and height
-				if (that.width < that.height) {
-					that.currentWidth = that.width * that.rowscols.Columns * 0.9; //0.9 to leave 10% space
-					that.currentHeight = (that.height / that.width) * that.currentWidth;
-				} else {
-					that.currentHeight = that.height * that.rowscols.Rows * 0.9;
-					that.currentWidth = (that.width / that.height) * that.currentHeight;
-				}
+            var selectedItem = null;
+            var selectedCol = 0;
+            var selectedRow = 0;
+            var offsetX = 0, offsetY = 0;
+            for (var i = 0; i < that.tiles.length; i++) {
+                if (that.tiles[i].Contains(evt.x, evt.y)) {
+                    selectedItem = that.tiles[i].facetItem.Id;
+                    //determine row and column that tile is in in relation to the first tile
+                    selectedCol = Math.round((that.tiles[i].x - that.currentOffsetX) / that.tiles[i].width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
+                    selectedRow = Math.round((that.tiles[i].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
+                    that.tiles[i].Selected(true);
+                    offsetX = that.tiles[i].x;
+                    offsetY = that.tiles[i].y;
+                } else {
+                    that.tiles[i].Selected(false);
+                }
+            }
+            //zoom in on selected tile
+            if (selectedItem != null && that.selected != selectedItem) {
+                that.selected = selectedItem;
+                //set the max width and height
+                if (that.width < that.height) {
+                    that.currentWidth = that.width * that.rowscols.Columns * 0.9; //0.9 to leave 10% space
+                    that.currentHeight = (that.height / that.width) * that.currentWidth;
+                } else {
+                    that.currentHeight = that.height * that.rowscols.Rows * 0.9;
+                    that.currentWidth = (that.width / that.height) * that.currentHeight;
+                }
 
-				var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
+                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
 
-				that.currentOffsetX = ((rowscols.TileWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileWidth / 2);
-				that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
-
-				//			that.currentOffsetX = offsetX;
-				//			that.currentOffsetY = offsetY;
-
-				that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
-			} else {
-				that.selected = selectedItem = "";
-				//zoom out
-				that.currentOffsetX = that.offsetX;
-				that.currentOffsetY = that.offsetY;
-				that.currentWidth = that.width;
-				that.currentHeight = that.height;
-				var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
-				that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
-			}
+                that.currentOffsetX = ((rowscols.TileWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileWidth / 2);
+                that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
+                
+                that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
+            } else {
+                that.selected = selectedItem = "";
+                //zoom out
+                that.currentOffsetX = that.offsetX;
+                that.currentOffsetY = that.offsetY;
+                that.currentWidth = that.width;
+                that.currentHeight = that.height;
+                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
+                that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
+            }
 
 
-			$.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
-		});
+            $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
+        });
 
-		$.subscribe("/PivotViewer/Views/Canvas/Hover", function (evt) {
-			if (!that.isActive || that.selected.length > 0)
-				return;
+        $.subscribe("/PivotViewer/Views/Canvas/Hover", function (evt) {
+            if (!that.isActive || that.selected.length > 0)
+                return;
 
-			for (var i = 0; i < that.tiles.length; i++) {
-				if (that.tiles[i].Contains(evt.x, evt.y))
-					that.tiles[i].Selected(true);
-				else
-					that.tiles[i].Selected(false);
-			}
-		});
+            for (var i = 0; i < that.tiles.length; i++) {
+                if (that.tiles[i].Contains(evt.x, evt.y))
+                    that.tiles[i].Selected(true);
+                else
+                    that.tiles[i].Selected(false);
+            }
+        });
 
-		$.subscribe("/PivotViewer/Views/Canvas/Zoom", function (evt) {
-			if (!that.isActive)
-				return;
+        $.subscribe("/PivotViewer/Views/Canvas/Zoom", function (evt) {
+            if (!that.isActive)
+                return;
 
-			var preWidth = that.currentWidth;
-			var preHeight = that.currentHeight;
-			//150% zoom
-			//var newWidth = that.currentWidth + ((that.currentWidth * 0.5) * (evt.delta >= 0 ? 1 : -1));
+            var preWidth = that.currentWidth;
+            var preHeight = that.currentHeight;
+            //150% zoom
+            //var newWidth = that.currentWidth + ((that.currentWidth * 0.5) * (evt.delta >= 0 ? 1 : -1));
 
-			if (evt.scale > 0)//that.prevScale < evt.scale)
-				that.currentScale += Math.abs(evt.scale - that.prevScale);
-			else
-				that.currentScale -= Math.abs(that.prevScale - evt.scale);
-
-
-			var newWidth = that.width;
-			if (evt.scale != undefined)
-				newWidth = that.width * (evt.scale + that.prevScale); //(evt.scale * that.currentScale);
-			else if (evt.delta != undefined)
-			// + delta = zoom in
-				newWidth = that.currentWidth + ((that.currentWidth * 0.5) * (evt.delta >= 0 ? 1 : -1));
-			else
-				return;
+            if (evt.scale > 0)//that.prevScale < evt.scale)
+                that.currentScale += Math.abs(evt.scale - that.prevScale);
+            else
+                that.currentScale -= Math.abs(that.prevScale - evt.scale);
 
 
-			that.prevScale = evt.scale;
-
-			//if trying to zoom out too far, reset to min
-			if (newWidth < that.width) {
-				that.currentOffsetX = that.offsetX;
-				that.currentOffsetY = that.offsetY;
-				that.currentWidth = that.width;
-				that.currentHeight = that.height;
-				that.prevScale = 0;
-			}
-			else {
-
-				that.currentWidth = newWidth;
-				//keep original ratio
-				that.currentHeight = (preHeight / preWidth) * that.currentWidth;
-
-				//if trying to zoom too far in, set to max
-				if ((that.currentWidth / that.rowscols.Columns) > that.width) {
-					that.currentWidth = that.width * that.rowscols.Columns;
-					//keep height ratio
-					that.currentHeight = (preHeight / preWidth) * that.currentWidth;
-				}
-				//if trying to zoom too far in, set to max height
-				if ((that.currentHeight / that.rowscols.Rows) > that.height) {
-					that.currentHeight = that.height * that.rowscols.Rows;
-					//keep height ratio
-					that.currentWidth = (preWidth / preHeight) * that.currentHeight;
-				}
-
-				//Work out the percentage of the total width evt.x
-				//multiply that with the difference in width
-				//add the offset
-				that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
-				that.currentOffsetY = ((((evt.y - that.offsetY) / that.height) * (that.currentHeight - that.height)) * -1) + that.offsetY;
+            var newWidth = that.width;
+            if (evt.scale != undefined)
+                newWidth = that.width * (evt.scale + that.prevScale); //(evt.scale * that.currentScale);
+            else if (evt.delta != undefined)
+            // + delta = zoom in
+                newWidth = that.currentWidth + ((that.currentWidth * 0.5) * (evt.delta >= 0 ? 1 : -1));
+            else
+                return;
 
 
-				//			if (evt.delta >= 0) {
-				//				that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
-				//			} else {
-				//				that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
-				//			}
+            that.prevScale = evt.scale;
 
-				/*
-				//The x and y offset is the difference is width, multiplied by the percentage of the mouse position to the width/height
-				var mouseXPercent = Math.round(((evt.x - that.offsetX) / ((that.width - that.offsetX) / 10))) / 10;
-				var mouseYPercent = Math.round(((evt.y - that.offsetY) / ((that.height - that.offsetY) / 10))) / 10;
-				if (evt.delta >= 0) {
-				that.currentOffsetX -= (that.width / 2) - evt.x;// (that.currentWidth - preWidth) * mouseXPercent;
-				that.currentOffsetY -= (that.currentHeight - preHeight) * mouseYPercent;
-				} else {
-				that.currentOffsetX += (preWidth - that.currentWidth) * mouseXPercent;
-				that.currentOffsetY += (preHeight - that.currentHeight) * mouseYPercent;
-				}
+            //if trying to zoom out too far, reset to min
+            if (newWidth < that.width) {
+                that.currentOffsetX = that.offsetX;
+                that.currentOffsetY = that.offsetY;
+                that.currentWidth = that.width;
+                that.currentHeight = that.height;
+                that.prevScale = 0;
+            }
+            else {
 
-				//bounds adjustment
-				//LHS out
-				if (that.currentOffsetX > that.offsetX)
-				that.currentOffsetX = that.offsetX;
-				//RHS out
-				if ((that.currentOffsetX + that.currentWidth) < that.width)
-				that.currentOffsetX = that.offsetX;
-				//Top out
-				if (that.currentOffsetY > that.offsetY)
-				that.currentOffsetY = that.offsetY;
-				//Bottom out
-				if ((that.currentOffsetY + that.currentHeight) < that.height)
-				that.currentOffsetY = that.offsetY;
-				*/
-			}
+                that.currentWidth = newWidth;
+                //keep original ratio
+                that.currentHeight = (preHeight / preWidth) * that.currentWidth;
 
-			var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
-			that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 100);
+                //if trying to zoom too far in, set to max
+                if ((that.currentWidth / that.rowscols.Columns) > that.width) {
+                    that.currentWidth = that.width * that.rowscols.Columns;
+                    //keep height ratio
+                    that.currentHeight = (preHeight / preWidth) * that.currentWidth;
+                }
+                //if trying to zoom too far in, set to max height
+                if ((that.currentHeight / that.rowscols.Rows) > that.height) {
+                    that.currentHeight = that.height * that.rowscols.Rows;
+                    //keep height ratio
+                    that.currentWidth = (preWidth / preHeight) * that.currentHeight;
+                }
 
-			//deselect tiles if zooming out
-			if (evt.delta < 0) {
-				for (var i = 0; i < that.tiles.length; i++) {
-					that.tiles[i].Selected(false);
-				}
-				that.selected = "";
-				$.publish("/PivotViewer/Views/Item/Selected", [that.selected]);
-			}
-		});
+                //Work out the percentage of the total width evt.x
+                //multiply that with the difference in width
+                //add the offset
+                that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
+                that.currentOffsetY = ((((evt.y - that.offsetY) / that.height) * (that.currentHeight - that.height)) * -1) + that.offsetY;
 
-		$.subscribe("/PivotViewer/Views/Canvas/Drag", function (evt) {
-			var dragX = evt.x;
-			var dragY = evt.y;
-			var noChangeX = false, noChangeY = false;
-			that.currentOffsetX += dragX;
-			that.currentOffsetY += dragY;
 
-			//LHS bounds check
-			if (dragX > 0 && that.currentOffsetX > that.offsetX) {
-				that.currentOffsetX -= dragX;
-				noChangeX = true;
-			}
-			//Top bounds check
-			if (dragY > 0 && that.currentOffsetY > that.offsetY) {
-				that.currentOffsetY -= dragY;
-				noChangeY = true;
-			}
-			//RHS bounds check
-			//if the current offset is smaller than the default offset and the zoom scale == 1 then stop drag
-			if (that.currentOffsetX < that.offsetX && that.currentWidth == that.width) {
-				that.currentOffsetX -= dragX;
-				noChangeX = true;
-			}
-			if (dragX < 0 && (that.currentOffsetX - that.offsetX) < -1 * (that.currentWidth - that.width)) {
-				that.currentOffsetX -= dragX;
-				noChangeX = true;
-			}
-			//bottom bounds check
-			if (that.currentOffsetY < that.offsetY && that.currentHeight == that.height) {
-				that.currentOffsetY -= dragY;
-				noChangeY = true;
-			}
-			if (dragY < 0 && (that.currentOffsetY - that.offsetY) < -1 * (that.currentHeight - that.height)) {
-				that.currentOffsetY -= dragY;
-				noChangeY = true;
-			}
+                //			if (evt.delta >= 0) {
+                //				that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
+                //			} else {
+                //				that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
+                //			}
 
-			if (noChangeX && noChangeY)
-				return;
-			if (noChangeX)
-				that.OffsetTiles(0, dragY);
-			else if (noChangeY)
-				that.OffsetTiles(dragX, 0);
-			else
-				that.OffsetTiles(dragX, dragY);
-		});
-	},
-	Setup: function (width, height, offsetX, offsetY, tileRatio) {
-		this.width = width;
-		this.height = height;
-		this.offsetX = offsetX;
-		this.offsetY = offsetY;
-		this.ratio = tileRatio;
-		this.currentWidth = this.width;
-		this.currentHeight = this.height;
-		this.currentOffsetX = this.offsetX;
-		this.currentOffsetY = this.offsetY;
-	},
-	Filter: function (dzTiles, currentFilter, sortFacet) {
-		var that = this;
-		if (!Modernizr.canvas)
-			return;
+                /*
+                //The x and y offset is the difference is width, multiplied by the percentage of the mouse position to the width/height
+                var mouseXPercent = Math.round(((evt.x - that.offsetX) / ((that.width - that.offsetX) / 10))) / 10;
+                var mouseYPercent = Math.round(((evt.y - that.offsetY) / ((that.height - that.offsetY) / 10))) / 10;
+                if (evt.delta >= 0) {
+                that.currentOffsetX -= (that.width / 2) - evt.x;// (that.currentWidth - preWidth) * mouseXPercent;
+                that.currentOffsetY -= (that.currentHeight - preHeight) * mouseYPercent;
+                } else {
+                that.currentOffsetX += (preWidth - that.currentWidth) * mouseXPercent;
+                that.currentOffsetY += (preHeight - that.currentHeight) * mouseYPercent;
+                }
 
-		Debug.Log('Grid View Filtered: ' + currentFilter.length);
+                //bounds adjustment
+                //LHS out
+                if (that.currentOffsetX > that.offsetX)
+                that.currentOffsetX = that.offsetX;
+                //RHS out
+                if ((that.currentOffsetX + that.currentWidth) < that.width)
+                that.currentOffsetX = that.offsetX;
+                //Top out
+                if (that.currentOffsetY > that.offsetY)
+                that.currentOffsetY = that.offsetY;
+                //Bottom out
+                if ((that.currentOffsetY + that.currentHeight) < that.height)
+                that.currentOffsetY = that.offsetY;
+                */
+            }
 
-		this.tiles = dzTiles;
-		if (this.init) {
-			this.SetInitialTiles(this.tiles, this.width, this.height);
-		}
+            var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
+            that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 100);
 
-		//Sort
-		this.tiles = this.tiles.sort(this.SortBy(sortFacet, false, function (a) {
-			return a.toUpperCase()
-		}));
-		this.currentFilter = currentFilter;
+            //deselect tiles if zooming out
+            if (evt.delta < 0) {
+                for (var i = 0; i < that.tiles.length; i++) {
+                    that.tiles[i].Selected(false);
+                }
+                that.selected = "";
+                $.publish("/PivotViewer/Views/Item/Selected", [that.selected]);
+            }
+        });
 
-		var pt1Timeout = 0;
-		//zoom out first
-		Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
-		if (this.currentWidth != this.width && !this.init) {
-			this.selected = selectedItem = "";
-			//zoom out
-			this.currentOffsetX = this.offsetX;
-			this.currentOffsetY = this.offsetY;
-			this.currentWidth = this.width;
-			this.currentHeight = this.height;
-			var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.ratio, this.tiles.length);
-			var clearFilter = [];
-			for (var i = 0; i < this.tiles.length; i++) {
-				clearFilter.push(this.tiles[i].facetItem.Id);
-			}
-			this.SetVisibleTilePositions(rowscols, clearFilter, this.currentOffsetX, this.currentOffsetY, true, false, 1000);
-			pt1Timeout = 1000;
-		}
+        $.subscribe("/PivotViewer/Views/Canvas/Drag", function (evt) {
+            var dragX = evt.x;
+            var dragY = evt.y;
+            var noChangeX = false, noChangeY = false;
+            that.currentOffsetX += dragX;
+            that.currentOffsetY += dragY;
 
-		setTimeout(function () {
-			for (var i = 0; i < that.tiles.length; i++) {
-				//setup tiles
-				that.tiles[i].startx = that.tiles[i].x;
-				that.tiles[i].starty = that.tiles[i].y;
-				that.tiles[i].startwidth = that.tiles[i].width;
-				that.tiles[i].startheight = that.tiles[i].height;
+            //LHS bounds check
+            if (dragX > 0 && that.currentOffsetX > that.offsetX) {
+                that.currentOffsetX -= dragX;
+                noChangeX = true;
+            }
+            //Top bounds check
+            if (dragY > 0 && that.currentOffsetY > that.offsetY) {
+                that.currentOffsetY -= dragY;
+                noChangeY = true;
+            }
+            //RHS bounds check
+            //if the current offset is smaller than the default offset and the zoom scale == 1 then stop drag
+            if (that.currentOffsetX < that.offsetX && that.currentWidth == that.width) {
+                that.currentOffsetX -= dragX;
+                noChangeX = true;
+            }
+            if (dragX < 0 && (that.currentOffsetX - that.offsetX) < -1 * (that.currentWidth - that.width)) {
+                that.currentOffsetX -= dragX;
+                noChangeX = true;
+            }
+            //bottom bounds check
+            if (that.currentOffsetY < that.offsetY && that.currentHeight == that.height) {
+                that.currentOffsetY -= dragY;
+                noChangeY = true;
+            }
+            if (dragY < 0 && (that.currentOffsetY - that.offsetY) < -1 * (that.currentHeight - that.height)) {
+                that.currentOffsetY -= dragY;
+                noChangeY = true;
+            }
 
-				var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
-				//set outer location for all tiles not in the filter
-				if (filterindex < 0) {
-					that.SetOuterTileDestination(that.width, that.height, that.tiles[i]);
-					that.tiles[i].start = Now();
-					that.tiles[i].end = that.tiles[i].start + 1000;
-				}
-			}
+            if (noChangeX && noChangeY)
+                return;
+            if (noChangeX)
+                that.OffsetTiles(0, dragY);
+            else if (noChangeY)
+                that.OffsetTiles(dragX, 0);
+            else
+                that.OffsetTiles(dragX, dragY);
+        });
+    },
+    Setup: function (width, height, offsetX, offsetY, tileRatio) {
+        this.width = width;
+        this.height = height;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+        this.ratio = tileRatio;
+        this.currentWidth = this.width;
+        this.currentHeight = this.height;
+        this.currentOffsetX = this.offsetX;
+        this.currentOffsetY = this.offsetY;
+    },
+    Filter: function (dzTiles, currentFilter, sortFacet) {
+        var that = this;
+        if (!Modernizr.canvas)
+            return;
 
-			var pt2Timeout = currentFilter.length == that.tiles.length ? 0 : 500;
-			//Delay pt2 animation
-			setTimeout(function () {
-				var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.ratio, that.currentFilter.length);
-				that.SetVisibleTilePositions(rowscols, that.currentFilter, that.offsetX, that.offsetY, false, false, 1000);
-			}, pt2Timeout);
+        Debug.Log('Grid View Filtered: ' + currentFilter.length);
 
-		}, pt1Timeout);
+        this.tiles = dzTiles;
+        if (this.init) {
+            this.SetInitialTiles(this.tiles, this.width, this.height);
+        }
 
-		this.init = false;
-	},
-	GetUI: function () {
-		if (Modernizr.canvas)
-			return "";
-		else
-			return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
-	},
-	GetButtonImage: function () {
-		return '../media/GridView.png';
-	},
-	GetButtonImageSelected: function () {
-		return '../media/GridViewSelected.png';
-	},
-	GetViewName: function () {
-		return 'Grid View';
-	},
-	/// Sets the tiles position based on the GetRowsAndColumns layout function
-	SetVisibleTilePositions: function (rowscols, filter, offsetX, offsetY, initTiles, keepColsRows, miliseconds) {
-		//re-use previous columns
-		var columns = keepColsRows ? this.rowscols.Columns : rowscols.Columns;
-		if (!keepColsRows)
-			this.rowscols = rowscols;
+        //Sort
+        this.tiles = this.tiles.sort(this.SortBy(sortFacet, false, function (a) {
+            return $.isNumeric(a) ? a : a.toUpperCase();
+        }));
+        this.currentFilter = currentFilter;
 
-		var currentColumn = 0;
-		var currentRow = 0;
-		for (var i = 0; i < this.tiles.length; i++) {
-			var filterindex = $.inArray(this.tiles[i].facetItem.Id, filter);
-			if (filterindex >= 0) {
-				if (initTiles) {
-					//setup tile initial positions
-					this.tiles[i].startx = this.tiles[i].x;
-					this.tiles[i].starty = this.tiles[i].y;
-					this.tiles[i].startwidth = this.tiles[i].width;
-					this.tiles[i].startheight = this.tiles[i].height;
-				}
+        var pt1Timeout = 0;
+        //zoom out first
+        Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
+        if (this.currentWidth != this.width && !this.init) {
+            this.selected = selectedItem = "";
+            //zoom out
+            this.currentOffsetX = this.offsetX;
+            this.currentOffsetY = this.offsetY;
+            this.currentWidth = this.width;
+            this.currentHeight = this.height;
+            var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.ratio, this.tiles.length);
+            var clearFilter = [];
+            for (var i = 0; i < this.tiles.length; i++) {
+                clearFilter.push(this.tiles[i].facetItem.Id);
+            }
+            this.SetVisibleTilePositions(rowscols, clearFilter, this.currentOffsetX, this.currentOffsetY, true, false, 1000);
+            pt1Timeout = 1000;
+        }
 
-				//set destination positions
-				this.tiles[i].destinationwidth = rowscols.TileWidth;
-				this.tiles[i].destinationheight = rowscols.TileHeight;
-				this.tiles[i].destinationx = (currentColumn * rowscols.TileWidth) + offsetX;
-				this.tiles[i].destinationy = (currentRow * rowscols.TileHeight) + offsetY;
-				this.tiles[i].start = Now();
-				this.tiles[i].end = this.tiles[i].start + miliseconds;
-				if (currentColumn == columns - 1) {
-					currentColumn = 0;
-					currentRow++;
-				}
-				else
-					currentColumn++;
-			}
-		}
-	}
-});
+        setTimeout(function () {
+            for (var i = 0; i < that.tiles.length; i++) {
+                //setup tiles
+                that.tiles[i].startx = that.tiles[i].x;
+                that.tiles[i].starty = that.tiles[i].y;
+                that.tiles[i].startwidth = that.tiles[i].width;
+                that.tiles[i].startheight = that.tiles[i].height;
+
+                var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
+                //set outer location for all tiles not in the filter
+                if (filterindex < 0) {
+                    that.SetOuterTileDestination(that.width, that.height, that.tiles[i]);
+                    that.tiles[i].start = PivotViewer.Utils.Now();
+                    that.tiles[i].end = that.tiles[i].start + 1000;
+                }
+            }
+
+            var pt2Timeout = currentFilter.length == that.tiles.length ? 0 : 500;
+            //Delay pt2 animation
+            setTimeout(function () {
+                var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.ratio, that.currentFilter.length);
+                that.SetVisibleTilePositions(rowscols, that.currentFilter, that.offsetX, that.offsetY, false, false, 1000);
+            }, pt2Timeout);
+
+        }, pt1Timeout);
+
+        this.init = false;
+    },
+    GetUI: function () {
+        if (Modernizr.canvas)
+            return "";
+        else
+            return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
+    },
+    GetButtonImage: function () {
+        return 'Content/images/GridView.png';
+    },
+    GetButtonImageSelected: function () {
+        return 'Content/images/GridViewSelected.png';
+    },
+    GetViewName: function () {
+        return 'Grid View';
+    },
+    /// Sets the tiles position based on the GetRowsAndColumns layout function
+    SetVisibleTilePositions: function (rowscols, filter, offsetX, offsetY, initTiles, keepColsRows, miliseconds) {
+        //re-use previous columns
+        var columns = keepColsRows ? this.rowscols.Columns : rowscols.Columns;
+        if (!keepColsRows)
+            this.rowscols = rowscols;
+
+        var currentColumn = 0;
+        var currentRow = 0;
+        for (var i = 0; i < this.tiles.length; i++) {
+            var filterindex = $.inArray(this.tiles[i].facetItem.Id, filter);
+            if (filterindex >= 0) {
+                if (initTiles) {
+                    //setup tile initial positions
+                    this.tiles[i].startx = this.tiles[i].x;
+                    this.tiles[i].starty = this.tiles[i].y;
+                    this.tiles[i].startwidth = this.tiles[i].width;
+                    this.tiles[i].startheight = this.tiles[i].height;
+                }
+
+                //set destination positions
+                this.tiles[i].destinationwidth = rowscols.TileWidth;
+                this.tiles[i].destinationheight = rowscols.TileHeight;
+                this.tiles[i].destinationx = (currentColumn * rowscols.TileWidth) + offsetX;
+                this.tiles[i].destinationy = (currentRow * rowscols.TileHeight) + offsetY;
+                this.tiles[i].start = PivotViewer.Utils.Now();
+                this.tiles[i].end = this.tiles[i].start + miliseconds;
+                if (currentColumn == columns - 1) {
+                    currentColumn = 0;
+                    currentRow++;
+                }
+                else
+                    currentColumn++;
+            }
+        }
+    }
+});///
 /// Graph (histogram) View
 ///
 PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
@@ -896,7 +946,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
 		//Sort
 		this.tiles = dzTiles.sort(this.SortBy(this.sortFacet, false, function (a) {
-			return a.toUpperCase()
+		    return $.isNumeric(a) ? a : a.toUpperCase();
 		}));
 		this.currentFilter = currentFilter;
 
@@ -939,7 +989,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 			//set outer location for all tiles not in the filter
 			if (filterindex < 0) {
 				SetOuterTileDestination(this.width, this.height, this.tiles[i]);
-				this.tiles[i].start = Now();
+				this.tiles[i].start = PivotViewer.Utils.Now();
 				this.tiles[i].end = this.tiles[i].start + 1000;
 			}
 		}
@@ -963,10 +1013,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 			return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
 	},
 	GetButtonImage: function () {
-		return '../media/GraphView.png';
+		return 'Content/images/GraphView.png';
 	},
 	GetButtonImageSelected: function () {
-		return '../media/GraphViewSelected.png';
+		return 'Content/images/GraphViewSelected.png';
 	},
 	GetViewName: function () {
 		return 'Graph View';
@@ -995,7 +1045,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 					this.tiles[j].destinationheight = rowscols.TileHeight;
 					this.tiles[j].destinationx = (i * this.columnWidth) + (currentColumn * rowscols.TileWidth) + offsetX;
 					this.tiles[j].destinationy = this.canvasHeightUIAdjusted - rowscols.TileHeight - (currentRow * rowscols.TileHeight) + offsetY;
-					this.tiles[j].start = Now();
+					this.tiles[j].start = PivotViewer.Utils.Now();
 					this.tiles[j].end = this.tiles[j].start + 1000;
 
 					if (currentColumn == rowscols.Columns - 1) {
@@ -1061,225 +1111,406 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
 		return bkts;
 	}
+});//Image Controller interface - all image handlers must implement this
+PivotViewer.Views.IImageController = Object.subClass({
+    init: function () { },
+    Setup: function (basePath) { },
+    GetImagesAtLevel: function (id, level) { },
+    Width: 0,
+    Height: 0
+});PivotViewer.Views.LoadImageSetHelper = Object.subClass({
+    init: function () {
+        this._images = [],
+        this._loaded = false;
+    },
+
+    //Load an array of urls
+    LoadImages: function (images) {
+        var that = this;
+        for (var i = 0; i < images.length; i++) {
+            var img = new Image();
+            img.src = images[i];
+            img.onload = function () {
+                that._loaded = true;
+            };
+            this._images.push(img);
+        }
+    },
+    GetImages: function () { return this._images; },
+    IsLoaded: function () { return this._loaded; }
+});///
+/// Deep Zoom Image Getter
+/// Retrieves and caches images
+///
+PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.subClass({
+    init: function () {
+        this._items = [];
+        this._collageItems = [];
+        this._baseUrl = "";
+        this._collageMaxLevel = 0;
+        this._tileSize = 256;
+        this._maxLevel = 0;
+
+        this._zooming = false;
+        var that = this;
+
+        //Events
+        $.subscribe("/PivotViewer/ImageController/Zoom", function (evt) {
+            that._zooming = evt;
+        });
+    },
+    Setup: function (deepzoomCollection) {
+        //get base URL
+        this._baseUrl = deepzoomCollection.substring(0, deepzoomCollection.lastIndexOf("/"));
+        this._collageUrl = deepzoomCollection.substring(deepzoomCollection.lastIndexOf("/") + 1).replace('.xml', '_files');
+        var that = this;
+        //load dzi and start creating array of id's and DeepZoomLevels
+        $.ajax({
+            type: "GET",
+            url: deepzoomCollection,
+            dataType: "xml",
+            success: function (xml) {
+                var items = $(xml).find("I");
+                if (items.length == 0)
+                    return;
+                //lets assume that each of the items have the same dzi properties, so just get the first one
+                var dziSource = $(items[0]).attr('Source');
+                $.ajax({
+                    type: "GET",
+                    url: that._baseUrl + "/" + dziSource,
+                    dataType: "xml",
+                    success: function (dzixml) {
+                        var image = $(dzixml).find("Image");
+                        if (image.length == 0)
+                            return;
+
+                        var jImage = $(image[0]);
+                        that._tileSize = jImage.attr('TileSize');
+                        that._tileFormat = jImage.attr('Format');
+                        that._collageMaxLevel = jImage.attr('MaxLevel');
+                        //calculate max level
+                        var size = jImage.children().first();
+                        that.Width = parseInt(size.attr("Width"));
+                        that.Height = parseInt(size.attr("Height"));
+                        var maxDim = that.Width > that.Height ? that.Width : that.Height;
+                        that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
+
+                        //create all images
+                        for (var i = 0; i < items.length; i++) {
+                            //Create an item image collection
+                            var source = $(items[i]).attr('Source');
+                            var itemId = $(items[i]).attr('Id');
+                            var dzN = $(items[i]).attr('N');
+                            var dzId = source.substring(source.lastIndexOf("/") + 1).replace(/\.xml/gi, "").replace(/\.dzi/gi, "");
+                            var basePath = source.substring(0, source.lastIndexOf("/"));
+                            if (basePath.length > 0)
+                                basePath = basePath + '/';
+                            that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath));
+                        }
+
+                        //Loaded DeepZoom collection
+                        $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
+                    }
+                });
+            }
+        });
+    },
+
+    GetImagesAtLevel: function (id, level) {
+        //if the request level is greater than the collections max then set to max
+        //level = (level > _maxLevel ? _maxLevel : level);
+
+        //For PoC max level is 8
+        level = (level > 7 ? 7 : level);
+        level = (level <= 0 ? 6 : level);
+
+        //find imageId
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+
+                //to work out collage image
+                //convert image n to base 2
+                //convert to array and put even and odd bits into a string
+                //convert strings to base 10 - this represents the tile row and col
+                var baseTwo = this._items[i].DZN.toString(2);
+                var even = "", odd = "";
+                for (var b = 0; b < baseTwo.length; b++) {
+                    if (b % 2 == 0)
+                        even += baseTwo[b];
+                    else
+                        odd += baseTwo[b];
+                }
+                dzCol = parseInt(even, 2);
+                dzRow = parseInt(odd, 2);
+                //for the zoom level work out the DZ tile where it came from
+
+                if ((this._items[i].Levels == undefined || this._items[i].Levels.length == 0) && !this._zooming) {
+                    //create 0 level
+                    var imageList = this.GetImageList(this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/6/", 6); ;
+                    var newLevel = new PivotViewer.Views.LoadImageSetHelper();
+                    newLevel.LoadImages(imageList);
+                    this._items[i].Levels.push(newLevel);
+                    return null;
+                }
+                else if (this._items[i].Levels.length < level && !this._zooming) {
+                    //requested level does not exist, and the Levels list is smaller than the requested level
+                    var imageList = this.GetImageList(this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/" + level + "/", level);
+                    var newLevel = new PivotViewer.Views.LoadImageSetHelper();
+                    newLevel.LoadImages(imageList);
+                    this._items[i].Levels.splice(level, 0, newLevel);
+                }
+
+                //get best loaded level to return
+                for (var j = level; j > -1; j--) {
+                    if (this._items[i].Levels[j] != undefined && this._items[i].Levels[j].IsLoaded()) {
+                        return this._items[i].Levels[j].GetImages();
+                    }
+                    //if request level has not been requested yet
+                    if (j == level && this._items[i].Levels[j] == undefined && !this._zooming) {
+                        //create array of images to getagePath.replace('.dzi', '').replace('\/\/', '\/');
+                        var imageList = this.GetImageList(this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/" + j + "/", j);
+                        //create level
+                        var newLevel = new PivotViewer.Views.LoadImageSetHelper();
+                        newLevel.LoadImages(imageList);
+                        this._items[i].Levels.splice(j, 0, newLevel);
+                    }
+                }
+
+                return null;
+            }
+        }
+        return null;
+    },
+
+    GetImageList: function (basePath, level) {
+        var fileNames = [];
+
+        var levelWidth = Math.ceil(this.Width / Math.pow(2, this._maxLevel - level));
+        var levelHeight = Math.ceil(this.Height / Math.pow(2, this._maxLevel - level));
+        //based on the width for this level, get the slices based on the DZ Tile Size
+        var hslices = Math.ceil(levelWidth / this._tileSize);
+        var vslices = Math.ceil(levelHeight / this._tileSize);
+
+        //Construct list of file names based on number of vertical and horizontal images
+        for (var i = 0; i < hslices; i++) {
+            for (var j = 0; j < vslices; j++) {
+                fileNames.push(basePath + i + "_" + j + "." + this._tileFormat);
+            }
+        }
+        return fileNames;
+    }
 });
-///
-/// Deep Zoom Controller
-/// used to create the initial deep zoom tiles and their animation based on the locations set in the views
-///
-PivotViewer.Views.DeepZoomController = function () {
-    var _tiles = [],
-        _started = false,
-        _breaks = false,
-        _easing = new Easing.Easer({ type: "circular", side: "both" }),
-        _imageController,
-        _isZooming = false,
-        _canvasContext,
-        _helpers = [],
-        _helperText = "";
 
-    InitDZController = function (pivotCollectionItems, baseCollectionPath, canvasContext) {
-
-        _imageController = new PivotViewer.Views.DeepZoomImageController();
+PivotViewer.Views.DeepZoomItem = Object.subClass({
+    init: function (ItemId, DZId, DZn, BasePath) {
+        this.ItemId = ItemId,
+        this.DZId = DZId,
+        this.DZN = parseInt(DZn),
+        this.BasePath = BasePath,
+        this.Levels = [];
+    }
+});///
+/// Tile Controller
+/// used to create the initial tiles and their animation based on the locations set in the views
+///
+PivotViewer.Views.TileController = Object.subClass({
+    init: function (ImageController) {
+        this._tiles = [];
+        this._helpers = [];
+        this._helperText = "";
+        this._easing = new Easing.Easer({ type: "circular", side: "both" });
+        this._imageController = ImageController;
+    },
+    initTiles: function (pivotCollectionItems, baseCollectionPath, canvasContext) {
+        //Set the initial state for the tiles
         for (var i = 0; i < pivotCollectionItems.length; i++) {
-            var tile = new PivotViewer.Views.DeepZoomTile(_imageController);
+            var tile = new PivotViewer.Views.Tile(this._imageController);
             tile.facetItem = pivotCollectionItems[i];
             tile.CollectionRoot = baseCollectionPath.replace(/\\/gi, "/").replace(/\.xml/gi, "");
-            _canvasContext = canvasContext;
-            tile.context = _canvasContext;
-            _tiles.push(tile);
+            this._canvasContext = canvasContext;
+            tile.context = this._canvasContext;
+            this._tiles.push(tile);
         }
-        //Init DZ images
-        _imageController.Init(baseCollectionPath.replace("\\", "/"));
+        return this._tiles;
+    },
 
-        return _tiles;
-    };
+    AnimateTiles: function () {
+        var that = this;
+        this._started = true;
+        var context = null;
+        var isAnimating = false;
 
-    AnimateTiles = function () {
-        _started = true;
+        if (this._tiles.length > 0 && this._tiles[0].context != null) {
+            context = this._tiles[0].context;
 
-        if (_tiles.length > 0 && _tiles[0].context != null) {
-            var context = _tiles[0].context;
-            context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
-            //TODO investigate this for performance: http://stackoverflow.com/questions/7787219/javascript-ios5-javascript-execution-exceeded-timeout
+            //TODO Seen this error, investigate this for performance: http://stackoverflow.com/questions/7787219/javascript-ios5-javascript-execution-exceeded-timeout
 
             var isZooming = false;
             //Set tile properties
-            for (var i = 0; i < _tiles.length; i++) {
-                var now = Now() - _tiles[i].start,
-                end = _tiles[i].end - _tiles[i].start;
+            for (var i = 0; i < this._tiles.length; i++) {
+                var now = PivotViewer.Utils.Now() - this._tiles[i].start,
+                end = this._tiles[i].end - this._tiles[i].start;
                 //use the easing function to determine the next position
                 if (now <= end) {
+                    //at least one tile is moving
+                    isAnimating = true;
 
                     //if the position is different from the destination position then zooming is happening
-                    if (_tiles[i].x != _tiles[i].destinationx || _tiles[i].y != _tiles[i].destinationy)
+                    if (this._tiles[i].x != this._tiles[i].destinationx || this._tiles[i].y != this._tiles[i].destinationy)
                         isZooming = true;
 
-                    _tiles[i].x = _easing.ease(
+                    this._tiles[i].x = this._easing.ease(
                         now, 										// curr time
-                        _tiles[i].startx, 							// start position
-                        _tiles[i].destinationx - _tiles[i].startx, // relative end position
+                        this._tiles[i].startx, 							// start position
+                        this._tiles[i].destinationx - this._tiles[i].startx, // relative end position
                         end											// end time
                     );
 
-                    _tiles[i].y = _easing.ease(
+                    this._tiles[i].y = this._easing.ease(
                     now,
-                    _tiles[i].starty,
-                    _tiles[i].destinationy - _tiles[i].starty,
+                    this._tiles[i].starty,
+                    this._tiles[i].destinationy - this._tiles[i].starty,
                     end
                 );
 
                     //if the width/height is different from the destination width/height then zooming is happening
-                    if (_tiles[i].width != _tiles[i].destinationWidth || _tiles[i].height != _tiles[i].destinationHeight)
+                    if (this._tiles[i].width != this._tiles[i].destinationWidth || this._tiles[i].height != this._tiles[i].destinationHeight)
                         isZooming = true;
 
-                    _tiles[i].width = _easing.ease(
+                    this._tiles[i].width = this._easing.ease(
                     now,
-                    _tiles[i].startwidth,
-                    _tiles[i].destinationwidth - _tiles[i].startwidth,
+                    this._tiles[i].startwidth,
+                    this._tiles[i].destinationwidth - this._tiles[i].startwidth,
                     end
                 );
 
-                    _tiles[i].height = _easing.ease(
+                    this._tiles[i].height = this._easing.ease(
                     now,
-                    _tiles[i].startheight,
-                    _tiles[i].destinationheight - _tiles[i].startheight,
+                    this._tiles[i].startheight,
+                    this._tiles[i].destinationheight - this._tiles[i].startheight,
                     end
                 );
                 } else {
-                    _tiles[i].x = _tiles[i].destinationx;
-                    //_tiles[i].startx = _tiles[i].destinationx;
-
-                    _tiles[i].y = _tiles[i].destinationy;
-                    //_tiles[i].starty = _tiles[i].destinationy;
-
-                    _tiles[i].width = _tiles[i].destinationwidth;
-                    //_tiles[i].startwidth = _tiles[i].destinationwidth;
-
-                    _tiles[i].height = _tiles[i].destinationheight;
-                    //_tiles[i].startheight = _tiles[i].destinationheight;
+                    this._tiles[i].x = this._tiles[i].destinationx;
+                    this._tiles[i].y = this._tiles[i].destinationy;
+                    this._tiles[i].width = this._tiles[i].destinationwidth;
+                    this._tiles[i].height = this._tiles[i].destinationheight;
                 }
 
                 //check if the destination will be in the visible area
-                if (_tiles[i].destinationx + _tiles[i].destinationwidth < 0 || _tiles[i].destinationx > context.canvas.width || _tiles[i].destinationy + _tiles[i].destinationheight < 0 || _tiles[i].destinationy > context.canvas.height)
-                    _tiles[i].destinationVisible = false;
+                if (this._tiles[i].destinationx + this._tiles[i].destinationwidth < 0 || this._tiles[i].destinationx > context.canvas.width || this._tiles[i].destinationy + this._tiles[i].destinationheight < 0 || this._tiles[i].destinationy > context.canvas.height)
+                    this._tiles[i].destinationVisible = false;
                 else
-                    _tiles[i].destinationVisible = true;
+                    this._tiles[i].destinationVisible = true;
             }
         }
 
         //fire zoom event
-        if (_isZooming != isZooming) {
-            _isZooming = isZooming;
-            $.publish("/PivotViewer/DeepZoom/Zoom", [_isZooming]);
+        if (this._isZooming != isZooming) {
+            this._isZooming = isZooming;
+            $.publish("/PivotViewer/ImageController/Zoom", [this._isZooming]);
         }
 
-        //one properties set then draw
-        for (var i = 0; i < _tiles.length; i++) {
+        //If animating then (most likely) all tiles will need to be updated, so clear the entire canvas
+        //if (isAnimating) {
+            //Clear drawing area
+            context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        //}
+
+        //once properties set then draw
+        for (var i = 0; i < this._tiles.length; i++) {
             //only draw if in visible area
-            if (_tiles[i].x + _tiles[i].width > 0 && _tiles[i].x < context.canvas.width && _tiles[i].y + _tiles[i].height > 0 && _tiles[i].y < context.canvas.height)
-                _tiles[i].Draw();
+            if (this._tiles[i].x + this._tiles[i].width > 0 && this._tiles[i].x < context.canvas.width && this._tiles[i].y + this._tiles[i].height > 0 && this._tiles[i].y < context.canvas.height) {
+                if (isAnimating)
+                    this._tiles[i].DrawEmpty();
+                else
+                    this._tiles[i].Draw();
+            }
         }
 
         //Helpers
         if (debug) {
             //Draw point if one requested
-            if (_helpers.length > 0) {
-                for (var i = 0; i < _helpers.length; i++) {
-                    _canvasContext.beginPath();
-                    _canvasContext.moveTo(_helpers[i].x, _helpers[i].y);
-                    _canvasContext.arc(_helpers[i].x + 1, _helpers[i].y + 1, 10, 0, Math.PI * 2, true);
-                    _canvasContext.fillStyle = "#FF0000";
-                    _canvasContext.fill();
-                    _canvasContext.beginPath();
-                    _canvasContext.rect(_helpers[i].x + 25, _helpers[i].y - 40, 50, 13);
-                    _canvasContext.fillStyle = "white";
-                    _canvasContext.fill();
-                    _canvasContext.fillStyle = "black";
-                    _canvasContext.fillText(_helpers[i].x + ", " + _helpers[i].y, _helpers[i].x + 30, _helpers[i].y - 30);
+            if (this._helpers.length > 0) {
+                for (var i = 0; i < this._helpers.length; i++) {
+                    this._canvasContext.beginPath();
+                    this._canvasContext.moveTo(this._helpers[i].x, this._helpers[i].y);
+                    this._canvasContext.arc(this._helpers[i].x + 1, this._helpers[i].y + 1, 10, 0, Math.PI * 2, true);
+                    this._canvasContext.fillStyle = "#FF0000";
+                    this._canvasContext.fill();
+                    this._canvasContext.beginPath();
+                    this._canvasContext.rect(this._helpers[i].x + 25, this._helpers[i].y - 40, 50, 13);
+                    this._canvasContext.fillStyle = "white";
+                    this._canvasContext.fill();
+                    this._canvasContext.fillStyle = "black";
+                    this._canvasContext.fillText(this._helpers[i].x + ", " + this._helpers[i].y, this._helpers[i].x + 30, this._helpers[i].y - 30);
                 }
             }
 
-            if (_helperText.length > 0) {
-                _canvasContext.beginPath();
-                _canvasContext.rect(220, 5, 500, 14);
-                _canvasContext.fillStyle = "white";
-                _canvasContext.fill();
-                _canvasContext.fillStyle = "black";
-                _canvasContext.fillText(_helperText, 225, 14);
+            if (this._helperText.length > 0) {
+                this._canvasContext.beginPath();
+                this._canvasContext.rect(220, 5, 500, 14);
+                this._canvasContext.fillStyle = "white";
+                this._canvasContext.fill();
+                this._canvasContext.fillStyle = "black";
+                this._canvasContext.fillText(this._helperText, 225, 14);
             }
         }
 
         // request new frame
-        if (!_breaks) {
+        if (!this._breaks) {
             requestAnimFrame(function () {
-                AnimateTiles();
+                that.AnimateTiles();
             });
         } else {
-            _started = false;
+            this._started = false;
             return;
         }
-    };
+    },
 
-    Now = function () {
-        if (Date.now)
-            return Date.now();
-        else
-            return (new Date().getTime());
-    };
-
-    return {
-        Init: InitDZController,
-        BeginAnimation: function () {
-            if (!_started && _tiles.length > 0) {
-                _breaks = false;
-                AnimateTiles();
-            }
-        },
-        StopAnimation: function () {
-            _breaks = true;
-        },
-        SetLinearEasingBoth: function () {
-            _easing = new Easing.Easer({ type: "linear", side: "both" });
-        },
-        SetCircularEasingBoth: function () {
-            _easing = new Easing.Easer({ type: "circular", side: "both" });
-        },
-        SetQuarticEasingOut: function () {
-            _easing = new Easing.Easer({ type: "quartic", side: "out" });
-        },
-        GetTileRaio: function () {
-            return _imageController.Height() / _imageController.Width();
-        },
-        DrawHelpers: function (helpers) {
-            _helpers = helpers;
-        },
-        DrawHelperText: function (text) {
-            _helperText = text;
+    BeginAnimation: function () {
+        if (!this._started && this._tiles.length > 0) {
+            this._breaks = false;
+            this.AnimateTiles();
         }
-    };
-};
+    },
+    StopAnimation: function () {
+        this._breaks = true;
+    },
+    SetLinearEasingBoth: function () {
+        this._easing = new Easing.Easer({ type: "linear", side: "both" });
+    },
+    SetCircularEasingBoth: function () {
+        this._easing = new Easing.Easer({ type: "circular", side: "both" });
+    },
+    SetQuarticEasingOut: function () {
+        this._easing = new Easing.Easer({ type: "quartic", side: "out" });
+    },
+    GetTileRaio: function () {
+        return this._imageController.Height / this._imageController.Width;
+    },
+    DrawHelpers: function (helpers) {
+        this._helpers = helpers;
+    },
+    DrawHelperText: function (text) {
+        this._helperText = text;
+    }
+});
 
 ///
-/// Deep Zoom Tile
+/// Tile
 /// Used to contain the details of an individual tile, and to draw the tile on a given canvas context
 ///
-PivotViewer.Views.DeepZoomTile = Object.subClass({
-    init: function (DZController) {
-        if (!(this instanceof PivotViewer.Views.DeepZoomTile)) {
-            return new PivotViewer.Views.DeepZoomTile(DZController);
+PivotViewer.Views.Tile = Object.subClass({
+    init: function (TileController) {
+        if (!(this instanceof PivotViewer.Views.Tile)) {
+            return new PivotViewer.Views.Tile(TileController);
         }
-        this._controller = DZController;
-        this._image = new Image();
+        this._controller = TileController;
         this._imageLoaded = false;
         this._selected = false;
-        this._controller = DZController;
         this._level = 0;
         this._images = null;
-
-        this._image.onload = function () {
-            this._imageLoaded = true;
-        };
     },
 
     Draw: function () {
@@ -1295,32 +1526,27 @@ PivotViewer.Views.DeepZoomTile = Object.subClass({
                 thisLevel = 0;
 
             //TODO: Look at caching last image to avoid using _controller
-            //if (thisLevel != _level || _images == null) {
             this._level = thisLevel;
-            this._images = this._controller.GetImagesAtLevel(this.facetItem.Img, this._level);
-            //}
+			this._images = this._controller.GetImagesAtLevel(this.facetItem.Img, this._level);
         }
 
         if (this._images != null) {
-            //determine width and height
-            //			var width = this.width; // -4;
-            //			var height = this.height;// -4;
-            //			if (_controller.Width() > _controller.Height())
-            //				height = (_controller.Height() / _controller.Width()) * height;
-            //			else
-            //				width = (_controller.Height() / _controller.Width()) * width;
-
-            for (var i = 0; i < this._images.length; i++) {
-                this.context.drawImage(this._images[i], this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            if (typeof this._images == "function") {
+                //A DrawLevel function returned - invoke
+                this._images(this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            }
+            else if (this._images.length > 0 && this._images[0] instanceof Image) {
+                //if the collection contains an image
+                for (var i = 0; i < this._images.length; i++) {
+                    //only clearing a small portion of the canvas
+                    //http://www.html5rocks.com/en/tutorials/canvas/performance/
+                    //this.context.fillRect(this.x, this.y, this.width, this.height);
+                    this.context.drawImage(this._images[i], this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+                }
             }
         }
         else {
-            //draw an empty square
-            this.context.beginPath();
-            this.context.rect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
-            this.context.lineWidth = 1;
-            this.context.strokeStyle = "black";
-            this.context.stroke();
+            this.DrawEmpty();
         }
 
         if (this._selected) {
@@ -1336,6 +1562,21 @@ PivotViewer.Views.DeepZoomTile = Object.subClass({
     Contains: function (mx, my) {
         return (this.x <= mx) && (this.x + this.width >= mx) &&
         (this.y <= my) && (this.y + this.height >= my);
+    },
+    DrawEmpty: function () {
+        if (this._controller.DrawLevel == undefined) {
+            //draw an empty square
+            this.context.beginPath();
+            this.context.fillStyle = "#D7DDDD";
+            this.context.fillRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            this.context.rect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            this.context.lineWidth = 1;
+            this.context.strokeStyle = "white";
+            this.context.stroke();
+        } else {
+            //use the controllers blank tile
+            this._controller.DrawLevel(this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+        }
     },
     CollectionRoot: "",
     now: null,
@@ -1356,237 +1597,16 @@ PivotViewer.Views.DeepZoomTile = Object.subClass({
     context: null,
     facetItem: null,
     Selected: function (selected) { this._selected = selected }
-});
-
-///
-/// Deep Zoom Image Getter
-/// Retrieves and caches images
-///
-PivotViewer.Views.DeepZoomImageController = function () {
-    var _items = [],
-        _collageItems = [],
-        _baseUrl = "",
-        _collageUrl = "",
-        _collageMaxLevel = 0,
-        _tileSize = 256,
-        _width = 0,
-        _height = 0,
-        _tileFormat = "jpg",
-        _maxLevel = 0,
-        _zooming = false;
-
-    initDZ = function (deepzoomCollection) {
-        //get base URL
-        _baseUrl = deepzoomCollection.substring(0, deepzoomCollection.lastIndexOf("/"));
-        _collageUrl = deepzoomCollection.substring(deepzoomCollection.lastIndexOf("/") + 1).replace('.xml', '_files');
-        //load dzi and start creating array of id's and DeepZoomLevels
-        $.ajax({
-            type: "GET",
-            url: deepzoomCollection,
-            dataType: "xml",
-            success: function (xml) {
-                var items = $(xml).find("I");
-                if (items.length == 0)
-                    return;
-                //lets assume that each of the items have the same dzi properties, so just get the first one
-                var dziSource = $(items[0]).attr('Source');
-                $.ajax({
-                    type: "GET",
-                    url: _baseUrl + "/" + dziSource,
-                    dataType: "xml",
-                    success: function (dzixml) {
-                        var image = $(dzixml).find("Image");
-                        if (image.length == 0)
-                            return;
-
-                        var jImage = $(image[0]);
-                        _tileSize = jImage.attr('TileSize');
-                        _tileFormat = jImage.attr('Format');
-                        _collageMaxLevel = jImage.attr('MaxLevel');
-                        //calculate max level
-                        var size = jImage.children().first();
-                        _width = parseInt(size.attr("Width"));
-                        _height = parseInt(size.attr("Height"));
-                        var maxDim = _width > _height ? _width : _height;
-                        _maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
-
-                        //create all images
-                        for (var i = 0; i < items.length; i++) {
-                            //Create an item image collection
-                            var source = $(items[i]).attr('Source');
-                            var itemId = $(items[i]).attr('Id');
-                            var dzN = $(items[i]).attr('N');
-                            var dzId = source.substring(source.lastIndexOf("/") + 1).replace(/\.xml/gi, "").replace(/\.dzi/gi, "");
-                            var basePath = source.substring(0, source.lastIndexOf("/"));
-                            if (basePath.length = 0)
-                                basePath = '/';
-                            _items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath));
-                        }
-
-                        //Loaded DeepZoom collection
-                        $.publish("/PivotViewer/DeepZoom/Collection/Loaded", null);
-                    }
-                });
-            }
-        });
-    };
-
-    getImageLevel = function (id, level) {
-        //if the request level is greater than the collections max then set to max
-        //level = (level > _maxLevel ? _maxLevel : level);
-
-        //For PoC max level is 8
-        level = (level > 7 ? 7 : level);
-        level = (level <= 0 ? 6 : level);
-
-        //find imageId
-        for (var i = 0; i < _items.length; i++) {
-            if (_items[i].ItemId == id) {
-
-
-                //to work out collage image
-                //convert image n to base 2
-                //convert to array and put even and odd bits into a string
-                //convert strings to base 10 - this represents the tile row and col
-                var baseTwo = _items[i].DZN.toString(2);
-                var even = "", odd = "";
-                for (var b = 0; b < baseTwo.length; b++) {
-                    if (b % 2 == 0)
-                        even += baseTwo[b];
-                    else
-                        odd += baseTwo[b];
-                }
-                dzCol = parseInt(even, 2);
-                dzRow = parseInt(odd, 2);
-                //for the zoom level work out the DZ tile where it came from
-
-                if ((_items[i].Levels == undefined || _items[i].Levels.length == 0) && !_zooming) {
-                    //create 0 level
-                    var imageList = getImageList(_baseUrl + "/" + _items[i].BasePath + _items[i].DZId + "_files/6/", 6); ;
-                    var newLevel = new PivotViewer.Views.DeepZoomLevel();
-                    newLevel.LoadImages(imageList);
-                    _items[i].Levels.push(newLevel);
-                    return null;
-                }
-                else if (_items[i].Levels.length < level && !_zooming) {
-                    //requested level does not exist, and the Levels list is smaller than the requested level
-                    var imageList = getImageList(_baseUrl + "/" + _items[i].BasePath + _items[i].DZId + "_files/" + level + "/", level);
-                    var newLevel = new PivotViewer.Views.DeepZoomLevel();
-                    newLevel.LoadImages(imageList);
-                    _items[i].Levels.splice(level, 0, newLevel);
-                }
-
-                //get best loaded level to return
-                for (var j = level; j > -1; j--) {
-                    if (_items[i].Levels[j] != undefined && _items[i].Levels[j].IsLoaded()) {
-                        return _items[i].Levels[j].GetImages();
-                    }
-                    //if request level has not been requested yet
-                    if (j == level && _items[i].Levels[j] == undefined && !_zooming) {
-                        //create array of images to getagePath.replace('.dzi', '').replace('\/\/', '\/');
-                        var imageList = getImageList(_baseUrl + "/" + _items[i].BasePath + _items[i].DZId + "_files/" + j + "/", j);
-                        //create level
-                        var newLevel = new PivotViewer.Views.DeepZoomLevel();
-                        newLevel.LoadImages(imageList);
-                        _items[i].Levels.splice(j, 0, newLevel);
-                    }
-                }
-
-                return null;
-            }
-        }
-        return null;
-    };
-
-    getImageList = function (basePath, level) {
-        var fileNames = [];
-
-        var levelWidth = Math.ceil(_width / Math.pow(2, _maxLevel - level));
-        var levelHeight = Math.ceil(_height / Math.pow(2, _maxLevel - level));
-        //based on the width for this level, get the slices based on the DZ Tile Size
-        var hslices = Math.ceil(levelWidth / _tileSize);
-        var vslices = Math.ceil(levelHeight / _tileSize);
-
-        //Construct list of file names based on number of vertical and horizontal images
-        for (var i = 0; i < hslices; i++) {
-            for (var j = 0; j < vslices; j++) {
-                fileNames.push(basePath + i + "_" + j + "." + _tileFormat);
-            }
-        }
-        return fileNames;
-    }
-
-    //Events
-    $.subscribe("/PivotViewer/DeepZoom/Zoom", function (evt) {
-        _zooming = evt;
-    });
-
-    return {
-        Init: initDZ,
-        GetImagesAtLevel: getImageLevel,
-        Width: function () { return _width; },
-        Height: function () { return _height; }
-    };
-};
-
-PivotViewer.Views.DeepZoomItem = function (ItemId, DZId, DZn, BasePath) {
-    var _itemId = ItemId,
-        _dzId = DZId,
-        _n = parseInt(DZn),
-        _basePath = BasePath,
-        _levels = [];
-    return {
-        ItemId: _itemId,
-        DZId: _dzId,
-        DZN: _n,
-        BasePath: _basePath,
-        Levels: _levels
-    };
-};
-
-PivotViewer.Views.DeepZoomLevel = function () {
-    var _images = [],
-        _loaded = false;
-
-    //Load an array of urls
-    loadImages = function (images) {
-        for (var i = 0; i < images.length; i++) {
-            var img = new Image();
-            img.src = images[i];
-            img.onload = function () {
-                _loaded = true;
-            };
-            _images.push(img);
-        }
-    };
-
-    isLoaded = function () {
-        if (!_loaded) {
-            //check if the images have loaded
-            var loadedCount = 0;
-            for (var i = 0; i < _images.length; i++) {
-                if (_images[i].complete)
-                    loadedCount++;
-            }
-            if (loadedCount == _images.length)
-                _loaded = true;
-        }
-        return _loaded;
-    }
-
-    return {
-        LoadImages: loadImages,
-        IsLoaded: function () { return _loaded; },
-        GetImages: function () { return _images; }
-    }
-};//PivotViewer jQuery extension
+});//PivotViewer jQuery extension
 (function ($) {
     var _views = [],
-        _facetItemTotals = [],
+        _facetItemTotals = [], //used to store the counts of all the string facets - used when resetting the filters
+        _facetNumericItemTotals = [], //used to store the counts of all the numeric facets - used when resetting the filters
         _currentView = 0,
         _loadingInterval,
-        _deepZoomController,
-        _deepZoomTiles = [],
+        _tileController,
+        _tiles = [],
+        _imageController,
         _mouseDrag = null,
         _mouseMove = null;
 
@@ -1601,12 +1621,21 @@ PivotViewer.Views.DeepZoomLevel = function () {
             defaults._self.addClass('pv-wrapper');
             InitPreloader();
 
+            //Collection loader
             if (options.Loader == undefined)
                 throw "Collection loader is undefined.";
             if (options.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader)
                 options.Loader.LoadCollection(defaults.PivotCollection);
             else
                 throw "Collection loader does not inherit from PivotViewer.Models.Loaders.ICollectionLoader.";
+
+            //Image controller
+            if (options.ImageController == undefined)
+                _imageController = new PivotViewer.Views.DeepZoomImageController();
+            else if (!options.ImageController instanceof PivotViewer.Views.IImageController)
+                throw "Image Controller does not inherit from PivotViewer.Views.IImageController.";
+            else
+                _imageController = options.ImageController;
         },
         show: function () {
             Debug.Log('Show');
@@ -1623,16 +1652,19 @@ PivotViewer.Views.DeepZoomLevel = function () {
         $('.pv-loading').css('left', ($('.pv-wrapper').width() / 2) - 43 + 'px');
     };
 
-    InitDeepZoom = function () {
+    InitTileCollection = function () {
         InitUI();
         //init DZ Controller
-        var DZXML = defaults.PivotCollection.ImageBase;
-        if(!(DZXML.indexOf('http', 0) >= 0 || DZXML.indexOf('www.', 0) >= 0))
-            DZXML = defaults.PivotCollection.CXMLBase.substring(0, defaults.PivotCollection.CXMLBase.lastIndexOf('/') + 1) + DZXML;
+        var baseCollectionPath = defaults.PivotCollection.ImageBase;
+        if (!(baseCollectionPath.indexOf('http', 0) >= 0 || baseCollectionPath.indexOf('www.', 0) >= 0))
+            baseCollectionPath = defaults.PivotCollection.CXMLBase.substring(0, defaults.PivotCollection.CXMLBase.lastIndexOf('/') + 1) + baseCollectionPath;
         var canvasContext = $('.pv-viewarea-canvas')[0].getContext("2d");
-        _deepZoomController = new PivotViewer.Views.DeepZoomController();
-        _deepZoomTiles = _deepZoomController.Init(defaults.PivotCollection.Items, DZXML, canvasContext);
-        _deepZoomController.BeginAnimation();
+
+        //Init Tile Controller and start animation loop
+        _tileController = new PivotViewer.Views.TileController(_imageController);
+        _tiles = _tileController.initTiles(defaults.PivotCollection.Items, baseCollectionPath, canvasContext);
+        //Init image controller
+        _imageController.Setup(baseCollectionPath.replace("\\", "/"));
     };
 
     InitPivotViewer = function () {
@@ -1645,6 +1677,8 @@ PivotViewer.Views.DeepZoomLevel = function () {
 
         //select first view
         SelectView(0);
+        //Begin tile animation
+        _tileController.BeginAnimation();
     };
 
     InitUI = function () {
@@ -1698,18 +1732,33 @@ PivotViewer.Views.DeepZoomLevel = function () {
                         //If the facet is found then add it's values to the list
                         if (defaults.PivotCollection.Items[i].Facets[j].Name == defaults.PivotCollection.FacetCategories[m].Name) {
                             for (var k = 0; k < defaults.PivotCollection.Items[i].Facets[j].FacetValues.length; k++) {
-                                var found = false;
-                                var itemId = PivotViewer.Utils.EscapeItemId("pv-facet-item-" + defaults.PivotCollection.Items[i].Facets[j].Name + "__" + defaults.PivotCollection.Items[i].Facets[j].FacetValues[k].Value);
-                                for (var n = _facetItemTotals.length - 1; n > -1; n -= 1) {
-                                    if (_facetItemTotals[n].itemId == itemId) {
-                                        _facetItemTotals[n].count += 1;
-                                        found = true;
-                                        break;
+                                if (defaults.PivotCollection.FacetCategories[m].Type == PivotViewer.Models.FacetType.String) {
+                                    var found = false;
+                                    var itemId = PivotViewer.Utils.EscapeItemId("pv-facet-item-" + defaults.PivotCollection.Items[i].Facets[j].Name + "__" + defaults.PivotCollection.Items[i].Facets[j].FacetValues[k].Value);
+                                    for (var n = _facetItemTotals.length - 1; n > -1; n -= 1) {
+                                        if (_facetItemTotals[n].itemId == itemId) {
+                                            _facetItemTotals[n].count += 1;
+                                            found = true;
+                                            break;
+                                        }
                                     }
-                                }
 
-                                if (!found)
-                                    _facetItemTotals.push({ itemId: itemId, itemValue: defaults.PivotCollection.Items[i].Facets[j].FacetValues[k].Value, facet: defaults.PivotCollection.Items[i].Facets[j].Name, count: 1 });
+                                    if (!found)
+                                        _facetItemTotals.push({ itemId: itemId, itemValue: defaults.PivotCollection.Items[i].Facets[j].FacetValues[k].Value, facet: defaults.PivotCollection.Items[i].Facets[j].Name, count: 1 });
+                                }
+                                else if (defaults.PivotCollection.FacetCategories[m].Type == PivotViewer.Models.FacetType.Number) {
+                                    //collect all the numbers to update the histogram
+                                    var numFound = false;
+                                    for (var n = 0; n < _facetNumericItemTotals.length; n++) {
+                                        if (_facetNumericItemTotals[n].Facet == defaults.PivotCollection.Items[i].Facets[j].Name) {
+                                            _facetNumericItemTotals[n].Values.push(defaults.PivotCollection.Items[i].Facets[j].FacetValues[k].Value);
+                                            numFound = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!numFound)
+                                        _facetNumericItemTotals.push({ Facet: defaults.PivotCollection.Items[i].Facets[j].Name, Values: [defaults.PivotCollection.Items[i].Facets[j].FacetValues[k].Value] });
+                                }
                             }
                             hasValue = true;
                         }
@@ -1740,16 +1789,21 @@ PivotViewer.Views.DeepZoomLevel = function () {
             if (defaults.PivotCollection.FacetCategories[i].IsFilterVisible) {
                 facets[i + 1] = "<h3><a href='#'>";
                 facets[i + 1] += defaults.PivotCollection.FacetCategories[i].Name;
-                facets[i + 1] += "</a><div class='pv-filterpanel-accordion-heading-clear'>&nbsp;</div></h3>";
+                facets[i + 1] += "</a><div class='pv-filterpanel-accordion-heading-clear' facetType='" + defaults.PivotCollection.FacetCategories[i].Type + "'>&nbsp;</div></h3>";
                 facets[i + 1] += "<div id='pv-cat-" + PivotViewer.Utils.EscapeItemId(defaults.PivotCollection.FacetCategories[i].Name) + "'>";
 
-                //Sort
-                if (defaults.PivotCollection.FacetCategories[i].CustomSort != undefined || defaults.PivotCollection.FacetCategories[i].CustomSort != null)
-                    facets[i + 1] += "<span class='pv-filterpanel-accordion-facet-sort' customSort='" + defaults.PivotCollection.FacetCategories[i].CustomSort.Name + "'>Sort: " + defaults.PivotCollection.FacetCategories[i].CustomSort.Name + "</span>";
-                else
-                    facets[i + 1] += "<span class='pv-filterpanel-accordion-facet-sort'>Sort: A-Z</span>";
+                //Create facet controls
+                if (defaults.PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String) {
+                    //Sort
+                    if (defaults.PivotCollection.FacetCategories[i].CustomSort != undefined || defaults.PivotCollection.FacetCategories[i].CustomSort != null)
+                        facets[i + 1] += "<span class='pv-filterpanel-accordion-facet-sort' customSort='" + defaults.PivotCollection.FacetCategories[i].CustomSort.Name + "'>Sort: " + defaults.PivotCollection.FacetCategories[i].CustomSort.Name + "</span>";
+                    else
+                        facets[i + 1] += "<span class='pv-filterpanel-accordion-facet-sort'>Sort: A-Z</span>";
+                    facets[i + 1] += CreateStringFacet(defaults.PivotCollection.FacetCategories[i].Name);
+                }
+                else if (defaults.PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Number)
+                    facets[i + 1] += "<div id='pv-filterpanel-category-numberitem-" + defaults.PivotCollection.FacetCategories[i].Name.replace(/\s+/gi, "|") + "'></div>";
 
-                facets[i + 1] += CreateFacet(defaults.PivotCollection.FacetCategories[i].Name);
                 facets[i + 1] += "</div>";
                 //Add to sort
                 sort[i] = "<option value='" + PivotViewer.Utils.EscapeItemId(defaults.PivotCollection.FacetCategories[i].Name) + "' label='" + defaults.PivotCollection.FacetCategories[i].Name + "'>" + defaults.PivotCollection.FacetCategories[i].Name + "</option>";
@@ -1767,10 +1821,14 @@ PivotViewer.Views.DeepZoomLevel = function () {
             fillSpace: true
         });
         $('.pv-toolbarpanel-sortcontrols').append('<select class="pv-toolbarpanel-sort">' + sort.join('') + '</select>');
+
+        //setup numeric facets
+        for (var i = 0; i < _facetNumericItemTotals.length; i++)
+            CreateNumberFacet(PivotViewer.Utils.EscapeItemId(_facetNumericItemTotals[i].Facet), _facetNumericItemTotals[i].Values);
     };
 
     /// Create the individual controls for the facet
-    CreateFacet = function (facetName) {
+    CreateStringFacet = function (facetName) {
         var facetControls = ["<ul class='pv-filterpanel-accordion-facet-list'>"];
         for (var i = 0; i < _facetItemTotals.length; i++) {
             if (_facetItemTotals[i].facet == facetName) {
@@ -1783,6 +1841,55 @@ PivotViewer.Views.DeepZoomLevel = function () {
         }
         facetControls[facetControls.length] = "</ul>";
         return facetControls.join('');
+    };
+
+    CreateNumberFacet = function (facetName, facetValues) {
+        //histogram dimensions
+        var w = 165, h = 80;
+
+        var chartWrapper = $("#pv-filterpanel-category-numberitem-" + PivotViewer.Utils.EscapeMetaChars(facetName));
+        chartWrapper.empty();
+        chartWrapper.append("<span class='pv-filterpanel-numericslider-range-val'>&nbsp;</span>");
+        var chart = "<svg class='pv-filterpanel-accordion-facet-chart' width='" + w + "' height='" + h + "'>";
+
+        //Create histogram
+        var histogram = PivotViewer.Utils.Histogram(facetValues);
+        //work out column width based on chart width
+        var columnWidth = (0.5 + (w / histogram.BinCount)) | 0;
+        //get the largest count from the histogram. This is used to scale the heights
+        var maxCount = 0;
+        for (var k = 0, _kLen = histogram.Histogram.length; k < _kLen; k++)
+            maxCount = maxCount < histogram.Histogram[k].length ? histogram.Histogram[k].length : maxCount;
+        //draw the bars
+        for (var k = 0, _kLen = histogram.Histogram.length; k < _kLen; k++) {
+            var barHeight = (0.5 + (h / (maxCount / histogram.Histogram[k].length))) | 0;
+            var barX = (0.5 + (columnWidth * k)) | 0;
+            chart += "<rect x='" + barX + "' y='" + (h - barHeight) + "' width='" + columnWidth + "' height='" + barHeight + "'></rect>";
+        }
+        chartWrapper.append(chart + "</svg>");
+        //add the extra controls
+        var p = $("#pv-filterpanel-category-numberitem-" + PivotViewer.Utils.EscapeMetaChars(facetName));
+        p.append('</span><div id="pv-filterpanel-numericslider-' + facetName + '" class="pv-filterpanel-numericslider"></div><span class="pv-filterpanel-numericslider-range-min">' + histogram.Min + '</span><span class="pv-filterpanel-numericslider-range-max">' + histogram.Max + '</span>');
+        var s = $('#pv-filterpanel-numericslider-' + PivotViewer.Utils.EscapeMetaChars(facetName));
+        s.slider({
+            range: true,
+            min: histogram.Min,
+            max: histogram.Max,
+            values: [histogram.Min, histogram.Max],
+            slide: function (event, ui) {
+                $(this).parent().find('.pv-filterpanel-numericslider-range-val').text(ui.values[0] + " - " + ui.values[1]);
+            },
+            stop: function (event, ui) {
+                var thisWrapped = $(this);
+                var thisMin = thisWrapped.slider('option', 'min'),
+                            thisMax = thisWrapped.slider('option', 'max');
+                if (ui.values[0] > thisMin || ui.values[1] < thisMax)
+                    thisWrapped.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
+                else if (ui.values[0] == thisMin && ui.values[1] == thisMax)
+                    thisWrapped.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
+                FilterCollection();
+            }
+        });
     };
 
     /// Creates and initialises the views - including plug-in views
@@ -1803,7 +1910,7 @@ PivotViewer.Views.DeepZoomLevel = function () {
         for (var i = 0; i < _views.length; i++) {
             try {
                 if (_views[i] instanceof PivotViewer.Views.IPivotViewerView) {
-                    _views[i].Setup(width, height, offsetX, offsetY, _deepZoomController.GetTileRaio());
+                    _views[i].Setup(width, height, offsetX, offsetY, _tileController.GetTileRaio());
                     viewPanel.append("<div class='pv-viewpanel-view' id='pv-viewpanel-view-" + i + "'>" + _views[i].GetUI() + "</div>");
                     $('.pv-toolbarpanel-viewcontrols').append("<div class='pv-toolbarpanel-view' id='pv-toolbarpanel-view-" + i + "' title='" + _views[i].GetViewName() + "'><img id='pv-viewpanel-view-" + i + "-image' src='" + _views[i].GetButtonImage() + "' alt='" + _views[i].GetViewName() + "' /></div>");
                 } else {
@@ -1869,57 +1976,115 @@ PivotViewer.Views.DeepZoomLevel = function () {
 
     /// Filters the collection of items and updates the views
     FilterCollection = function () {
-        var checked = $('.pv-facet-facetitem:checked');
         var filterItems = [];
         var foundItemsCount = [];
         var selectedFacets = [];
         var sort = $('.pv-toolbarpanel-sort option:selected').text();
 
-        if (checked.length == 0) {
-            for (i in defaults.PivotCollection.Items) {
-                filterItems.push(defaults.PivotCollection.Items[i].Id);
-            }
-            $('.pv-filterpanel-clearall').css('visibility', 'hidden');
-            $('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
-        } else {
-            for (var i = 0; i < checked.length; i++) {
-                var facet = $(checked[i]).attr('itemfacet').replace(/\|/gi, " ");
-                var facetValue = $(checked[i]).attr('itemvalue').replace(/\|/gi, " ");
-                var foundItems = GetItemIds(facet, facetValue);
+        //Filter String facet items
+        var checked = $('.pv-facet-facetitem:checked');
 
-                for (var j = 0; j < foundItems.length; j++) {
-                    var found = false;
-                    for (var k = 0; k < foundItemsCount.length; k++) {
-                        if (foundItems[j] == foundItemsCount[k].Id) {
-                            foundItemsCount[k].count++;
-                            found = true;
+        //Turn off clear all button
+        $('.pv-filterpanel-clearall').css('visibility', 'hidden');
+
+        //Filter String facet items
+        //create an array of selected facets and values to compare to all items.
+        var stringFacets = [];
+        for (var i = 0; i < checked.length; i++) {
+            var facet = $(checked[i]).attr('itemfacet').replace(/\|/gi, " ");
+            var facetValue = $(checked[i]).attr('itemvalue').replace(/\|/gi, " ");
+
+            var found = false;
+            for (var j = 0; j < stringFacets.length; j++) {
+                if (stringFacets[j].facet == facet) {
+                    stringFacets[j].facetValue.push(facetValue);
+                    found = true;
+                }
+            }
+            if (!found)
+                stringFacets.push({ facet: facet, facetValue: [facetValue] });
+
+            //Add to selected facets list - this is then used to filter the facet list counts
+            if ($.inArray(facet, selectedFacets) < 0)
+                selectedFacets.push(facet);
+        }
+
+        //Numeric facet items. Find all numeric types that have been filtered
+        var numericFacets = [];
+        for (var i = 0, _iLen = defaults.PivotCollection.FacetCategories.length; i < _iLen; i++) {
+            if (defaults.PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Number) {
+                var numbFacet = $('#pv-filterpanel-category-numberitem-' + PivotViewer.Utils.EscapeMetaChars(defaults.PivotCollection.FacetCategories[i].Name.replace(/\s+/gi, "|")));
+                var sldr = $(numbFacet).find('.pv-filterpanel-numericslider');
+                if (sldr.length > 0) {
+                    var range = sldr.slider("values");
+                    var rangeMax = sldr.slider('option', 'max'), rangeMin = sldr.slider('option', 'min');
+                    if (range[0] != rangeMin || range[1] != rangeMax) {
+                        var facet = defaults.PivotCollection.FacetCategories[i].Name;
+                        numericFacets.push({ facet: facet, rangeMin: range[0], rangeMax: range[1] });
+                        //Add to selected facets list - this is then used to filter the facet list counts
+                        if ($.inArray(facet, selectedFacets) < 0)
+                            selectedFacets.push(facet);
+                    }
+                }
+            }
+        }
+
+        //Find matching facet values in items
+        for (var i = 0, _iLen = defaults.PivotCollection.Items.length; i < _iLen; i++) {
+            var foundCount = 0;
+
+            for (var j = 0, _jLen = defaults.PivotCollection.Items[i].Facets.length; j < _jLen; j++) {
+                //String facets
+                for (var k = 0, _kLen = stringFacets.length; k < _kLen; k++) {
+                    if (defaults.PivotCollection.Items[i].Facets[j].Name == stringFacets[k].facet) {
+                        for (var m = 0, _mLen = defaults.PivotCollection.Items[i].Facets[j].FacetValues.length; m < _mLen; m++) {
+                            for (var n = 0, _nLen = stringFacets[k].facetValue.length; n < _nLen; n++) {
+                                if (defaults.PivotCollection.Items[i].Facets[j].FacetValues[m].Value == stringFacets[k].facetValue[n])
+                                    foundCount++;
+                            }
                         }
                     }
-                    if (!found)
-                        foundItemsCount.push({ Id: foundItems[j], count: 1 });
                 }
-
-                //Add to selected facets list - this is then used to filter the facet list counts
-                if ($.inArray(facet, selectedFacets) < 0)
-                    selectedFacets.push(facet);
-
             }
 
-            for (var i = 0; i < foundItemsCount.length; i++) {
-                if (foundItemsCount[i].count == selectedFacets.length)
-                    filterItems.push(foundItemsCount[i].Id);
+            //if the item was not in the string filters then exit early
+            if (foundCount != stringFacets.length)
+                continue;
+
+            for (var j = 0, _jLen = defaults.PivotCollection.Items[i].Facets.length; j < _jLen; j++) {
+                //Numeric facets
+                for (var k = 0, _kLen = numericFacets.length; k < _kLen; k++) {
+                    if (defaults.PivotCollection.Items[i].Facets[j].Name == numericFacets[k].facet) {
+                        for (var m = 0, _mLen = defaults.PivotCollection.Items[i].Facets[j].FacetValues.length; m < _mLen; m++) {
+                            var parsed = parseFloat(defaults.PivotCollection.Items[i].Facets[j].FacetValues[m].Value);
+                            if (!isNaN(parsed) && parsed >= numericFacets[k].rangeMin && parsed <= numericFacets[k].rangeMax)
+                                foundCount++;
+                        }
+                    }
+                }
             }
 
-            $('.pv-filterpanel-clearall').css('visibility', 'visible');
+            if (foundCount != (stringFacets.length + numericFacets.length))
+                continue;
+
+            //Date facets
+
+            //Item is in all filters
+            filterItems.push(defaults.PivotCollection.Items[i].Id);
+
+            if ((stringFacets.length + numericFacets.length) > 0)
+                $('.pv-filterpanel-clearall').css('visibility', 'visible');
         }
+
+
         $('.pv-viewpanel-view').hide();
         $('#pv-viewpanel-view-' + _currentView).show();
         //Filter the facet counts and remove empty facets
         FilterFacets(filterItems, selectedFacets);
 
         //Filter view
-        _deepZoomController.SetCircularEasingBoth();
-        _views[_currentView].Filter(_deepZoomTiles, filterItems, sort);
+        _tileController.SetCircularEasingBoth();
+        _views[_currentView].Filter(_tiles, filterItems, sort);
         $.publish("/PivotViewer/Views/Item/Deselected", null);
         DeselectInfoPanel();
     };
@@ -1928,15 +2093,22 @@ PivotViewer.Views.DeepZoomLevel = function () {
     FilterFacets = function (filterItems, selectedFacets) {
         //if all the items are visible then update all
         if (filterItems.length == defaults.PivotCollection.Items.length) {
+            //String facets
             for (var i = _facetItemTotals.length - 1; i > -1; i -= 1) {
                 var item = $('#' + PivotViewer.Utils.EscapeMetaChars(_facetItemTotals[i].itemId));
                 item.show();
                 item.find('span').last().text(_facetItemTotals[i].count);
             }
+            //Numeric facets
+            //re-create the histograms
+            for (var i = 0; i < _facetNumericItemTotals.length; i++)
+                CreateNumberFacet(PivotViewer.Utils.EscapeItemId(_facetNumericItemTotals[i].Facet), _facetNumericItemTotals[i].Values);
             return;
         }
 
-        var filterList = [];
+        var filterList = []; //used for string facets
+        var numericFilterList = []; //used for number facets
+
         //Create list of items to display
         for (var i = filterItems.length - 1; i > -1; i -= 1) {
             var item = defaults.PivotCollection.GetItemById(filterItems[i]);
@@ -1948,19 +2120,36 @@ PivotViewer.Views.DeepZoomLevel = function () {
                         if (item.Facets[j].Name == defaults.PivotCollection.FacetCategories[m].Name) {
                             //If not in the selected facet list then determine count
                             if ($.inArray(item.Facets[j].Name, selectedFacets) < 0) {
-                                if (defaults.PivotCollection.GetFacetCategoryByName(item.Facets[j].Name).IsFilterVisible) {
+                                var facetCategory = defaults.PivotCollection.GetFacetCategoryByName(item.Facets[j].Name);
+                                if (facetCategory.IsFilterVisible) {
                                     for (var k = item.Facets[j].FacetValues.length - 1; k > -1; k -= 1) {
-                                        var filteredItem = { item: '#' + PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId('pv-facet-item-' + item.Facets[j].Name + '__' + item.Facets[j].FacetValues[k].Value)), count: 1 };
-                                        var found = false;
-                                        for (var n = filterList.length - 1; n > -1; n -= 1) {
-                                            if (filterList[n].item == filteredItem.item) {
-                                                filterList[n].count += 1;
-                                                found = true;
-                                                break;
+                                        //String Facets
+                                        if (facetCategory.Type == PivotViewer.Models.FacetType.String) {
+                                            var filteredItem = { item: '#' + PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId('pv-facet-item-' + item.Facets[j].Name + '__' + item.Facets[j].FacetValues[k].Value)), count: 1 };
+                                            var found = false;
+                                            for (var n = filterList.length - 1; n > -1; n -= 1) {
+                                                if (filterList[n].item == filteredItem.item) {
+                                                    filterList[n].count += 1;
+                                                    found = true;
+                                                    break;
+                                                }
                                             }
+                                            if (!found)
+                                                filterList.push(filteredItem);
                                         }
-                                        if (!found)
-                                            filterList.push(filteredItem);
+                                        else if (facetCategory.Type == PivotViewer.Models.FacetType.Number) {
+                                            //collect all the numbers to update the histogram
+                                            var numFound = false;
+                                            for (var n = 0; n < numericFilterList.length; n++) {
+                                                if (numericFilterList[n].Facet == item.Facets[j].Name) {
+                                                    numericFilterList[n].Values.push(item.Facets[j].FacetValues[k].Value);
+                                                    numFound = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (!numFound)
+                                                numericFilterList.push({ Facet: item.Facets[j].Name, Values: [item.Facets[j].FacetValues[k].Value] });
+                                        }
                                     }
                                 }
                             }
@@ -1986,6 +2175,7 @@ PivotViewer.Views.DeepZoomLevel = function () {
             }
         }
 
+        //String facets
         //iterate over all facet items to set it's visibility and count
         for (var i = _facetItemTotals.length - 1; i > -1; i -= 1) {
             if ($.inArray(_facetItemTotals[i].facet, selectedFacets) < 0) {
@@ -2011,6 +2201,11 @@ PivotViewer.Views.DeepZoomLevel = function () {
                 itemCount.text(filterList[i].count);
             }
         }
+
+        //Numeric facets
+        //re-create the histograms
+        for (var i = 0; i < numericFilterList.length; i++)
+            CreateNumberFacet(PivotViewer.Utils.EscapeItemId(numericFilterList[i].Facet), numericFilterList[i].Values);
     };
 
     DeselectInfoPanel = function () {
@@ -2052,11 +2247,11 @@ PivotViewer.Views.DeepZoomLevel = function () {
     //Events
     //Collection loading complete
     $.subscribe("/PivotViewer/Models/Collection/Loaded", function (event) {
-        InitDeepZoom();
+        InitTileCollection();
     });
 
-    //DeepZoom Collection loading complete
-    $.subscribe("/PivotViewer/DeepZoom/Collection/Loaded", function (event) {
+    //Image Collection loading complete
+    $.subscribe("/PivotViewer/ImageController/Collection/Loaded", function (event) {
         InitPivotViewer();
     });
 
@@ -2066,52 +2261,52 @@ PivotViewer.Views.DeepZoomLevel = function () {
         if (evt == undefined || evt == null)
             return;
 
-        if (evt.length > 0) {
-            var selectedItem = GetItem(evt);
-            if (selectedItem != null) {
-                var alternate = true;
-                $('.pv-infopanel-heading').text(selectedItem.Name);
-                var infopanelDetails = $('.pv-infopanel-details');
-                infopanelDetails.empty();
-                if (selectedItem.Description != undefined && selectedItem.Description.length > 0) {
-                    infopanelDetails.append("<div class='pv-infopanel-detail-description' style='height:100px;'>" + selectedItem.Description + "</div><div class='pv-infopanel-detail-description-more'>More</div>");
-                }
-
-                var detailDOM = [];
-                var detailDOMIndex = 0;
-                for (var i = 0; i < selectedItem.Facets.length; i++) {
-                    //check for IsMetaDataVisible
-                    var IsMetaDataVisible = false;
-                    var IsFilterVisible = false;
-                    for (var j = 0; j < defaults.PivotCollection.FacetCategories.length; j++) {
-                        if (defaults.PivotCollection.FacetCategories[j].Name == selectedItem.Facets[i].Name && defaults.PivotCollection.FacetCategories[j].IsMetaDataVisible) {
-                            IsMetaDataVisible = true;
-                            IsFilterVisible = defaults.PivotCollection.FacetCategories[j].IsFilterVisible;
-                            break;
-                        }
-                    }
-
-                    if (IsMetaDataVisible) {
-                        detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title'>" + selectedItem.Facets[i].Name + "</div>";
-                        for (var j = 0; j < selectedItem.Facets[i].FacetValues.length; j++) {
-                            detailDOM[detailDOMIndex] += "<div class='pv-infopanel-detail-item detail-item-value" + (IsFilterVisible ? " detail-item-value-filter" : "") + "'>";
-                            if (selectedItem.Facets[i].FacetValues[j].Href != null)
-                                detailDOM[detailDOMIndex] += "<a class='detail-item-link' href='" + selectedItem.Facets[i].FacetValues[j].Href + "'>" + selectedItem.Facets[i].FacetValues[j].Value + "</a>";
-                            else
-                                detailDOM[detailDOMIndex] += selectedItem.Facets[i].FacetValues[j].Value;
-                            detailDOM[detailDOMIndex] += "</div>";
-                        }
-                        detailDOM[detailDOMIndex] += "</div>";
-                        detailDOMIndex++;
-                        alternate = !alternate;
-                    }
-                }
-                infopanelDetails.append(detailDOM.join(''));
-                $('.pv-infopanel').fadeIn();
-                infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height()) - 20) + 'px');
-                return;
+        //if (evt.length > 0) {
+        var selectedItem = GetItem(evt);
+        if (selectedItem != null) {
+            var alternate = true;
+            $('.pv-infopanel-heading').text(selectedItem.Name);
+            var infopanelDetails = $('.pv-infopanel-details');
+            infopanelDetails.empty();
+            if (selectedItem.Description != undefined && selectedItem.Description.length > 0) {
+                infopanelDetails.append("<div class='pv-infopanel-detail-description' style='height:100px;'>" + selectedItem.Description + "</div><div class='pv-infopanel-detail-description-more'>More</div>");
             }
+
+            var detailDOM = [];
+            var detailDOMIndex = 0;
+            for (var i = 0; i < selectedItem.Facets.length; i++) {
+                //check for IsMetaDataVisible
+                var IsMetaDataVisible = false;
+                var IsFilterVisible = false;
+                for (var j = 0; j < defaults.PivotCollection.FacetCategories.length; j++) {
+                    if (defaults.PivotCollection.FacetCategories[j].Name == selectedItem.Facets[i].Name && defaults.PivotCollection.FacetCategories[j].IsMetaDataVisible) {
+                        IsMetaDataVisible = true;
+                        IsFilterVisible = defaults.PivotCollection.FacetCategories[j].IsFilterVisible;
+                        break;
+                    }
+                }
+
+                if (IsMetaDataVisible) {
+                    detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title'>" + selectedItem.Facets[i].Name + "</div>";
+                    for (var j = 0; j < selectedItem.Facets[i].FacetValues.length; j++) {
+                        detailDOM[detailDOMIndex] += "<div class='pv-infopanel-detail-item detail-item-value" + (IsFilterVisible ? " detail-item-value-filter" : "") + "'>";
+                        if (selectedItem.Facets[i].FacetValues[j].Href != null)
+                            detailDOM[detailDOMIndex] += "<a class='detail-item-link' href='" + selectedItem.Facets[i].FacetValues[j].Href + "'>" + selectedItem.Facets[i].FacetValues[j].Value + "</a>";
+                        else
+                            detailDOM[detailDOMIndex] += selectedItem.Facets[i].FacetValues[j].Value;
+                        detailDOM[detailDOMIndex] += "</div>";
+                    }
+                    detailDOM[detailDOMIndex] += "</div>";
+                    detailDOMIndex++;
+                    alternate = !alternate;
+                }
+            }
+            infopanelDetails.append(detailDOM.join(''));
+            $('.pv-infopanel').fadeIn();
+            infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height()) - 20) + 'px');
+            return;
         }
+        //}
         DeselectInfoPanel();
     });
 
@@ -2176,22 +2371,50 @@ PivotViewer.Views.DeepZoomLevel = function () {
         });
         //Facet clear all click
         $('.pv-filterpanel-clearall').on('click', function (e) {
-            //deselect all items
+            //deselect all String Facets
             var checked = $('.pv-facet-facetitem:checked');
             for (var i = 0; i < checked.length; i++) {
                 $(checked[i]).removeAttr('checked');
             }
+            //Reset all Numeric Facets
+            var sliders = $('.pv-filterpanel-numericslider');
+            for (var i = 0; i < sliders.length; i++) {
+                var slider = $(sliders[i]);
+                var thisMin = slider.slider('option', 'min'),
+                    thisMax = slider.slider('option', 'max');
+                slider.slider('values', 0, thisMin);
+                slider.slider('values', 1, thisMax);
+                slider.prev().prev().html('&nbsp;');
+            }
+            //turn off clear buttons
+            $('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
             FilterCollection();
         });
         //Facet clear click
         $('.pv-filterpanel-accordion-heading-clear').on('click', function (e) {
-            //get selected items in current group
-            var checked = $(this.parentElement).next().find('.pv-facet-facetitem:checked');
-            for (var i = 0; i < checked.length; i++) {
-                $(checked[i]).removeAttr('checked');
+            //Get facet type
+            var facetType = this.attributes['facetType'].value;
+            if (facetType == "String") {
+                //get selected items in current group
+                var checked = $(this.parentElement).next().find('.pv-facet-facetitem:checked');
+                for (var i = 0; i < checked.length; i++) {
+                    $(checked[i]).removeAttr('checked');
+                }
+            } else if (facetType == "Number") {
+                //reset range
+                var slider = $(this.parentElement).next().find('.pv-filterpanel-numericslider');
+                var thisMin = slider.slider('option', 'min'),
+                    thisMax = slider.slider('option', 'max');
+                slider.slider('values', 0, thisMin);
+                slider.slider('values', 1, thisMax);
+                slider.prev().prev().html('&nbsp;');
             }
             FilterCollection();
             $(this).css('visibility', 'hidden');
+        });
+        //Numeric facet type slider drag
+        $('.ui-slider-range').on('mousedown', function (e) {
+            //drag it
         });
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
@@ -2252,10 +2475,10 @@ PivotViewer.Views.DeepZoomLevel = function () {
             var offsetX = evt.clientX - offset.left;
             var offsetY = evt.clientY - offset.top;
             //zoom easing different from filter
-            _deepZoomController.SetQuarticEasingOut();
+            _tileController.SetQuarticEasingOut();
 
             //Draw helper
-            _deepZoomController.DrawHelpers([{ x: offsetX, y: offsetY}]);
+            _tileController.DrawHelpers([{ x: offsetX, y: offsetY}]);
             //send zoom event
             $.publish("/PivotViewer/Views/Canvas/Zoom", [{ x: offsetX, y: offsetY, delta: delta}]);
         });
@@ -2294,11 +2517,11 @@ PivotViewer.Views.DeepZoomLevel = function () {
                     var avgX = (minX + maxX) / 2;
                     var avgY = (minY + maxY) / 2;
                     //var delta = orig.scale < 1 ? -1 : 1;
-                    _deepZoomController.SetLinearEasingBoth();
+                    _tileController.SetLinearEasingBoth();
 
                     helpers.push({ x: avgX, y: avgY });
-                    _deepZoomController.DrawHelpers(helpers);
-                    _deepZoomController.DrawHelperText("Scale: " + orig.scale);
+                    _tileController.DrawHelpers(helpers);
+                    _tileController.DrawHelperText("Scale: " + orig.scale);
                     $.publish("/PivotViewer/Views/Canvas/Zoom", [{ x: avgX, y: avgY, scale: orig.scale}]);
                     //$.publish("/PivotViewer/Views/Canvas/Zoom", [{ x: avgX, y: avgY, delta: orig.scale - 1}]);
                     return;

@@ -1,10 +1,16 @@
-(function (d) {
+/*	
+http://higginsforpresident.net/js/static/jq.pubsub.js
+jQuery pub/sub plugin by Peter Higgins (dante@dojotoolkit.org)
+Loosely based on Dojo publish/subscribe API, limited in scope. Rewritten blindly.
+Original is (c) Dojo Foundation 2004-2010. Released under either AFL or new BSD, see:
+http://dojofoundation.org/license for more information.
+*/
+; (function (d) {
 
 	// the topic/subscription hash
 	var cache = {};
 
-	// String: topic, Array?: args
-	d.publish = function (topic, args) {
+	d.publish = function (/* String */topic, /* Array? */args) {
 		// summary: 
 		//		Publish some data on a named topic.
 		// topic: String
