@@ -3,6 +3,7 @@
     var _views = [],
         _facetItemTotals = [], //used to store the counts of all the string facets - used when resetting the filters
         _facetNumericItemTotals = [], //used to store the counts of all the numeric facets - used when resetting the filters
+        _wordWheelItems = [], //used for quick access to search values
         _currentView = 0,
         _loadingInterval,
         _tileController,
@@ -12,6 +13,7 @@
         _mouseMove = null,
         _viewerState = { View: null, Facet: null, Filters: [] },
         _self = null,
+        _silderPrev = 0,
         PivotCollection = new PivotViewer.Models.Collection();
 
     var methods = {
@@ -51,9 +53,14 @@
                             _viewerState.Facet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
-                            var filter = splitItem[1].split('.');
-                            if (filter.length == 2)
-                                _viewerState.Filters.push({ Facet: PivotViewer.Utils.EscapeItemId(splitItem[0]), Operator: filter[0], Value: PivotViewer.Utils.EscapeItemId(filter[1]) });
+                            var filter = { Facet: splitItem[0], Predicates: [] };
+                            var filters = splitItem[1].split('_');
+                            for (var j = 0, _jLen = filters.length; j < _jLen; j++) {
+                                var pred = filters[j].split('.');
+                                if (pred.length == 2)
+                                    filter.Predicates.push({ Operator: pred[0], Value: pred[1] });
+                            }
+                            _viewerState.Filters.push(filter);
                         }
                     }
                 }
@@ -102,9 +109,9 @@
 
         //select first view
         if (_viewerState.View != null)
-            SelectView(_viewerState.View);
+            SelectView(_viewerState.View, true);
         else
-            SelectView(0);
+            SelectView(0, true);
 
         //Begin tile animation
         _tileController.BeginAnimation();
@@ -124,6 +131,17 @@
         toolbarPanel += "</div>";
         _self.append(toolbarPanel);
 
+        //setup zoom slider
+        var thatRef = _silderPrev;
+        $('.pv-toolbarpanel-zoomslider').slider({
+            max: 10,
+            slide: function (event, ui) {
+                var val = ui.value < thatRef ? ui.value * -1 : ui.value;
+                $.publish("/PivotViewer/Views/Canvas/Zoom", [{ x: 201, y: 0, delta: 0.75 * val}]);
+                thatRef = ui.value;
+            }
+        });
+
         //main panel
         _self.append("<div class='pv-mainpanel'></div>");
         var mainPanelHeight = $('.pv-wrapper').height() - $('.pv-toolbarpanel').height() - 6;
@@ -133,20 +151,25 @@
         $('.pv-mainpanel').append("<div class='pv-infopanel'></div>");
 
         //filter panel
-        $('.pv-filterpanel').append("<div class='pv-filterpanel-clearall'>Clear All</div>");
-        $('.pv-filterpanel').append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' />");
-        $('.pv-filterpanel').css('height', mainPanelHeight - 13 + 'px');
-        $('.pv-filterpanel-search').css('width', $('.pv-filterpanel').width() - 12 + 'px');
+        var filterPanel = $('.pv-filterpanel');
+        filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
+            .append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' /><div class='pv-filterpanel-search-autocomplete'></div>")
+            .css('height', mainPanelHeight - 13 + 'px');
+        $('.pv-filterpanel-search').css('width', filterPanel.width() - 2 + 'px');
+        $('.pv-filterpanel-search-autocomplete')
+            .css('width', filterPanel.width() - 8 + 'px')
+            .hide();
         //view panel
         //$('.pv-viewpanel').css('left', $('.pv-filterpanel').width() + 28 + 'px');
         //info panel
-        $('.pv-infopanel').css('left', (($('.pv-mainpanel').offset().left + $('.pv-mainpanel').width()) - 205) + 'px');
-        $('.pv-infopanel').css('height', mainPanelHeight - 28 + 'px');
-        $('.pv-infopanel').append("<div class='pv-infopanel-controls'></div>");
+        var infoPanel = $('.pv-infopanel');
+        infoPanel.css('left', (($('.pv-mainpanel').offset().left + $('.pv-mainpanel').width()) - 205) + 'px')
+            .css('height', mainPanelHeight - 28 + 'px');
+        infoPanel.append("<div class='pv-infopanel-controls'></div>");
         $('.pv-infopanel-controls').append("<div><div class='pv-infopanel-controls-navleft'></div><div class='pv-infopanel-controls-navbar'></div><div class='pv-infopanel-controls-navright'></div></div>");
-        $('.pv-infopanel').append("<div class='pv-infopanel-heading'></div>");
-        $('.pv-infopanel').append("<div class='pv-infopanel-details'></div>");
-        $('.pv-infopanel').hide();
+        infoPanel.append("<div class='pv-infopanel-heading'></div>");
+        infoPanel.append("<div class='pv-infopanel-details'></div>");
+        infoPanel.hide();
     };
 
     //Creates facet list for the filter panel
@@ -154,16 +177,25 @@
     CreateFacetList = function () {
         //build list of all facets - used to get id references of all facet items and store the counts
         for (var i = 0; i < PivotCollection.Items.length; i++) {
+            var currentItem = PivotCollection.Items[i];
+
+            //Go through Facet Categories to get properties
             for (var m = 0; m < PivotCollection.FacetCategories.length; m++) {
-                if (PivotCollection.FacetCategories[m].IsFilterVisible) {
+                var currentFacetCategory = PivotCollection.FacetCategories[m];
+
+                //Add to the facet panel
+                if (currentFacetCategory.IsFilterVisible) {
                     var hasValue = false;
-                    for (var j = 0; j < PivotCollection.Items[i].Facets.length; j++) {
+
+                    //Get values                    
+                    for (var j = 0, _jLen = currentItem.Facets.length; j < _jLen; j++) {
+                        var currrentItemFacet = currentItem.Facets[j];
                         //If the facet is found then add it's values to the list
-                        if (PivotCollection.Items[i].Facets[j].Name == PivotCollection.FacetCategories[m].Name) {
-                            for (var k = 0; k < PivotCollection.Items[i].Facets[j].FacetValues.length; k++) {
-                                if (PivotCollection.FacetCategories[m].Type == PivotViewer.Models.FacetType.String) {
+                        if (currrentItemFacet.Name == currentFacetCategory.Name) {
+                            for (var k = 0; k < currrentItemFacet.FacetValues.length; k++) {
+                                if (currentFacetCategory.Type == PivotViewer.Models.FacetType.String) {
                                     var found = false;
-                                    var itemId = PivotViewer.Utils.EscapeItemId("pv-facet-item-" + PivotCollection.Items[i].Facets[j].Name + "__" + PivotCollection.Items[i].Facets[j].FacetValues[k].Value);
+                                    var itemId = PivotViewer.Utils.EscapeItemId("pv-facet-item-" + currrentItemFacet.Name + "__" + currrentItemFacet.FacetValues[k].Value);
                                     for (var n = _facetItemTotals.length - 1; n > -1; n -= 1) {
                                         if (_facetItemTotals[n].itemId == itemId) {
                                             _facetItemTotals[n].count += 1;
@@ -173,20 +205,20 @@
                                     }
 
                                     if (!found)
-                                        _facetItemTotals.push({ itemId: itemId, itemValue: PivotCollection.Items[i].Facets[j].FacetValues[k].Value, facet: PivotCollection.Items[i].Facets[j].Name, count: 1 });
+                                        _facetItemTotals.push({ itemId: itemId, itemValue: currrentItemFacet.FacetValues[k].Value, facet: currrentItemFacet.Name, count: 1 });
                                 }
-                                else if (PivotCollection.FacetCategories[m].Type == PivotViewer.Models.FacetType.Number) {
+                                else if (currentFacetCategory.Type == PivotViewer.Models.FacetType.Number) {
                                     //collect all the numbers to update the histogram
                                     var numFound = false;
                                     for (var n = 0; n < _facetNumericItemTotals.length; n++) {
-                                        if (_facetNumericItemTotals[n].Facet == PivotCollection.Items[i].Facets[j].Name) {
-                                            _facetNumericItemTotals[n].Values.push(PivotCollection.Items[i].Facets[j].FacetValues[k].Value);
+                                        if (_facetNumericItemTotals[n].Facet == currentItem.Facets[j].Name) {
+                                            _facetNumericItemTotals[n].Values.push(currrentItemFacet.FacetValues[k].Value);
                                             numFound = true;
                                             break;
                                         }
                                     }
                                     if (!numFound)
-                                        _facetNumericItemTotals.push({ Facet: PivotCollection.Items[i].Facets[j].Name, Values: [PivotCollection.Items[i].Facets[j].FacetValues[k].Value] });
+                                        _facetNumericItemTotals.push({ Facet: currrentItemFacet.Name, Values: [currrentItemFacet.FacetValues[k].Value] });
                                 }
                             }
                             hasValue = true;
@@ -196,7 +228,7 @@
                     if (!hasValue) {
                         //Create (no info) value
                         var found = false;
-                        var itemId = PivotViewer.Utils.EscapeItemId("pv-facet-item-" + PivotCollection.FacetCategories[m].Name + "__(no info)");
+                        var itemId = PivotViewer.Utils.EscapeItemId("pv-facet-item-" + currentFacetCategory.Name + "__(no info)");
                         for (var n = _facetItemTotals.length - 1; n > -1; n -= 1) {
                             if (_facetItemTotals[n].itemId == itemId) {
                                 _facetItemTotals[n].count += 1;
@@ -206,7 +238,22 @@
                         }
 
                         if (!found)
-                            _facetItemTotals.push({ itemId: itemId, itemValue: "(no info)", facet: PivotCollection.FacetCategories[m].Name, count: 1 });
+                            _facetItemTotals.push({ itemId: itemId, itemValue: "(no info)", facet: currentFacetCategory.Name, count: 1 });
+                    }
+                }
+                //Add to the word wheel cache array
+                if (currentFacetCategory.IsWordWheelVisible) {
+                    //Get values                    
+                    for (var j = 0, _jLen = currentItem.Facets.length; j < _jLen; j++) {
+                        var currrentItemFacet = currentItem.Facets[j];
+                        //If the facet is found then add it's values to the list
+                        if (currrentItemFacet.Name == currentFacetCategory.Name) {
+                            for (var k = 0; k < currrentItemFacet.FacetValues.length; k++) {
+                                if (currentFacetCategory.Type == PivotViewer.Models.FacetType.String) {
+                                    _wordWheelItems.push({ Facet: currrentItemFacet.Name, Value: currrentItemFacet.FacetValues[k].Value });
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -245,7 +292,7 @@
             if (PivotCollection.FacetCategories[i].IsFilterVisible)
                 SortFacetItems(PivotCollection.FacetCategories[i].Name);
         }
-        $(".pv-filterpanel-accordion").css('height', ($(".pv-filterpanel").height() - $(".pv-filterpanel-search").height() - 40) + "px");
+        $(".pv-filterpanel-accordion").css('height', ($(".pv-filterpanel").height() - $(".pv-filterpanel-search").height() - 50) + "px");
         $(".pv-filterpanel-accordion").accordion({
             fillSpace: true
         });
@@ -350,16 +397,18 @@
     };
 
     /// Set the currrent view
-    SelectView = function (viewNumber) {
+    SelectView = function (viewNumber, init) {
         //Deselect all views
         for (var i = 0; i < _views.length; i++) {
             if (viewNumber != i) {
                 $('#pv-viewpanel-view-' + i + '-image').attr('src', _views[i].GetButtonImage());
                 _views[i].Deactivate();
+                _views[i].init = false;
             }
         }
         $('#pv-viewpanel-view-' + viewNumber + '-image').attr('src', _views[viewNumber].GetButtonImageSelected());
         _views[viewNumber].Activate();
+        _views[viewNumber].init = init;
 
         _currentView = viewNumber;
         FilterCollection();
@@ -412,14 +461,49 @@
 
         //Filters
         for (var i = 0, _iLen = _viewerState.Filters.length; i < _iLen; i++) {
-            switch (_viewerState.Filters[i].Operator) {
-                case "EQ":
-                    var cb = $('.pv-facet-facetitem[itemfacet="' + _viewerState.Filters[i].Facet + '"][itemvalue="' + _viewerState.Filters[i].Value + '"]');
-                    cb.attr('checked', 'checked');
-                    cb.parent().parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
-                    break;
+            for (var j = 0, _jLen = _viewerState.Filters[i].Predicates.length; j < _jLen; j++) {
+                var operator = _viewerState.Filters[i].Predicates[j].Operator;
+                if (operator == "GT" || operator == "GE" || operator == "LT" || operator == "LE") {
+                    var s = $('#pv-filterpanel-numericslider-' + PivotViewer.Utils.EscapeItemId(_viewerState.Filters[i].Facet));
+                    var intvalue = parseFloat(_viewerState.Filters[i].Predicates[j].Value);
+                    switch (operator) {
+                        case "GT":
+                            s.slider("values", 0, intvalue + 1);
+                            break;
+                        case "GE":
+                            s.slider("values", 0, intvalue);
+                            break;
+                        case "LT":
+                            s.slider("values", 1, intvalue - 1);
+                            break;
+                        case "LE":
+                            s.slider("values", 1, intvalue);
+                            break;
+                    }
+                    s.parent().find('.pv-filterpanel-numericslider-range-val').text(s.slider("values", 0) + " - " + s.slider("values", 1));
+                    s.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
+                } else if (operator == "EQ") {
+                    //String facet
+                    SelectStringFacetItem(
+                        PivotViewer.Utils.EscapeItemId(_viewerState.Filters[i].Facet),
+                        PivotViewer.Utils.EscapeItemId(_viewerState.Filters[i].Predicates[j].Value)
+                    );
+                } else if (operator == "NT") {
+                    //No Info string facet
+                    SelectStringFacetItem(
+                        PivotViewer.Utils.EscapeItemId(_viewerState.Filters[i].Facet),
+                        "(no|info)"
+                    );
+                }
             }
         }
+    };
+
+    //Selects a string facet
+    SelectStringFacetItem = function (facet, value) {
+        var cb = $('.pv-facet-facetitem[itemfacet="' + facet + '"][itemvalue="' + value + '"]');
+        cb.attr('checked', 'checked');
+        cb.parent().parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
     };
 
     /// Filters the collection of items and updates the views
@@ -638,8 +722,8 @@
                 if (!found)
                     $('#' + PivotViewer.Utils.EscapeMetaChars(_facetItemTotals[i].itemId)).hide();
             } else {
-                //Set count
-                $('#' + _facetItemTotals[i].itemId).find('span').last().text(_facetItemTotals[i].count);
+                //Set count for selected facets
+                $('#' + PivotViewer.Utils.EscapeMetaChars(_facetItemTotals[i].itemId)).find('span').last().text(_facetItemTotals[i].count);
             }
         }
 
@@ -709,8 +793,10 @@
     //Item selected - show the info panel
     $.subscribe("/PivotViewer/Views/Item/Selected", function (evt) {
 
-        if (evt == undefined || evt == null)
+        if (evt == undefined || evt == null) {
+            DeselectInfoPanel();
             return;
+        }
 
         //if (evt.length > 0) {
         var selectedItem = GetItem(evt);
@@ -757,8 +843,7 @@
             infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height()) - 20) + 'px');
             return;
         }
-        //}
-        DeselectInfoPanel();
+
     });
 
     //Filter the facet list
@@ -777,7 +862,7 @@
         $('.pv-toolbarpanel-view').on('click', function (e) {
             var viewId = this.id.substring(this.id.lastIndexOf('-') + 1, this.id.length);
             if (viewId != null)
-                SelectView(parseInt(viewId));
+                SelectView(parseInt(viewId), false);
         });
         //Sort change
         $('.pv-toolbarpanel-sort').on('change', function (e) {
@@ -837,6 +922,8 @@
                 slider.slider('values', 1, thisMax);
                 slider.prev().prev().html('&nbsp;');
             }
+            //Clear search box
+            $('.pv-filterpanel-search').val('');
             //turn off clear buttons
             $('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
             FilterCollection();
@@ -881,6 +968,61 @@
                 details.css('height', '100px');
                 $(this).text('More');
             }
+        });
+        //Saerch
+        $('.pv-filterpanel-search').on('keyup', function (e) {
+            var found = false;
+            var foundAlready = [];
+            var autocomplete = $('.pv-filterpanel-search-autocomplete');
+            var filterRef = FilterCollection;
+            var selectRef = SelectStringFacetItem;
+            autocomplete.empty();
+
+            //Esc
+            if (e.keyCode == 27) {
+                $(e.target).blur(); //remove focus
+                return;
+            }
+
+            for (var i = 0, _iLen = _wordWheelItems.length; i < _iLen; i++) {
+                var wwi = _wordWheelItems[i].Value.toLowerCase();
+                if (wwi.indexOf(e.target.value.toLowerCase()) >= 0) {
+                    if ($.inArray(wwi, foundAlready) == -1) {
+                        foundAlready.push(wwi);
+                        //Add to autocomplete
+                        autocomplete.append('<span facet="' + _wordWheelItems[i].Facet + '">' + _wordWheelItems[i].Value + '</span>');
+
+                        if (e.keyCode == 13) {
+                            SelectStringFacetItem(
+                                PivotViewer.Utils.EscapeItemId(_wordWheelItems[i].Facet),
+                                PivotViewer.Utils.EscapeItemId(_wordWheelItems[i].Value)
+                            );
+                            found = true;
+                        }
+                    }
+                }
+            }
+
+            $('.pv-filterpanel-search-autocomplete > span').on('mousedown', function (e) {
+                e.preventDefault();
+                $('.pv-filterpanel-search').val(e.target.textContent);
+                $('.pv-filterpanel-search-autocomplete').hide();
+                selectRef(
+                    PivotViewer.Utils.EscapeItemId(e.target.attributes[0].value),
+                    PivotViewer.Utils.EscapeItemId(e.target.textContent)
+                );
+                filterRef();
+            });
+
+            if (foundAlready.length > 0)
+                autocomplete.show();
+
+            if (found)
+                FilterCollection();
+        });
+        $('.pv-filterpanel-search').on('blur', function (e) {
+            e.target.value = '';
+            $('.pv-filterpanel-search-autocomplete').hide();
         });
         //Shared canvas events
         var canvas = $('.pv-viewarea-canvas');

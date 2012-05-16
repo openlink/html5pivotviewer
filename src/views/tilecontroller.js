@@ -118,6 +118,7 @@ PivotViewer.Views.TileController = Object.subClass({
         }
 
         //Helpers
+        /*
         if (debug) {
             //Draw point if one requested
             if (this._helpers.length > 0) {
@@ -145,6 +146,7 @@ PivotViewer.Views.TileController = Object.subClass({
                 this._canvasContext.fillText(this._helperText, 225, 14);
             }
         }
+        */
 
         // request new frame
         if (!this._breaks) {
@@ -216,7 +218,8 @@ PivotViewer.Views.Tile = Object.subClass({
 
             //TODO: Look at caching last image to avoid using _controller
             this._level = thisLevel;
-			this._images = this._controller.GetImagesAtLevel(this.facetItem.Img, this._level);
+            //if(this._level > 6)
+                this._images = this._controller.GetImagesAtLevel(this.facetItem.Img, this._level);
         }
 
         if (this._images != null) {

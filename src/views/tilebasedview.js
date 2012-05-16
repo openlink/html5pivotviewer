@@ -34,8 +34,8 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 		var b = (canvasHeight + (canvasWidth * tileRatio)) * gap;
 		var c = -1 * (canvasHeight * canvasWidth);
 		var tileWidth = ((-1 * b) + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a);
-		var tileHeight = tileWidth * tileRatio;
-		var canvasRows = Math.floor(canvasHeight / tileHeight);
+		var tileHeight = Math.floor(tileWidth * tileRatio);
+		var canvasRows = Math.ceil(canvasHeight / tileHeight);
 		var canvasColumns = Math.floor(canvasWidth / tileWidth);
 		return { Rows: canvasRows, Columns: canvasColumns, TileWidth: tileWidth, TileHeight: tileHeight };
 	},

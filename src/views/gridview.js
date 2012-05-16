@@ -3,6 +3,7 @@
 ///
 PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     init: function () {
+        this.Scale = 1;
         this._super();
         var that = this;
         //Event Handlers
@@ -43,10 +44,10 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
 
                 that.currentOffsetX = ((rowscols.TileWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileWidth / 2);
                 that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
-                
+
                 that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
             } else {
-                that.selected = selectedItem = "";
+                that.selected = selectedItem = null;
                 //zoom out
                 that.currentOffsetX = that.offsetX;
                 that.currentOffsetY = that.offsetY;
@@ -76,99 +77,52 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             if (!that.isActive)
                 return;
 
+            var oldScale = that.Scale;
             var preWidth = that.currentWidth;
             var preHeight = that.currentHeight;
-            //150% zoom
-            //var newWidth = that.currentWidth + ((that.currentWidth * 0.5) * (evt.delta >= 0 ? 1 : -1));
+            //Set the zoom time - the time it takes to zoom to the scale
+            //if on a touch device where ect.scale != undefined then have no delay
+            var zoomTime = evt.scale != undefined ? 0 : 1000;
+                        
+            if (evt.scale != undefined) {
+                if (evt.scale >= 1)
+                    that.Scale += (evt.scale - 1);
+                else {
+                    that.Scale -= evt.scale;
+                    that.Scale = that.Scale < 1 ? 1 : that.Scale;
+                }
+            } else if (evt.delta != undefined)
+                that.Scale = evt.delta > 0 ? that.Scale / 0.7 : that.Scale * 0.7; //evt.delta > 0 ? that.Scale / evt.delta : that.Scale * Math.abs(evt.delta);
 
-            if (evt.scale > 0)//that.prevScale < evt.scale)
-                that.currentScale += Math.abs(evt.scale - that.prevScale);
-            else
-                that.currentScale -= Math.abs(that.prevScale - evt.scale);
+            if (that.Scale == NaN)
+                that.Scale = 1;
+
+            var newWidth = (that.width - that.offsetX) * that.Scale;
+            var newHeight = (that.height - that.offsetY) * that.Scale;
 
 
-            var newWidth = that.width;
-            if (evt.scale != undefined)
-                newWidth = that.width * (evt.scale + that.prevScale); //(evt.scale * that.currentScale);
-            else if (evt.delta != undefined)
-            // + delta = zoom in
-                newWidth = that.currentWidth + ((that.currentWidth * 0.5) * (evt.delta >= 0 ? 1 : -1));
-            else
-                return;
-
-
-            that.prevScale = evt.scale;
 
             //if trying to zoom out too far, reset to min
-            if (newWidth < that.width) {
+            if (newWidth < that.width || that.Scale == 1) {
                 that.currentOffsetX = that.offsetX;
                 that.currentOffsetY = that.offsetY;
                 that.currentWidth = that.width;
                 that.currentHeight = that.height;
-                that.prevScale = 0;
-            }
-            else {
+                that.Scale = 1;
+            } else {
+                //adjust position to base scale - then scale out to new scale
+                var scaledPositionX = ((evt.x - that.currentOffsetX) / oldScale) * that.Scale;
+                var scaledPositionY = ((evt.y - that.currentOffsetY) / oldScale) * that.Scale;
 
+                //Move the scaled position to the mouse location
+                that.currentOffsetX = evt.x - scaledPositionX;
+                that.currentOffsetY = evt.y - scaledPositionY;
                 that.currentWidth = newWidth;
-                //keep original ratio
-                that.currentHeight = (preHeight / preWidth) * that.currentWidth;
-
-                //if trying to zoom too far in, set to max
-                if ((that.currentWidth / that.rowscols.Columns) > that.width) {
-                    that.currentWidth = that.width * that.rowscols.Columns;
-                    //keep height ratio
-                    that.currentHeight = (preHeight / preWidth) * that.currentWidth;
-                }
-                //if trying to zoom too far in, set to max height
-                if ((that.currentHeight / that.rowscols.Rows) > that.height) {
-                    that.currentHeight = that.height * that.rowscols.Rows;
-                    //keep height ratio
-                    that.currentWidth = (preWidth / preHeight) * that.currentHeight;
-                }
-
-                //Work out the percentage of the total width evt.x
-                //multiply that with the difference in width
-                //add the offset
-                that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
-                that.currentOffsetY = ((((evt.y - that.offsetY) / that.height) * (that.currentHeight - that.height)) * -1) + that.offsetY;
-
-
-                //			if (evt.delta >= 0) {
-                //				that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
-                //			} else {
-                //				that.currentOffsetX = ((((evt.x - that.offsetX) / that.width) * (that.currentWidth - that.width)) * -1) + that.offsetX;
-                //			}
-
-                /*
-                //The x and y offset is the difference is width, multiplied by the percentage of the mouse position to the width/height
-                var mouseXPercent = Math.round(((evt.x - that.offsetX) / ((that.width - that.offsetX) / 10))) / 10;
-                var mouseYPercent = Math.round(((evt.y - that.offsetY) / ((that.height - that.offsetY) / 10))) / 10;
-                if (evt.delta >= 0) {
-                that.currentOffsetX -= (that.width / 2) - evt.x;// (that.currentWidth - preWidth) * mouseXPercent;
-                that.currentOffsetY -= (that.currentHeight - preHeight) * mouseYPercent;
-                } else {
-                that.currentOffsetX += (preWidth - that.currentWidth) * mouseXPercent;
-                that.currentOffsetY += (preHeight - that.currentHeight) * mouseYPercent;
-                }
-
-                //bounds adjustment
-                //LHS out
-                if (that.currentOffsetX > that.offsetX)
-                that.currentOffsetX = that.offsetX;
-                //RHS out
-                if ((that.currentOffsetX + that.currentWidth) < that.width)
-                that.currentOffsetX = that.offsetX;
-                //Top out
-                if (that.currentOffsetY > that.offsetY)
-                that.currentOffsetY = that.offsetY;
-                //Bottom out
-                if ((that.currentOffsetY + that.currentHeight) < that.height)
-                that.currentOffsetY = that.offsetY;
-                */
+                that.currentHeight = newHeight;
             }
 
             var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
-            that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 100);
+            that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, zoomTime);
 
             //deselect tiles if zooming out
             if (evt.delta < 0) {
@@ -181,6 +135,9 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         });
 
         $.subscribe("/PivotViewer/Views/Canvas/Drag", function (evt) {
+            if (!that.isActive)
+                return;
+
             var dragX = evt.x;
             var dragY = evt.y;
             var noChangeX = false, noChangeY = false;
@@ -203,7 +160,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 that.currentOffsetX -= dragX;
                 noChangeX = true;
             }
-            if (dragX < 0 && (that.currentOffsetX - that.offsetX) < -1 * (that.currentWidth - that.width)) {
+            if (dragX < 0 && (that.currentOffsetX) < -1 * (that.currentWidth - that.width)) {
                 that.currentOffsetX -= dragX;
                 noChangeX = true;
             }
@@ -310,10 +267,10 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
     },
     GetButtonImage: function () {
-        return 'Content/images/GridView.png';
+        return 'media/GridView.png';
     },
     GetButtonImageSelected: function () {
-        return 'Content/images/GridViewSelected.png';
+        return 'media/GridViewSelected.png';
     },
     GetViewName: function () {
         return 'Grid View';
