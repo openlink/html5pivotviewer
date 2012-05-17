@@ -784,10 +784,10 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
     },
     GetButtonImage: function () {
-        return 'media/GridView.png';
+        return 'Content/images/GridView.png';
     },
     GetButtonImageSelected: function () {
-        return 'media/GridViewSelected.png';
+        return 'Content/images/GridViewSelected.png';
     },
     GetViewName: function () {
         return 'Grid View';
@@ -1136,10 +1136,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
     },
     GetButtonImage: function () {
-        return 'media/GraphView.png';
+        return 'Content/images/GraphView.png';
     },
     GetButtonImageSelected: function () {
-        return 'media/GraphViewSelected.png';
+        return 'Content/images/GraphViewSelected.png';
     },
     GetViewName: function () {
         return 'Graph View';
@@ -1850,6 +1850,7 @@ PivotViewer.Views.Tile = Object.subClass({
         if (brandImage.length > 0)
             toolbarPanel += "<img class='pv-toolbarpanel-brandimage' src='" + brandImage + "'></img>";
         toolbarPanel += "<span class='pv-toolbarpanel-name'>" + PivotCollection.CollectionName + "</span>";
+        toolbarPanel += "<div class='pv-toolbarpanel-facetbreadcrumb'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-zoomcontrols'><div class='pv-toolbarpanel-zoomslider'></div></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-viewcontrols'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-sortcontrols'></div>";
@@ -2277,7 +2278,7 @@ PivotViewer.Views.Tile = Object.subClass({
                     var rangeMax = sldr.slider('option', 'max'), rangeMin = sldr.slider('option', 'min');
                     if (range[0] != rangeMin || range[1] != rangeMax) {
                         var facet = PivotCollection.FacetCategories[i].Name;
-                        numericFacets.push({ facet: facet, rangeMin: range[0], rangeMax: range[1] });
+                        numericFacets.push({ facet: facet, selectedMin: range[0], selectedMax: range[1], rangeMin: rangeMin, rangeMax: rangeMax });
                         //Add to selected facets list - this is then used to filter the facet list counts
                         if ($.inArray(facet, selectedFacets) < 0)
                             selectedFacets.push(facet);
@@ -2314,7 +2315,7 @@ PivotViewer.Views.Tile = Object.subClass({
                     if (PivotCollection.Items[i].Facets[j].Name == numericFacets[k].facet) {
                         for (var m = 0, _mLen = PivotCollection.Items[i].Facets[j].FacetValues.length; m < _mLen; m++) {
                             var parsed = parseFloat(PivotCollection.Items[i].Facets[j].FacetValues[m].Value);
-                            if (!isNaN(parsed) && parsed >= numericFacets[k].rangeMin && parsed <= numericFacets[k].rangeMax)
+                            if (!isNaN(parsed) && parsed >= numericFacets[k].selectedMin && parsed <= numericFacets[k].selectedMax)
                                 foundCount++;
                         }
                     }
@@ -2338,6 +2339,9 @@ PivotViewer.Views.Tile = Object.subClass({
         $('#pv-viewpanel-view-' + _currentView).show();
         //Filter the facet counts and remove empty facets
         FilterFacets(filterItems, selectedFacets);
+
+        //Update breadcrumb
+        UpdateBreadcrumbNavigation(stringFacets, numericFacets);
 
         //Filter view
         _tileController.SetCircularEasingBoth();
@@ -2466,6 +2470,34 @@ PivotViewer.Views.Tile = Object.subClass({
         //re-create the histograms
         for (var i = 0; i < numericFilterList.length; i++)
             CreateNumberFacet(PivotViewer.Utils.EscapeItemId(numericFilterList[i].Facet), numericFilterList[i].Values);
+    };
+
+    UpdateBreadcrumbNavigation = function (stringFacets, numericFacets) {
+        var bc = $('.pv-toolbarpanel-facetbreadcrumb');
+        bc.empty();
+
+        if (stringFacets.length == 0)
+            return;
+
+        var bcItems = "|";
+        for (var i = 0, _iLen = stringFacets.length; i < _iLen; i++) {
+            bcItems += "<span class='pv-toolbarpanel-facetbreadcrumb-facet'>" + stringFacets[i].facet + ":</span><span class='pv-toolbarpanel-facetbreadcrumb-values'>"
+            bcItems += stringFacets[i].facetValue.join(', ');
+            bcItems += "</span><span class='pv-toolbarpanel-facetbreadcrumb-separator'>&gt;</span>";
+        }
+
+        for (var i = 0, _iLen = numericFacets.length; i < _iLen; i++) {
+            bcItems += "<span class='pv-toolbarpanel-facetbreadcrumb-facet'>" + numericFacets[i].facet + ":</span><span class='pv-toolbarpanel-facetbreadcrumb-values'>"
+            if(numericFacets[i].selectedMin == numericFacets[i].rangeMin)
+                bcItems += "Under " + numericFacets[i].selectedMax;
+            else if (numericFacets[i].selectedMax == numericFacets[i].rangeMax)
+                bcItems += "Over " + numericFacets[i].selectedMin;
+            else
+                bcItems += numericFacets[i].selectedMin + " - " + numericFacets[i].selectedMax;
+            bcItems += "</span><span class='pv-toolbarpanel-facetbreadcrumb-separator'>&gt;</span>";
+        }
+
+        bc.append(bcItems);
     };
 
     DeselectInfoPanel = function () {
