@@ -33,6 +33,17 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 var items = $(xml).find("I");
                 if (items.length == 0)
                     return;
+                
+                //If collection itself contains size information, use first one for now
+                var dzcSize = $(items[0]).find('Size');
+                if (dzcSize.length > 0) {
+                    //calculate max level
+                    that.Width = parseInt(dzcSize.attr("Width"));
+                    that.Height = parseInt(dzcSize.attr("Height"));
+                    var maxDim = that.Width > that.Height ? that.Width : that.Height;
+                    that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
+                }
+
                 //lets assume that each of the items have the same dzi properties, so just get the first one
                 var dziSource = $(items[0]).attr('Source');
                 $.ajax({
@@ -40,6 +51,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                     url: that._baseUrl + "/" + dziSource,
                     dataType: "xml",
                     success: function (dzixml) {
+                        //In case we find a dzi, recalculate sizes
                         var image = $(dzixml).find("Image");
                         if (image.length == 0)
                             return;
@@ -48,6 +60,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         that._tileSize = jImage.attr('TileSize');
                         that._tileFormat = jImage.attr('Format');
                         that._collageMaxLevel = jImage.attr('MaxLevel');
+
                         //calculate max level
                         var size = jImage.children().first();
                         that.Width = parseInt(size.attr("Width"));
@@ -55,7 +68,9 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         var maxDim = that.Width > that.Height ? that.Width : that.Height;
                         that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
 
-                        //create all images
+                    },
+                    complete: function (jqXHR, textStatus) {
+                        //At this point we either have size info from collection or first dzi, so continue
                         for (var i = 0; i < items.length; i++) {
                             //Create an item image collection
                             var source = $(items[i]).attr('Source');
@@ -70,8 +85,26 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
 
                         //Loaded DeepZoom collection
                         $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //Make sure throbber is removed else everyone thinks the app is still running
+                        $('.pv-loading').remove();
+                        //No need to throw alert
                     }
                 });
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                //Make sure throbber is removed else everyone thinks the app is still running
+                $('.pv-loading').remove();
+
+                //Throw an alert so the user knows something is wrong
+                var msg = '';
+                msg = msg + 'Error loading from DeepZoom Cache\r\n\r\n';
+                msg = msg + 'URL        : ' + this.url + '\r\n';
+                msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
+                msg = msg + 'Details    : ' + errorThrown + '\r\n';
+                msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
+                window.alert (msg);
             }
         });
     },

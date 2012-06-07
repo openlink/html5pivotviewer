@@ -763,7 +763,7 @@
 
         for (var i = 0, _iLen = numericFacets.length; i < _iLen; i++) {
             bcItems += "<span class='pv-toolbarpanel-facetbreadcrumb-facet'>" + numericFacets[i].facet + ":</span><span class='pv-toolbarpanel-facetbreadcrumb-values'>"
-            if(numericFacets[i].selectedMin == numericFacets[i].rangeMin)
+            if (numericFacets[i].selectedMin == numericFacets[i].rangeMin)
                 bcItems += "Under " + numericFacets[i].selectedMax;
             else if (numericFacets[i].selectedMax == numericFacets[i].rangeMax)
                 bcItems += "Over " + numericFacets[i].selectedMin;
@@ -989,6 +989,7 @@
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
             $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text()}]);
+            return false;
         });
         $('.pv-infopanel-details').on('click', '.pv-infopanel-detail-description-more', function (e) {
             var that = $(this);

@@ -108,7 +108,8 @@ PivotViewer.Utils.EscapeMetaChars = function (jQuerySelector) {
             .replace(/,/gi, "\\,")
             .replace(/:/gi, "\\:")
             .replace(/\(/gi, "\\(")
-            .replace(/\)/gi, "\\)");
+            .replace(/\)/gi, "\\)")
+            .replace(/\+/gi, "\\+");
 };
 
 PivotViewer.Utils.EscapeItemId = function (itemId) {
@@ -312,120 +313,133 @@ PivotViewer.Models.FacetType = {
 	Link: "Link"
 };//Collection loader interface - used so that different types of data sources can be used
 PivotViewer.Models.Loaders.ICollectionLoader = Object.subClass({
-    init: function () { },
-    LoadCollection: function (collection) {
-        if (!collection instanceof PivotViewer.Models.Collection) {
-            throw "collection not an instance of PivotViewer.Models.Collection.";
-        }
-    }
+	init: function () { },
+	LoadCollection: function (collection) {
+		if (!collection instanceof PivotViewer.Models.Collection) {
+			throw "collection not an instance of PivotViewer.Models.Collection.";
+		}
+	}
 });
 
 //CXML loader
 PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLoader.subClass({
-    init: function (CXMLUri) {
-        this.CXMLUri = CXMLUri;
-    },
-    LoadCollection: function (collection) {
-        var collection = collection;
-        this._super(collection);
+	init: function (CXMLUri) {
+		this.CXMLUri = CXMLUri;
+	},
+	LoadCollection: function (collection) {
+		var collection = collection;
+		this._super(collection);
 
-        collection.CXMLBase = this.CXMLUri;
+		collection.CXMLBase = this.CXMLUri;
 
-        $.ajax({
-            type: "GET",
-            url: this.CXMLUri,
-            dataType: "xml",
-            success: function (xml) {
-                Debug.Log('CXML loaded');
-                var collectionRoot = $(xml).find("Collection")[0];
-                //get namespace local name
-                var namespacePrefix = "P";
-                for (var i = 0; i < collectionRoot.attributes.length; i++) {
-                    if (collectionRoot.attributes[i].value == "http://schemas.microsoft.com/livelabs/pivot/collection/2009") {
-                        namespacePrefix = collectionRoot.attributes[i].localName != undefined ? collectionRoot.attributes[i].localName : collectionRoot.attributes[i].baseName;
-                        break;
-                    }
-                }
-                collection.CollectionName = $(collectionRoot).attr("Name");
-                collection.BrandImage = $(collectionRoot).attr(namespacePrefix + ":BrandImage") != undefined ? $(collectionRoot).attr(namespacePrefix + ":BrandImage") : "";
+		$.ajax({
+			type: "GET",
+			url: this.CXMLUri,
+			dataType: "xml",
+			success: function (xml) {
+				Debug.Log('CXML loaded');
+				var collectionRoot = $(xml).find("Collection")[0];
+				//get namespace local name
+				var namespacePrefix = "P";
+				for (var i = 0; i < collectionRoot.attributes.length; i++) {
+					if (collectionRoot.attributes[i].value == "http://schemas.microsoft.com/livelabs/pivot/collection/2009") {
+						namespacePrefix = collectionRoot.attributes[i].localName != undefined ? collectionRoot.attributes[i].localName : collectionRoot.attributes[i].baseName;
+						break;
+					}
+				}
+				collection.CollectionName = $(collectionRoot).attr("Name");
+				collection.BrandImage = $(collectionRoot).attr(namespacePrefix + ":BrandImage") != undefined ? $(collectionRoot).attr(namespacePrefix + ":BrandImage") : "";
 
-                //FacetCategory
-                var facetCategories = $(xml).find("FacetCategory");
-                for (var i = 0; i < facetCategories.length; i++) {
-                    var facetElement = $(facetCategories[i]);
+				//FacetCategory
+				var facetCategories = $(xml).find("FacetCategory");
+				for (var i = 0; i < facetCategories.length; i++) {
+					var facetElement = $(facetCategories[i]);
 
-                    var facetCategory = new PivotViewer.Models.FacetCategory(
-                    facetElement.attr("Name"),
-                        facetElement.attr("Format"),
-                        facetElement.attr("Type"),
-                        facetElement.attr(namespacePrefix + ":IsFilterVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsFilterVisible").toLowerCase() == "true" ? true : false) : false,
-                        facetElement.attr(namespacePrefix + ":IsMetaDataVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsMetaDataVisible").toLowerCase() == "true" ? true : false) : false,
-                        facetElement.attr(namespacePrefix + ":IsWordWheelVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsWordWheelVisible").toLowerCase() == "true" ? true : false) : false
-                        );
+					var facetCategory = new PivotViewer.Models.FacetCategory(
+					facetElement.attr("Name"),
+						facetElement.attr("Format"),
+						facetElement.attr("Type"),
+						facetElement.attr(namespacePrefix + ":IsFilterVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsFilterVisible").toLowerCase() == "true" ? true : false) : true,
+						facetElement.attr(namespacePrefix + ":IsMetaDataVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsMetaDataVisible").toLowerCase() == "true" ? true : false) : true,
+						facetElement.attr(namespacePrefix + ":IsWordWheelVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsWordWheelVisible").toLowerCase() == "true" ? true : false) : false
+						);
 
-                    //Add custom sort order
-                    var sortOrder = facetElement.find(namespacePrefix + "\\:SortOrder");
-                    var sortValues = sortOrder.find(namespacePrefix + "\\:SortValue");
+					//Add custom sort order
+					var sortOrder = facetElement.find(namespacePrefix + "\\:SortOrder");
+					var sortValues = sortOrder.find(namespacePrefix + "\\:SortValue");
 
-                    if (sortOrder.length == 0) {
-                        //webkit doesn't seem to like the P namespace
-                        sortOrder = facetElement.find("SortOrder");
-                        sortValues = sortOrder.find("SortValue");
-                    }
+					if (sortOrder.length == 0) {
+						//webkit doesn't seem to like the P namespace
+						sortOrder = facetElement.find("SortOrder");
+						sortValues = sortOrder.find("SortValue");
+					}
 
-                    if (sortOrder.length == 1) {
-                        var customSort = new PivotViewer.Models.FacetCategorySort(sortOrder.attr("Name"));
-                        for (var j = 0; j < sortValues.length; j++) {
-                            customSort.SortValues.push($(sortValues[j]).attr("Value"));
-                        }
-                        facetCategory.CustomSort = customSort;
-                    }
-                    collection.FacetCategories.push(facetCategory);
-                }
-                //Items
-                var facetItems = $(xml).find("Items");
-                if (facetItems.length == 1) {
-                    collection.ImageBase = $(facetItems[0]).attr("ImgBase");
-                    var facetItem = $(facetItems[0]).find("Item");
-                    for (var i = 0; i < facetItem.length; i++) {
-                        var item = new PivotViewer.Models.Item(
-                            $(facetItem[i]).attr("Img").replace("#", ""),
-                            $(facetItem[i]).attr("Id"),
-                            $(facetItem[i]).attr("Href"),
-                            $(facetItem[i]).attr("Name")
-                        );
-                        var description = $(facetItem[i]).find("Description");
-                        if (description.length == 1 && description[0].childNodes.length)
-                            item.Description = description[0].childNodes[0].nodeValue;
-                        var facets = $(facetItem[i]).find("Facet");
-                        for (var j = 0; j < facets.length; j++) {
-                            var f = new PivotViewer.Models.Facet(
-                                $(facets[j]).attr("Name")
-                            );
+					if (sortOrder.length == 1) {
+						var customSort = new PivotViewer.Models.FacetCategorySort(sortOrder.attr("Name"));
+						for (var j = 0; j < sortValues.length; j++) {
+							customSort.SortValues.push($(sortValues[j]).attr("Value"));
+						}
+						facetCategory.CustomSort = customSort;
+					}
+					collection.FacetCategories.push(facetCategory);
+				}
+				//Items
+				var facetItems = $(xml).find("Items");
+				if (facetItems.length == 1) {
+					collection.ImageBase = $(facetItems[0]).attr("ImgBase");
+					var facetItem = $(facetItems[0]).find("Item");
+					for (var i = 0; i < facetItem.length; i++) {
+						var item = new PivotViewer.Models.Item(
+							$(facetItem[i]).attr("Img").replace("#", ""),
+							$(facetItem[i]).attr("Id"),
+							$(facetItem[i]).attr("Href"),
+							$(facetItem[i]).attr("Name")
+						);
+						var description = $(facetItem[i]).find("Description");
+						if (description.length == 1 && description[0].childNodes.length)
+							item.Description = description[0].childNodes[0].nodeValue;
+						var facets = $(facetItem[i]).find("Facet");
+						for (var j = 0; j < facets.length; j++) {
+							var f = new PivotViewer.Models.Facet(
+								$(facets[j]).attr("Name")
+							);
 
-                            var facetChildren = $(facets[j]).children();
-                            for (var k = 0; k < facetChildren.length; k++) {
-                                if (facetChildren[k].nodeType == 1) {
-                                    var v = $.trim($(facetChildren[k]).attr("Value"));
-                                    if (v == null) {
-                                        var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
-                                        fValue.Href = $(facetChildren[k]).attr("Href");
-                                        f.AddFacetValue(fValue);
-                                    } else {
-                                        var fValue = new PivotViewer.Models.FacetValue(v);
-                                        f.AddFacetValue(fValue);
-                                    }
-                                }
-                            }
-                            item.Facets.push(f);
-                        }
-                        collection.Items.push(item);
-                    }
-                }
-                $.publish("/PivotViewer/Models/Collection/Loaded", null);
-            }
-        });
-    }
+							var facetChildren = $(facets[j]).children();
+							for (var k = 0; k < facetChildren.length; k++) {
+								if (facetChildren[k].nodeType == 1) {
+									var v = $.trim($(facetChildren[k]).attr("Value"));
+									if (v == null) {
+										var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
+										fValue.Href = $(facetChildren[k]).attr("Href");
+										f.AddFacetValue(fValue);
+									} else {
+										var fValue = new PivotViewer.Models.FacetValue(v);
+										f.AddFacetValue(fValue);
+									}
+								}
+							}
+							item.Facets.push(f);
+						}
+						collection.Items.push(item);
+					}
+				}
+				$.publish("/PivotViewer/Models/Collection/Loaded", null);
+			},
+			error: function(jqXHR, textStatus, errorThrown) {
+				//Make sure throbber is removed else everyone thinks the app is still running
+				$('.pv-loading').remove();
+
+				//Throw an alert so the user knows something is wrong
+				var msg = '';
+				msg = msg + 'Error loading CXML Collection\r\n\r\n';
+				msg = msg + 'URL        : ' + this.url + '\r\n';
+				msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
+				msg = msg + 'Details    : ' + errorThrown + '\r\n';
+				msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
+				window.alert (msg);
+			}
+		});
+	}
 });//Views interface - all views must implement this
 PivotViewer.Views.IPivotViewerView = Object.subClass({
 	init: function () {
@@ -1296,6 +1310,17 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 var items = $(xml).find("I");
                 if (items.length == 0)
                     return;
+                
+                //If collection itself contains size information, use first one for now
+                var dzcSize = $(items[0]).find('Size');
+                if (dzcSize.length > 0) {
+                    //calculate max level
+                    that.Width = parseInt(dzcSize.attr("Width"));
+                    that.Height = parseInt(dzcSize.attr("Height"));
+                    var maxDim = that.Width > that.Height ? that.Width : that.Height;
+                    that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
+                }
+
                 //lets assume that each of the items have the same dzi properties, so just get the first one
                 var dziSource = $(items[0]).attr('Source');
                 $.ajax({
@@ -1303,6 +1328,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                     url: that._baseUrl + "/" + dziSource,
                     dataType: "xml",
                     success: function (dzixml) {
+                        //In case we find a dzi, recalculate sizes
                         var image = $(dzixml).find("Image");
                         if (image.length == 0)
                             return;
@@ -1311,6 +1337,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         that._tileSize = jImage.attr('TileSize');
                         that._tileFormat = jImage.attr('Format');
                         that._collageMaxLevel = jImage.attr('MaxLevel');
+
                         //calculate max level
                         var size = jImage.children().first();
                         that.Width = parseInt(size.attr("Width"));
@@ -1318,7 +1345,9 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         var maxDim = that.Width > that.Height ? that.Width : that.Height;
                         that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
 
-                        //create all images
+                    },
+                    complete: function (jqXHR, textStatus) {
+                        //At this point we either have size info from collection or first dzi, so continue
                         for (var i = 0; i < items.length; i++) {
                             //Create an item image collection
                             var source = $(items[i]).attr('Source');
@@ -1333,8 +1362,26 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
 
                         //Loaded DeepZoom collection
                         $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //Make sure throbber is removed else everyone thinks the app is still running
+                        $('.pv-loading').remove();
+                        //No need to throw alert
                     }
                 });
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                //Make sure throbber is removed else everyone thinks the app is still running
+                $('.pv-loading').remove();
+
+                //Throw an alert so the user knows something is wrong
+                var msg = '';
+                msg = msg + 'Error loading from DeepZoom Cache\r\n\r\n';
+                msg = msg + 'URL        : ' + this.url + '\r\n';
+                msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
+                msg = msg + 'Details    : ' + errorThrown + '\r\n';
+                msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
+                window.alert (msg);
             }
         });
     },
@@ -1659,7 +1706,7 @@ PivotViewer.Views.Tile = Object.subClass({
         if (this._images != null) {
             if (typeof this._images == "function") {
                 //A DrawLevel function returned - invoke
-                this._images(this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+                this._images(this.facetItem, this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
             }
             else if (this._images.length > 0 && this._images[0] instanceof Image) {
                 //if the collection contains an image
@@ -1701,7 +1748,7 @@ PivotViewer.Views.Tile = Object.subClass({
             this.context.stroke();
         } else {
             //use the controllers blank tile
-            this._controller.DrawLevel(this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            this._controller.DrawLevel(this.facetItem, this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
         }
     },
     CollectionRoot: "",
@@ -2488,7 +2535,7 @@ PivotViewer.Views.Tile = Object.subClass({
 
         for (var i = 0, _iLen = numericFacets.length; i < _iLen; i++) {
             bcItems += "<span class='pv-toolbarpanel-facetbreadcrumb-facet'>" + numericFacets[i].facet + ":</span><span class='pv-toolbarpanel-facetbreadcrumb-values'>"
-            if(numericFacets[i].selectedMin == numericFacets[i].rangeMin)
+            if (numericFacets[i].selectedMin == numericFacets[i].rangeMin)
                 bcItems += "Under " + numericFacets[i].selectedMax;
             else if (numericFacets[i].selectedMax == numericFacets[i].rangeMax)
                 bcItems += "Over " + numericFacets[i].selectedMin;
@@ -2714,6 +2761,7 @@ PivotViewer.Views.Tile = Object.subClass({
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
             $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text()}]);
+            return false;
         });
         $('.pv-infopanel-details').on('click', '.pv-infopanel-detail-description-more', function (e) {
             var that = $(this);

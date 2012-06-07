@@ -225,7 +225,7 @@ PivotViewer.Views.Tile = Object.subClass({
         if (this._images != null) {
             if (typeof this._images == "function") {
                 //A DrawLevel function returned - invoke
-                this._images(this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+                this._images(this.facetItem, this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
             }
             else if (this._images.length > 0 && this._images[0] instanceof Image) {
                 //if the collection contains an image
@@ -267,7 +267,7 @@ PivotViewer.Views.Tile = Object.subClass({
             this.context.stroke();
         } else {
             //use the controllers blank tile
-            this._controller.DrawLevel(this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            this._controller.DrawLevel(this.facetItem, this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
         }
     },
     CollectionRoot: "",
