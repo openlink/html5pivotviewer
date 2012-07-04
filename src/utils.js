@@ -26,7 +26,10 @@ PivotViewer.Utils.EscapeMetaChars = function (jQuerySelector) {
             .replace(/:/gi, "\\:")
             .replace(/\(/gi, "\\(")
             .replace(/\)/gi, "\\)")
-            .replace(/\+/gi, "\\+");
+            .replace(/\+/gi, "\\+")
+            .replace(/\+/gi, "\\-")
+            .replace(/\+/gi, "\\_")
+            .replace(/\+/gi, "\\%");
 };
 
 PivotViewer.Utils.EscapeItemId = function (itemId) {

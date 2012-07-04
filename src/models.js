@@ -48,7 +48,7 @@ PivotViewer.Models.FacetCategorySort = Object.subClass({
 
 PivotViewer.Models.Item = Object.subClass({
 	init: function (Img, Id, Href, Name) {
-		this.Img = Img,
+		this.Img = parseInt(Img),
 		this.Id = Id,
 		this.Href = Href,
 		this.Name = Name,
