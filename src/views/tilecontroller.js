@@ -42,7 +42,7 @@ PivotViewer.Views.TileController = Object.subClass({
                 //use the easing function to determine the next position
                 if (now <= end) {
                     //at least one tile is moving
-                    isAnimating = true;
+                    //isAnimating = true;
 
                     //if the position is different from the destination position then zooming is happening
                     if (this._tiles[i].x != this._tiles[i].destinationx || this._tiles[i].y != this._tiles[i].destinationy)
