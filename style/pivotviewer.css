@@ -64,7 +64,7 @@
 .pv-viewarea-graphview { position: absolute; top:0px; left:0px; z-index: 2; }
 .pv-viewarea-graphview-overlay { position: absolute; top: 0px; width: 100%; height: 100%; z-index: 1; }
 .pv-viewarea-graphview-overlay-bucket { height: 100%; position:absolute; top:0px;}
-.pv-viewarea-graphview-overlay-buckettitle { height: 54px; background-color:#F5F5F5; position: relative; text-align:center; border: 1px solid #D3D4D4; cursor: default; }
+.pv-viewarea-graphview-overlay-buckettitle { height: 50px; background-color:#F5F5F5; position: relative; text-align:center; border: 1px solid #D3D4D4; cursor: default; }
 .graphview-bucket-dark { background-color: #E6E8ED; }
 .graphview-bucket-light { background-color: #EBEDF1; }
 .graphview-bucket-hover { background-color: #DCECF4; }
