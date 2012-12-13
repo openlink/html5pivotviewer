@@ -42,6 +42,19 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 var collectionRoot = $(xml).find("Collection")[0];
                 //get namespace local name
                 var namespacePrefix = "P";
+
+                if (collectionRoot == undefined) {
+                    //Make sure throbber is removed else everyone thinks the app is still running
+                    $('.pv-loading').remove();
+ 
+                    //Throw an alert so the user knows something is wrong
+                    var msg = '';
+                    msg = msg + 'Error parsing CXML Collection\r\n\r\n';
+                    msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
+                    window.alert (msg);
+                    throw "Error parsing CXML Collection";
+                }
+
                 for (var i = 0; i < collectionRoot.attributes.length; i++) {
                     if (collectionRoot.attributes[i].value == "http://schemas.microsoft.com/livelabs/pivot/collection/2009") {
                         namespacePrefix = collectionRoot.attributes[i].localName != undefined ? collectionRoot.attributes[i].localName : collectionRoot.attributes[i].baseName;
