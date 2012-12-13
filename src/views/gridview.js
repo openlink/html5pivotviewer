@@ -38,38 +38,54 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     selectedCol = Math.round((that.tiles[i].x - that.currentOffsetX) / that.tiles[i].width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
                     selectedRow = Math.round((that.tiles[i].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
                     that.tiles[i].Selected(true);
-                    offsetX = that.tiles[i].x;
-                    offsetY = that.tiles[i].y;
+                    tileHeight = that.tiles[i].height;
+                    tileWidth = that.tiles[i].width;
+                    canvasHeight = that.tiles[i].context.canvas.height
+                    canvasWidth = that.tiles[i].context.canvas.width
+
                 } else {
                     that.tiles[i].Selected(false);
                 }
             }
+
             //zoom in on selected tile
             if (selectedItem != null && that.selected != selectedItem) {
-                that.selected = selectedItem;
-                //set the max width and height
-                if (that.width < that.height) {
-                    that.currentWidth = that.width * that.rowscols.Columns * 0.9; //0.9 to leave 10% space
-                    that.currentHeight = (that.height / that.width) * that.currentWidth;
-                } else {
-                    that.currentHeight = that.height * that.rowscols.Rows * 0.9;
-                    that.currentWidth = (that.width / that.height) * that.currentHeight;
+                // Find which is proportionally bigger, height or width
+                if (tileHeight / canvasHeight > tileWidth/canvasWidth) 
+                    currentProportion = tileHeight / canvasHeight;
+                else
+                    currentProportion = tileWidth / canvasWidth;
+                //Get scaling factor so max tile dimension is about 60% total
+                //Multiply by two as the zoomslider devides all scaling factors by 2
+                scale = Math.round((0.75 / currentProportion) * 2);
+
+                // Zoom using the slider event
+                if (that.selected == ""){
+                    var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+                    value += scale; 
+                    $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
                 }
+                that.selected = selectedItem;
+                that.CentreOnSelectedTile(selectedCol, selectedRow);
 
-                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
+/*
+                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
 
-                that.currentOffsetX = ((rowscols.TileWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileWidth / 2);
+                that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2);
                 that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
 
                 that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
+*/
             } else {
-                that.selected = selectedItem = null;
+                that.selected = selectedItem = "";
                 //zoom out
                 that.currentOffsetX = that.offsetX;
                 that.currentOffsetY = that.offsetY;
-                that.currentWidth = that.width;
-                that.currentHeight = that.height;
-                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
+                // Zoom using the slider event
+                var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+                value = 0;
+                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
+                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
                 that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
             }
 
@@ -97,7 +113,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             var preWidth = that.currentWidth;
             var preHeight = that.currentHeight;
             //Set the zoom time - the time it takes to zoom to the scale
-            //if on a touch device where ect.scale != undefined then have no delay
+            //if on a touch device where evt.scale != undefined then have no delay
             var zoomTime = evt.scale != undefined ? 0 : 1000;
                         
             if (evt.scale != undefined) {
@@ -108,7 +124,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     that.Scale = that.Scale < 1 ? 1 : that.Scale;
                 }
             } else if (evt.delta != undefined)
-                that.Scale = evt.delta > 0 ? that.Scale / 0.7 : that.Scale * 0.7; //evt.delta > 0 ? that.Scale / evt.delta : that.Scale * Math.abs(evt.delta);
+                that.Scale = evt.delta < 0 ? that.Scale / evt.delta : that.Scale * Math.abs(evt.delta);
 
             if (that.Scale == NaN)
                 that.Scale = 1;
@@ -137,7 +153,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 that.currentHeight = newHeight;
             }
 
-            var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.ratio, that.currentFilter.length);
+            var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
             that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, zoomTime);
 
             //deselect tiles if zooming out
@@ -200,12 +216,12 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 that.OffsetTiles(dragX, dragY);
         });
     },
-    Setup: function (width, height, offsetX, offsetY, tileRatio) {
+    Setup: function (width, height, offsetX, offsetY, tileMaxRatio) {
         this.width = width;
         this.height = height;
         this.offsetX = offsetX;
         this.offsetY = offsetY;
-        this.ratio = tileRatio;
+        this.maxRatio = tileMaxRatio;
         this.currentWidth = this.width;
         this.currentHeight = this.height;
         this.currentOffsetX = this.offsetX;
@@ -232,14 +248,15 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         var pt1Timeout = 0;
         //zoom out first
         Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
-        if (this.currentWidth != this.width && !this.init) {
+          var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+          if (value > 0) { 
             this.selected = selectedItem = "";
             //zoom out
             this.currentOffsetX = this.offsetX;
             this.currentOffsetY = this.offsetY;
-            this.currentWidth = this.width;
-            this.currentHeight = this.height;
-            var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.ratio, this.tiles.length);
+            // Zoom using the slider event
+            $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 1);
+            var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.maxRatio, this.tiles.length);
             var clearFilter = [];
             for (var i = 0; i < this.tiles.length; i++) {
                 clearFilter.push(this.tiles[i].facetItem.Id);
@@ -268,7 +285,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             var pt2Timeout = currentFilter.length == that.tiles.length ? 0 : 500;
             //Delay pt2 animation
             setTimeout(function () {
-                var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.ratio, that.currentFilter.length);
+                var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.maxRatio, that.currentFilter.length);
                 that.SetVisibleTilePositions(rowscols, that.currentFilter, that.offsetX, that.offsetY, false, false, 1000);
             }, pt2Timeout);
 
@@ -312,9 +329,9 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 }
 
                 //set destination positions
-                this.tiles[i].destinationwidth = rowscols.TileWidth;
+                this.tiles[i].destinationwidth = rowscols.TileMaxWidth;
                 this.tiles[i].destinationheight = rowscols.TileHeight;
-                this.tiles[i].destinationx = (currentColumn * rowscols.TileWidth) + offsetX;
+                this.tiles[i].destinationx = (currentColumn * rowscols.TileMaxWidth) + offsetX;
                 this.tiles[i].destinationy = (currentRow * rowscols.TileHeight) + offsetY;
                 this.tiles[i].start = PivotViewer.Utils.Now();
                 this.tiles[i].end = this.tiles[i].start + miliseconds;
@@ -326,5 +343,34 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     currentColumn++;
             }
         }
+    },
+    GetSelectedCol: function (tile) {
+        var that = this;
+        selectedCol = Math.round((tile.x - that.currentOffsetX) / tile.width); 
+        return selectedCol;
+    },
+    GetSelectedRow: function (tile) {
+        var that = this;
+        selectedRow = Math.round((tile.y - that.currentOffsetY) / tile.height);
+        return selectedRow;
+    },
+    /// Centres the selected tile
+    CentreOnSelectedTile: function (selectedCol, selectedRow) {
+        var that = this;
+        var selectedTile; 
+        for (var i = 0; i < that.tiles.length; i++) {
+            if (that.tiles[i].IsSelected()) {
+                selectedTile = that.tiles[i];   
+                break;
+            }
+        }
+        offsetX = selectedTile.x;
+        offsetY = selectedTile.y;
+
+        var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
+
+        that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2);
+        that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
+        that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
     }
 });

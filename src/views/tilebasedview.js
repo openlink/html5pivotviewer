@@ -43,17 +43,17 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 		}
 	},
 
-	GetRowsAndColumns: function (canvasWidth, canvasHeight, tileRatio, tileCount) {
+	GetRowsAndColumns: function (canvasWidth, canvasHeight, tileMaxRatio, tileCount) {
 		// look into creating a series of calcs that will try multiple times changing the gap
 		var gap = 0.7;
-		var a = tileRatio * (tileCount - Math.pow(gap, 2));
-		var b = (canvasHeight + (canvasWidth * tileRatio)) * gap;
+		var a = tileMaxRatio * (tileCount - Math.pow(gap, 2));
+		var b = (canvasHeight + (canvasWidth * tileMaxRatio)) * gap;
 		var c = -1 * (canvasHeight * canvasWidth);
-		var tileWidth = ((-1 * b) + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a);
-		var tileHeight = Math.floor(tileWidth * tileRatio);
+		var tileMaxWidth = ((-1 * b) + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a);
+		var tileHeight = Math.floor(tileMaxWidth * tileMaxRatio);
 		var canvasRows = Math.ceil(canvasHeight / tileHeight);
-		var canvasColumns = Math.floor(canvasWidth / tileWidth);
-		return { Rows: canvasRows, Columns: canvasColumns, TileWidth: tileWidth, TileHeight: tileHeight };
+		var canvasColumns = Math.floor(canvasWidth / tileMaxWidth);
+		return { Rows: canvasRows, Columns: canvasColumns, TileMaxWidth: tileMaxWidth, TileHeight: tileHeight };
 	},
 
 	SetOuterTileDestination: function (canvasWidth, canvasHeight, tile) {

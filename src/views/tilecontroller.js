@@ -193,8 +193,9 @@ PivotViewer.Views.TileController = Object.subClass({
     SetQuarticEasingOut: function () {
         this._easing = new Easing.Easer({ type: "quartic", side: "out" });
     },
-    GetTileRaio: function () {
-        return this._imageController.Height / this._imageController.Width;
+    GetMaxTileRatio: function () {
+    //    return this._imageController.Height / this._imageController.MaxWidth;
+        return this._imageController.MaxRatio;
     },
     DrawHelpers: function (helpers) {
         this._helpers = helpers;
@@ -220,6 +221,10 @@ PivotViewer.Views.Tile = Object.subClass({
         this._images = null;
     },
 
+    IsSelected: function () {
+       return this._selected;
+    },
+
     Draw: function () {
         //Is the tile destination in visible area?
         //If not, then re-use the old level images
@@ -237,19 +242,49 @@ PivotViewer.Views.Tile = Object.subClass({
             //if(this._level > 6)
                 this._images = this._controller.GetImagesAtLevel(this.facetItem.Img, this._level);
         }
-
         if (this._images != null) {
             if (typeof this._images == "function") {
                 //A DrawLevel function returned - invoke
-                this._images(this.facetItem, this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+                this._images(this.facetItem, this.context, this.x + 4, this.y + 4, this.width - 8, this.height - 8);
             }
+
             else if (this._images.length > 0 && this._images[0] instanceof Image) {
                 //if the collection contains an image
+                var completeImageHeight = this._controller.GetHeight(this.facetItem.Img);
+                //var completeImageWidth = this._controller.GetWidth(this.facetItem.Img);
+                //var levelWidth = Math.ceil(completeImageWidth / Math.pow(2, this._controller.GetMaxLevel(this.facetItem.Img) - this._level));
+
+                var displayHeight = this.height - 8;
+                var displayWidth = Math.ceil(this._controller.GetWidthForImage(this.facetItem.Img, displayHeight));
+               
+                //Narrower images need to be centered 
+                blankWidth = (this.width - 8) - displayWidth;
                 for (var i = 0; i < this._images.length; i++) {
+                    // We need to know where individual image tiles go
+                    var source = this._images[i].src;
+                    var tileSize = this._controller._tileSize;
+                    var n = source.match(/[0-9]+_[0-9]+/g);
+                    var xPosition = parseInt(n[n.length - 1].substring(0, n[n.length - 1].indexOf("_")));
+                    var yPosition = parseInt(n[n.length - 1].substring(n[n.length - 1].indexOf("_") + 1));
+
+                    //Get image level
+                    n = source.match (/_files\/[0-9]+\//g);
+                    var imageLevel = parseInt(n[0].substring(7, n[0].length - 1));
+                    var levelHeight = Math.ceil(completeImageHeight / Math.pow(2, this._controller.GetMaxLevel(this.facetItem.Img) - imageLevel));
+
+                    //Image will need to be scaled to get the displayHeight
+                    var scale = displayHeight / levelHeight;
+               
+                    var offsetx = (Math.floor(blankWidth/2)) + 4 + xPosition * Math.floor(tileSize * scale);
+                    var offsety = 4 + Math.floor((yPosition * tileSize * scale));
+               
+                    var imageTileHeight = Math.ceil(this._images[i].height * scale);
+                    var imageTileWidth = Math.ceil(this._images[i].width * scale);
+
+                    // Creates a grid artfact across the image so comment out for now
                     //only clearing a small portion of the canvas
-                    //http://www.html5rocks.com/en/tutorials/canvas/performance/
-                    //this.context.fillRect(this.x, this.y, this.width, this.height);
-                    this.context.drawImage(this._images[i], this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+                    //this.context.fillRect(offsetx + this.x, offsety + this.y, imageTileWidth, imageTileHeight);
+                    this.context.drawImage(this._images[i], offsetx + this.x , offsety + this.y, imageTileWidth, imageTileHeight);
                 }
             }
         }
@@ -260,7 +295,9 @@ PivotViewer.Views.Tile = Object.subClass({
         if (this._selected) {
             //draw a blue border
             this.context.beginPath();
-            this.context.rect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+// JCH - Line fits better round the image if the x offset is 3 not 4.  
+// Not clear why - maybe to do with thickness of the line
+            this.context.rect(this.x + 3, this.y + 4, this.width - 8, this.height - 8);
             this.context.lineWidth = 4;
             this.context.strokeStyle = "#92C4E1";
             this.context.stroke();
@@ -276,14 +313,14 @@ PivotViewer.Views.Tile = Object.subClass({
             //draw an empty square
             this.context.beginPath();
             this.context.fillStyle = "#D7DDDD";
-            this.context.fillRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
-            this.context.rect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            this.context.fillRect(this.x + 4, this.y + 4, this.width - 8, this.height - 8);
+            this.context.rect(this.x + 4, this.y + 4, this.width - 8, this.height - 8);
             this.context.lineWidth = 1;
             this.context.strokeStyle = "white";
             this.context.stroke();
         } else {
             //use the controllers blank tile
-            this._controller.DrawLevel(this.facetItem, this.context, this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+            this._controller.DrawLevel(this.facetItem, this.context, this.x + 4, this.y + 4, this.width - 8, this.height - 8);
         }
     },
     CollectionRoot: "",
@@ -297,6 +334,7 @@ PivotViewer.Views.Tile = Object.subClass({
     destinationy: 0,
     width: 0,
     height: 0,
+    ratio: 1,
     startwidth: 0,
     startheight: 0,
     destinationwidth: 0,

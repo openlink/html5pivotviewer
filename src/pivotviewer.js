@@ -151,10 +151,13 @@
         //setup zoom slider
         var thatRef = _silderPrev;
         $('.pv-toolbarpanel-zoomslider').slider({
-            max: 10,
-            slide: function (event, ui) {
+            max: 20,
+            change: function (event, ui) {
                 var val = ui.value < thatRef ? ui.value * -1 : ui.value;
-                $.publish("/PivotViewer/Views/Canvas/Zoom", [{ x: 201, y: 0, delta: 0.75 * val}]);
+                //Find canvas centre
+                centreX = $('.pv-viewarea-canvas').width() / 2;
+                centreY = $('.pv-viewarea-canvas').height() / 2;
+                $.publish("/PivotViewer/Views/Canvas/Zoom", [{ x: centreX, y: centreY, delta: 0.5 * val}]);
                 thatRef = ui.value;
             }
         });
@@ -403,7 +406,8 @@
         for (var i = 0; i < _views.length; i++) {
             try {
                 if (_views[i] instanceof PivotViewer.Views.IPivotViewerView) {
-                    _views[i].Setup(width, height, offsetX, offsetY, _tileController.GetTileRaio());
+                    //jch _views[i].Setup(width, height, offsetX, offsetY, _tileController.GetTileRaio());
+                    _views[i].Setup(width, height, offsetX, offsetY, _tileController.GetMaxTileRatio());
                     viewPanel.append("<div class='pv-viewpanel-view' id='pv-viewpanel-view-" + i + "'>" + _views[i].GetUI() + "</div>");
                     $('.pv-toolbarpanel-viewcontrols').append("<div class='pv-toolbarpanel-view' id='pv-toolbarpanel-view-" + i + "' title='" + _views[i].GetViewName() + "'><img id='pv-viewpanel-view-" + i + "-image' src='" + _views[i].GetButtonImage() + "' alt='" + _views[i].GetViewName() + "' /></div>");
                 } else {
@@ -1121,8 +1125,14 @@
 
             //Draw helper
             _tileController.DrawHelpers([{ x: offsetX, y: offsetY}]);
-            //send zoom event
-            $.publish("/PivotViewer/Views/Canvas/Zoom", [{ x: offsetX, y: offsetY, delta: delta}]);
+
+            var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+            if (delta > 0) { value += 1; }
+            else if (delta < 0) { value -= 1; }
+ 
+            // Ensure that its limited between 0 and 20
+            value = Math.max(0, Math.min(20, value));
+            $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
         });
         //http://stackoverflow.com/questions/6458571/javascript-zoom-and-rotate-using-gesturechange-and-gestureend
         canvas.on("touchstart", function (evt) {

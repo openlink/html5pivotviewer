@@ -22,7 +22,7 @@ PivotViewer.Views.IPivotViewerView = Object.subClass({
 		this.selected = "";
 		this.tiles = [];
 	},
-	Setup: function (width, height, offsetX, offsetY, tileRatio) { },
+	Setup: function (width, height, offsetX, offsetY, tileMaxRatio) { },
 	Filter: function (dzTiles, currentFilter, sortFacet) { },
 	GetUI: function () { return ''; },
 	GetButtonImage: function () { return ''; },
