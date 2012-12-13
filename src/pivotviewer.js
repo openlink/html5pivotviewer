@@ -24,6 +24,8 @@
         _loadingInterval,
         _tileController,
         _tiles = [],
+        _filterItems = [],
+        _selectedItem = "",
         _imageController,
         _mouseDrag = null,
         _mouseMove = null,
@@ -186,7 +188,9 @@
         infoPanel.css('left', (($('.pv-mainpanel').offset().left + $('.pv-mainpanel').width()) - 205) + 'px')
             .css('height', mainPanelHeight - 28 + 'px');
         infoPanel.append("<div class='pv-infopanel-controls'></div>");
-        $('.pv-infopanel-controls').append("<div><div class='pv-infopanel-controls-navleft'></div><div class='pv-infopanel-controls-navbar'></div><div class='pv-infopanel-controls-navright'></div></div>");
+        $('.pv-infopanel-controls').append("<div><div class='pv-infopanel-controls-navleft'></div><div class='pv-infopanel-controls-navleftdisabled'></div><div class='pv-infopanel-controls-navbar'></div><div class='pv-infopanel-controls-navright'></div><div class='pv-infopanel-controls-navrightdisabled'></div></div>");
+        $('.pv-infopanel-controls-navleftdisabled').hide();
+        $('.pv-infopanel-controls-navrightdisabled').hide();
         infoPanel.append("<div class='pv-infopanel-heading'></div>");
         infoPanel.append("<div class='pv-infopanel-details'></div>");
         infoPanel.hide();
@@ -641,7 +645,16 @@
         //Filter view
         _tileController.SetCircularEasingBoth();
         _views[_currentView].Filter(_tiles, filterItems, sort);
-        $.publish("/PivotViewer/Views/Item/Deselected", null);
+
+        // Maintain a list of items in the filter in sort order.
+        var sortedFilter = [];
+        for (var i = 0; i < _views[_currentView].tiles.length; i++) {
+            var filterindex = $.inArray(_views[_currentView].tiles[i].facetItem.Id, filterItems);
+            if (filterindex >= 0)
+                sortedFilter.push(_views[_currentView].tiles[i].facetItem.Id);
+        }
+        _filterItems = sortedFilter;
+
         DeselectInfoPanel();
     };
 
@@ -860,6 +873,28 @@
             if (selectedItem.Description != undefined && selectedItem.Description.length > 0) {
                 infopanelDetails.append("<div class='pv-infopanel-detail-description' style='height:100px;'>" + selectedItem.Description + "</div><div class='pv-infopanel-detail-description-more'>More</div>");
             }
+            // nav arrows...
+            if (selectedItem.Id == _filterItems[0] && selectedItem == _filterItems[_filterItems.length - 1]) {
+                $('.pv-infopanel-controls-navright').hide();
+                $('.pv-infopanel-controls-navrightdisabled').show();
+                $('.pv-infopanel-controls-navleft').hide();
+                $('.pv-infopanel-controls-navleftdisabled').show();
+            } else if (selectedItem.Id == _filterItems[0]) {
+                $('.pv-infopanel-controls-navleft').hide();
+                $('.pv-infopanel-controls-navleftdisabled').show();
+                $('.pv-infopanel-controls-navright').show();
+                $('.pv-infopanel-controls-navrightdisabled').hide();
+            } else if (selectedItem.Id == _filterItems[_filterItems.length - 1]) {
+                $('.pv-infopanel-controls-navright').hide();
+                $('.pv-infopanel-controls-navrightdisabled').show();
+                $('.pv-infopanel-controls-navleft').show();
+                $('.pv-infopanel-controls-navleftdisabled').hide();
+            } else {
+                $('.pv-infopanel-controls-navright').show();
+                $('.pv-infopanel-controls-navrightdisabled').hide();
+                $('.pv-infopanel-controls-navleft').show();
+                $('.pv-infopanel-controls-navleftdisabled').hide();
+            }
 
             var detailDOM = [];
             var detailDOMIndex = 0;
@@ -893,6 +928,7 @@
             infopanelDetails.append(detailDOM.join(''));
             $('.pv-infopanel').fadeIn();
             infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height()) - 20) + 'px');
+            _selectedItem = selectedItem;
             return;
         }
 
@@ -1022,7 +1058,48 @@
                 $(this).text('More');
             }
         });
-        //Saerch
+        $('.pv-infopanel-controls-navleft').on('click', function (e) {
+          for (var i = 0; i < _filterItems.length; i++) {
+              if (_filterItems[i] == _selectedItem.Id){
+                  if (i >= 0)
+                      $.publish("/PivotViewer/Views/Item/Selected", [_filterItems[i - 1]]);
+                      //jch need to move the images
+                      for (var j = 0; j < _tiles.length; j++) {
+                          if (_tiles[j].facetItem.Id == _filterItems[i - 1]) {
+                                _tiles[j].Selected(true);
+                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j]);
+                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j]);
+                                _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
+                          } else {
+                                _tiles[j].Selected(false);
+                          }
+                      }
+                  break;
+              }
+          }
+        });
+        $('.pv-infopanel-controls-navright').on('click', function (e) {
+          for (var i = 0; i < _filterItems.length; i++) {
+              if (_filterItems[i] == _selectedItem.Id){
+                  if (i < _filterItems.length) {
+                      $.publish("/PivotViewer/Views/Item/Selected", [_filterItems[i + 1]]);
+                      //jch need to move the images
+                      for (var j = 0; j < _tiles.length; j++) {
+                          if (_tiles[j].facetItem.Id == _filterItems[i + 1]) {
+                                _tiles[j].Selected(true);
+                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j]);
+                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j]);
+                                _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
+                          } else {
+                                _tiles[j].Selected(false);
+                          }
+                      }
+                  }
+                  break;
+              }
+          }
+        });
+        //Search
         $('.pv-filterpanel-search').on('keyup', function (e) {
             var found = false;
             var foundAlready = [];

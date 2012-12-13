@@ -41,8 +41,10 @@
 .pv-infopanel { position: absolute; z-index:30; width: 182px; margin-top:5px; padding: 8px 8px 8px 8px; background:#FEFEFE; border: 1px solid #C5C5C5; -moz-border-radius: 3px; border-radius: 3px; -moz-box-shadow: 0 0 2px 2px #D7D9DA; -webkit-box-shadow: 0 0 2px 2px #D7D9DA; box-shadow: 0 0 2px 2px #D7D9DA; }
 .pv-infopanel-controls { margin-bottom:7px; float :left; clear:both; }
 .pv-infopanel-controls-navleft { height: 10px; width: 10px; background-image: url('../Content/images/InfoPanelLeft.png'); float: left; cursor:pointer; }
+.pv-infopanel-controls-navleftdisabled { height: 10px; width: 10px; background-image: url('../Content/images/InfoPanelLeftDisabled.png'); float: left; cursor:pointer; }
 .pv-infopanel-controls-navbar { height: 10px; width: 0px; border-left: 1px solid #C8CFD3; margin-left:8px; float: left; }
 .pv-infopanel-controls-navright { height: 10px; width: 10px; margin-left:8px; background-image: url('../Content/images/InfoPanelRight.png'); float: left; cursor:pointer;}
+.pv-infopanel-controls-navrightdisabled { height: 10px; width: 10px; margin-left:8px; background-image: url('../Content/images/InfoPanelRightDisabled.png'); float: left; cursor:pointer;}
 .pv-infopanel-heading { font-size: 12pt; float:left; clear:both; }
 .pv-infopanel-details { margin-top: 15px; float: left; clear:both; width:181px; overflow-y:auto; overflow-x:hidden;}
 .pv-infopanel-detail-description { margin-bottom:5px; overflow:hidden; }
