@@ -589,6 +589,28 @@
         for (var i = 0, _iLen = PivotCollection.Items.length; i < _iLen; i++) {
             var foundCount = 0;
 
+            //Look for ("no info") in string filters
+            //Go through all filters facets 
+            for (var k = 0, _kLen = stringFacets.length; k < _kLen; k++) {
+                //Look for value matching "(no info)"
+                for (var n = 0, _nLen = stringFacets[k].facetValue.length; n < _nLen; n++) {
+                    if (stringFacets[k].facetValue[n] == "(no info)") {
+                        // See if facet is defined for the item
+                        var definedForItem = false;
+                        for (var j = 0, _jLen = PivotCollection.Items[i].Facets.length; j < _jLen; j++) {
+                            if (PivotCollection.Items[i].Facets[j].Name == stringFacets[k].facet){
+                                //Facet is defined for that item
+                                definedForItem = true;
+                            }
+                        }
+                        //Tried all of the items facets
+                        // Matches ("no info")
+                        if (definedForItem == false)
+                            foundCount++;
+                    }
+                }
+            }
+
             for (var j = 0, _jLen = PivotCollection.Items[i].Facets.length; j < _jLen; j++) {
                 //String facets
                 for (var k = 0, _kLen = stringFacets.length; k < _kLen; k++) {
@@ -606,6 +628,26 @@
             //if the item was not in the string filters then exit early
             if (foundCount != stringFacets.length)
                 continue;
+
+            //Look for ("no info") in numeric filters
+            //Go through all filters facets 
+            for (var k = 0, _kLen = numericFacets.length; k < _kLen; k++) {
+                //Look for value matching "(no info)"
+                    if (numericFacets[k].selectedMin == "(no info)") {
+                        // See if facet is defined for the item
+                        var definedForItem = false;
+                        for (var j = 0, _jLen = PivotCollection.Items[i].Facets.length; j < _jLen; j++) {
+                            if (PivotCollection.Items[i].Facets[j].Name == numericFacets[k].facet){
+                                //Facet is defined for that item
+                                definedForItem = true;
+                            }
+                        }
+                        //Tried all of the items facets
+                        // Matches ("no info")
+                        if (definedForItem == false)
+                            foundCount++;
+                    }
+            }
 
             for (var j = 0, _jLen = PivotCollection.Items[i].Facets.length; j < _jLen; j++) {
                 //Numeric facets
