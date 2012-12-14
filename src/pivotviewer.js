@@ -614,14 +614,19 @@
             for (var j = 0, _jLen = PivotCollection.Items[i].Facets.length; j < _jLen; j++) {
                 //String facets
                 for (var k = 0, _kLen = stringFacets.length; k < _kLen; k++) {
+                    var valueFoundForFacet = 0;
+
                     if (PivotCollection.Items[i].Facets[j].Name == stringFacets[k].facet) {
                         for (var m = 0, _mLen = PivotCollection.Items[i].Facets[j].FacetValues.length; m < _mLen; m++) {
                             for (var n = 0, _nLen = stringFacets[k].facetValue.length; n < _nLen; n++) {
                                 if (PivotCollection.Items[i].Facets[j].FacetValues[m].Value == stringFacets[k].facetValue[n])
-                                    foundCount++;
+                                    valueFoundForFacet++;
                             }
                         }
                     }
+                    // Handles the posibility that and item might match several values of one facet
+                    if (valueFoundForFacet > 0 )
+                      foundCount++;
                 }
             }
 
@@ -899,7 +904,7 @@
     //Item selected - show the info panel
     $.subscribe("/PivotViewer/Views/Item/Selected", function (evt) {
 
-        if (evt == undefined || evt == null) {
+        if (evt === undefined || evt === null || evt === "") {
             DeselectInfoPanel();
             return;
         }
@@ -980,9 +985,20 @@
         if (evt == undefined || evt == null)
             return;
 
-        var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Item)) + " input");
-        cb.attr('checked', 'checked');
-        FacetItemClick(cb[0]);
+        for (var i = 0, _iLen = PivotCollection.FacetCategories.length; i < _iLen; i++) {
+            if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
+                PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String) {
+
+            var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Item)) + " input");
+            cb.attr('checked', 'checked');
+            FacetItemClick(cb[0]);
+            }
+            if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
+                PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Number) {
+                var s = $('#pv-filterpanel-numericslider-' + PivotViewer.Utils.EscapeMetaChars(evt.Facet));
+                FacetSliderDrag(s, evt.Item, evt.MaxRange);
+            }
+        }
     });
 
     AttachEventHandlers = function () {
@@ -1327,6 +1343,23 @@
         if ($(checkbox).attr('checked') == 'checked') {
             $(checkbox.parentElement.parentElement.parentElement).prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
         }
+        FilterCollection();
+    };
+
+    FacetSliderDrag = function (slider, min, max) {
+        var thisWrapped = $(slider);
+        var thisMin = thisWrapped.slider('option', 'min'),
+                    thisMax = thisWrapped.slider('option', 'max');
+        // Treat no info as like 0 (bit dodgy fix later)
+        if (min == "(no info)") min = 0;
+        if (min > thisMin || max < thisMax) {
+            thisWrapped.parent().find('.pv-filterpanel-numericslider-range-val').text(min + " - " + max);
+            thisWrapped.slider('values', 0, min);
+            thisWrapped.slider('values', 1, max);
+            thisWrapped.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
+        }
+        else if (min == thisMin && max == thisMax)
+            thisWrapped.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
         FilterCollection();
     };
 
