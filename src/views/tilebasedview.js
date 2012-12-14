@@ -38,11 +38,6 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 			dzTiles[i]._locations[0].starty = inity;
 			dzTiles[i]._locations[0].destinationx = 0;
 			dzTiles[i]._locations[0].destinationy = 0;
-
-			dzTiles[i].startx = initx;
-			dzTiles[i].starty = inity;
-			dzTiles[i].destinationx = 0;
-			dzTiles[i].destinationy = 0;
 			dzTiles[i].width = 1;
 			dzTiles[i].height = 1;
 		}
@@ -68,8 +63,6 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 		// as x2 and y2 are the origin
 		var dx = tile._locations[0].x - (canvasWidth / 2);
 		var dy = tile._locations[0].y - (canvasHeight / 2);
-		var dx = tile.x - (canvasWidth / 2);
-		var dy = tile.y - (canvasHeight / 2);
 		var M = dy / dx;
 		var theta = Math.atan2(dy, dx)
 		tile._locations[0].destinationx = canvasWidth * Math.cos(theta) + (canvasWidth / 2);

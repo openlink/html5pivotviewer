@@ -53,6 +53,8 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     selectedRow = Math.round((that.canvasHeightUIAdjusted - that.tiles[i]._locations[0].y) / that.tiles[i].height);
                     tileHeight = that.tiles[i].height;
                     tileWidth = that.tiles[i].width;
+                    tileOrigHeight = that.tiles[i].origheight;
+                    tileOrigWidth = that.tiles[i].origwidth;
                     canvasHeight = that.tiles[i].context.canvas.height
                     canvasWidth = that.tiles[i].context.canvas.width
                 } else {
@@ -69,17 +71,17 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             if (selectedItem != null && that.selected != selectedItem) {
                 // Find which is proportionally bigger, height or width
                 if (tileHeight / canvasHeight > tileWidth/canvasWidth) 
-                    currentProportion = tileHeight / canvasHeight;
+                    origProportion = tileOrigHeight / canvasHeight;
                 else
-                    currentProportion = tileWidth / canvasWidth;
+                    origProportion = tileOrigWidth / canvasWidth;
                 //Get scaling factor so max tile dimension is about 60% total
                 //Multiply by two as the zoomslider devides all scaling factors by 2
-                scale = Math.round((0.75 / currentProportion) * 2);
+                scale = Math.round((0.75 / origProportion) * 2);
 
                 // Zoom using the slider event
                 if (that.selected == ""){
                     var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
-                    value += scale; 
+                    value = scale; 
                     $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
                 }
                 that.selected = selectedItem;
@@ -360,6 +362,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         //Delay pt2 animation
         setTimeout(function () {
             that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted - that.offsetY, that.maxRatio, that.bigCount);
+            for (var i = 0; i < that.tiles.length; i++) {
+                that.tiles[i].origwidth = that.rowscols.TileHeight / that.tiles[i].ratio;
+                that.tiles[i].origheight = that.rowscols.TileHeight;
+            }
             that.SetVisibleTileGraphPositions(that.rowscols, that.offsetX, that.offsetY, false, false);
 
         }, pt2Timeout);

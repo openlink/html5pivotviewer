@@ -335,7 +335,7 @@ PivotViewer.Views.Tile = Object.subClass({
             this.context.stroke();
         } else {
             //use the controllers blank tile
-            this._controller.DrawLevel(this.facetItem, this.context, this.x + 4, this.y + 4, this.width - 8, this.height - 8);
+            this._controller.DrawLevel(this.facetItem, this.context, this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
         }
     },
     CollectionRoot: "",
@@ -343,6 +343,8 @@ PivotViewer.Views.Tile = Object.subClass({
     end: null,
     width: 0,
     height: 0,
+    origwidth: 0,
+    origheight: 0,
     ratio: 1,
     startwidth: 0,
     startheight: 0,

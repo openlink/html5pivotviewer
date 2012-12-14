@@ -155,7 +155,7 @@
         $('.pv-toolbarpanel-zoomslider').slider({
             max: 20,
             change: function (event, ui) {
-                var val = ui.value < thatRef ? ui.value * -1 : ui.value;
+                var val = ui.value - thatRef;
                 //Find canvas centre
                 centreX = $('.pv-viewarea-canvas').width() / 2;
                 centreY = $('.pv-viewarea-canvas').height() / 2;

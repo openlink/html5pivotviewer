@@ -40,6 +40,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     that.tiles[i].Selected(true);
                     tileHeight = that.tiles[i].height;
                     tileWidth = that.tiles[i].width;
+                    tileOrigHeight = that.tiles[i].origheight;
+                    tileOrigWidth = that.tiles[i].origwidth;
                     canvasHeight = that.tiles[i].context.canvas.height
                     canvasWidth = that.tiles[i].context.canvas.width
 
@@ -52,17 +54,17 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             if (selectedItem != null && that.selected != selectedItem) {
                 // Find which is proportionally bigger, height or width
                 if (tileHeight / canvasHeight > tileWidth/canvasWidth) 
-                    currentProportion = tileHeight / canvasHeight;
+                    origProportion = tileOrigHeight / canvasHeight;
                 else
-                    currentProportion = tileWidth / canvasWidth;
+                    origProportion = tileOrigWidth / canvasWidth;
                 //Get scaling factor so max tile dimension is about 60% total
                 //Multiply by two as the zoomslider devides all scaling factors by 2
-                scale = Math.round((0.75 / currentProportion) * 2);
+                scale = Math.round((0.75 / origProportion) * 2);
 
                 // Zoom using the slider event
                 if (that.selected == ""){
                     var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
-                    value += scale; 
+                    value = scale; 
                     $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
                 }
                 that.selected = selectedItem;
@@ -85,10 +87,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
                 value = 0;
                 $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
-                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
-                that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
             }
-
 
             $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
         });
@@ -124,7 +123,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     that.Scale = that.Scale < 1 ? 1 : that.Scale;
                 }
             } else if (evt.delta != undefined)
-                that.Scale = evt.delta < 0 ? that.Scale / evt.delta : that.Scale * Math.abs(evt.delta);
+                that.Scale = evt.delta == 0 ? 1 : (that.Scale + evt.delta - 1);
 
             if (that.Scale == NaN)
                 that.Scale = 1;
@@ -156,8 +155,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
             that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, zoomTime);
 
-            //deselect tiles if zooming out
-            if (evt.delta < 0) {
+            //deselect tiles if zooming back to min size
+            if (that.Scale == 1 && oldScale != 1) {
                 for (var i = 0; i < that.tiles.length; i++) {
                     that.tiles[i].Selected(false);
                 }
@@ -265,6 +264,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.maxRatio, this.tiles.length);
             var clearFilter = [];
             for (var i = 0; i < this.tiles.length; i++) {
+                this.tiles[i].origwidth = rowscols.TileHeight / this.tiles[i].ratio;
+                this.tiles[i].origheight = rowscols.TileHeight;
                 clearFilter.push(this.tiles[i].facetItem.Id);
             }
             this.SetVisibleTilePositions(rowscols, clearFilter, this.currentOffsetX, this.currentOffsetY, true, false, 1000);
@@ -292,6 +293,10 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             //Delay pt2 animation
             setTimeout(function () {
                 var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.maxRatio, that.currentFilter.length);
+                for (var i = 0; i < that.tiles.length; i++) {
+                    that.tiles[i].origwidth = rowscols.TileHeight / that.tiles[i].ratio;
+                    that.tiles[i].origheight = rowscols.TileHeight;
+                }
                 that.SetVisibleTilePositions(rowscols, that.currentFilter, that.offsetX, that.offsetY, false, false, 1000);
             }, pt2Timeout);
 
