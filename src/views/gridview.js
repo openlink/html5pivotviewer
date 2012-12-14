@@ -35,8 +35,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 if (that.tiles[i].Contains(evt.x, evt.y)) {
                     selectedItem = that.tiles[i].facetItem.Id;
                     //determine row and column that tile is in in relation to the first tile
-                    selectedCol = Math.round((that.tiles[i].x - that.currentOffsetX) / that.tiles[i].width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
-                    selectedRow = Math.round((that.tiles[i].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
+                    selectedCol = Math.round((that.tiles[i]._locations[0].x - that.currentOffsetX) / that.tiles[i].width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
+                    selectedRow = Math.round((that.tiles[i]._locations[0].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
                     that.tiles[i].Selected(true);
                     tileHeight = that.tiles[i].height;
                     tileWidth = that.tiles[i].width;
@@ -239,6 +239,12 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             this.SetInitialTiles(this.tiles, this.width, this.height);
         }
 
+        // Clear all the multiple images that are used in the grid view
+        for (var l = 0; l < this.tiles.length; l++) {
+          while (this.tiles[l]._locations.length > 1) 
+              this.tiles[l]._locations.pop();   
+        }
+
         //Sort
         this.tiles = this.tiles.sort(this.SortBy(sortFacet, false, function (a) {
             return $.isNumeric(a) ? a : a.toUpperCase();
@@ -268,8 +274,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         setTimeout(function () {
             for (var i = 0; i < that.tiles.length; i++) {
                 //setup tiles
-                that.tiles[i].startx = that.tiles[i].x;
-                that.tiles[i].starty = that.tiles[i].y;
+                that.tiles[i]._locations[0].startx = that.tiles[i]._locations[0].x;
+                that.tiles[i]._locations[0].starty = that.tiles[i]._locations[0].y;
                 that.tiles[i].startwidth = that.tiles[i].width;
                 that.tiles[i].startheight = that.tiles[i].height;
 
@@ -322,8 +328,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             if (filterindex >= 0) {
                 if (initTiles) {
                     //setup tile initial positions
-                    this.tiles[i].startx = this.tiles[i].x;
-                    this.tiles[i].starty = this.tiles[i].y;
+                    this.tiles[i]._locations[0].startx = this.tiles[i]._locations[0].x;
+                    this.tiles[i]._locations[0].starty = this.tiles[i]._locations[0].y;
                     this.tiles[i].startwidth = this.tiles[i].width;
                     this.tiles[i].startheight = this.tiles[i].height;
                 }
@@ -331,8 +337,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 //set destination positions
                 this.tiles[i].destinationwidth = rowscols.TileMaxWidth;
                 this.tiles[i].destinationheight = rowscols.TileHeight;
-                this.tiles[i].destinationx = (currentColumn * rowscols.TileMaxWidth) + offsetX;
-                this.tiles[i].destinationy = (currentRow * rowscols.TileHeight) + offsetY;
+                this.tiles[i]._locations[0].destinationx = (currentColumn * rowscols.TileMaxWidth) + offsetX;
+                this.tiles[i]._locations[0].destinationy = (currentRow * rowscols.TileHeight) + offsetY;
                 this.tiles[i].start = PivotViewer.Utils.Now();
                 this.tiles[i].end = this.tiles[i].start + miliseconds;
                 if (currentColumn == columns - 1) {
@@ -346,12 +352,12 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     },
     GetSelectedCol: function (tile) {
         var that = this;
-        selectedCol = Math.round((tile.x - that.currentOffsetX) / tile.width); 
+        selectedCol = Math.round((tile._locations[0].x - that.currentOffsetX) / tile.width); 
         return selectedCol;
     },
     GetSelectedRow: function (tile) {
         var that = this;
-        selectedRow = Math.round((tile.y - that.currentOffsetY) / tile.height);
+        selectedRow = Math.round((tile._locations[0].y - that.currentOffsetY) / tile.height);
         return selectedRow;
     },
     /// Centres the selected tile
@@ -364,8 +370,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 break;
             }
         }
-        offsetX = selectedTile.x;
-        offsetY = selectedTile.y;
+        offsetX = selectedTile._locations[0].x;
+        offsetY = selectedTile._locations[0].y;
 
         var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
 

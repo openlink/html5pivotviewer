@@ -34,6 +34,8 @@ PivotViewer.Views.TileController = Object.subClass({
             tile.CollectionRoot = baseCollectionPath.replace(/\\/gi, "/").replace(/\.xml/gi, "");
             this._canvasContext = canvasContext;
             tile.context = this._canvasContext;
+            tileLocation = new PivotViewer.Views.TileLocation();
+            tile._locations.push(tileLocation);
             this._tiles.push(tile);
         }
         return this._tiles;
@@ -53,62 +55,66 @@ PivotViewer.Views.TileController = Object.subClass({
             var isZooming = false;
             //Set tile properties
             for (var i = 0; i < this._tiles.length; i++) {
-                var now = PivotViewer.Utils.Now() - this._tiles[i].start,
-                end = this._tiles[i].end - this._tiles[i].start;
-                //use the easing function to determine the next position
-                if (now <= end) {
-                    //at least one tile is moving
-                    //isAnimating = true;
+                //for each tile location...
+                for (l = 0; l < this._tiles[i]._locations.length; l++) {
+                     var now = PivotViewer.Utils.Now() - this._tiles[i].start,
+                     end = this._tiles[i].end - this._tiles[i].start;
+                     //use the easing function to determine the next position
+                     if (now <= end) {
+                         //at least one tile is moving
+                         //isAnimating = true;
+ 
+                         //if the position is different from the destination position then zooming is happening
+                         if (this._tiles[i]._locations[l].x != this._tiles[i]._locations[l].destinationx || this._tiles[i]._locations[l].y != this._tiles[i]._locations[l].destinationy)
+                             isZooming = true;
+ 
+                         this._tiles[i]._locations[l].x = this._easing.ease(
+                             now, 										// curr time
+                             this._tiles[i]._locations[l].startx,                                                       // start position
+                            this._tiles[i]._locations[l].destinationx - this._tiles[i]._locations[l].startx, // relative end position
 
-                    //if the position is different from the destination position then zooming is happening
-                    if (this._tiles[i].x != this._tiles[i].destinationx || this._tiles[i].y != this._tiles[i].destinationy)
-                        isZooming = true;
-
-                    this._tiles[i].x = this._easing.ease(
-                        now, 										// curr time
-                        this._tiles[i].startx, 							// start position
-                        this._tiles[i].destinationx - this._tiles[i].startx, // relative end position
-                        end											// end time
-                    );
-
-                    this._tiles[i].y = this._easing.ease(
-                    now,
-                    this._tiles[i].starty,
-                    this._tiles[i].destinationy - this._tiles[i].starty,
-                    end
-                );
-
-                    //if the width/height is different from the destination width/height then zooming is happening
-                    if (this._tiles[i].width != this._tiles[i].destinationWidth || this._tiles[i].height != this._tiles[i].destinationHeight)
-                        isZooming = true;
-
-                    this._tiles[i].width = this._easing.ease(
-                    now,
-                    this._tiles[i].startwidth,
-                    this._tiles[i].destinationwidth - this._tiles[i].startwidth,
-                    end
-                );
-
-                    this._tiles[i].height = this._easing.ease(
-                    now,
-                    this._tiles[i].startheight,
-                    this._tiles[i].destinationheight - this._tiles[i].startheight,
-                    end
-                );
-                } else {
-                    this._tiles[i].x = this._tiles[i].destinationx;
-                    this._tiles[i].y = this._tiles[i].destinationy;
-                    this._tiles[i].width = this._tiles[i].destinationwidth;
-                    this._tiles[i].height = this._tiles[i].destinationheight;
-                }
-
-                //check if the destination will be in the visible area
-                if (this._tiles[i].destinationx + this._tiles[i].destinationwidth < 0 || this._tiles[i].destinationx > context.canvas.width || this._tiles[i].destinationy + this._tiles[i].destinationheight < 0 || this._tiles[i].destinationy > context.canvas.height)
-                    this._tiles[i].destinationVisible = false;
-                else
-                    this._tiles[i].destinationVisible = true;
-            }
-        }
+                             end											// end time
+                         );
+ 
+                         this._tiles[i]._locations[l].y = this._easing.ease(
+                         now,
+                         this._tiles[i]._locations[l].starty,
+                         this._tiles[i]._locations[l].destinationy - this._tiles[i]._locations[l].starty,
+                         end
+                     );
+ 
+                         //if the width/height is different from the destination width/height then zooming is happening
+                         if (this._tiles[i].width != this._tiles[i].destinationWidth || this._tiles[i].height != this._tiles[i].destinationHeight)
+                             isZooming = true;
+ 
+                         this._tiles[i].width = this._easing.ease(
+                         now,
+                         this._tiles[i].startwidth,
+                         this._tiles[i].destinationwidth - this._tiles[i].startwidth,
+                         end
+                     );
+ 
+                         this._tiles[i].height = this._easing.ease(
+                         now,
+                         this._tiles[i].startheight,
+                         this._tiles[i].destinationheight - this._tiles[i].startheight,
+                         end
+                     );
+                     } else {
+                         this._tiles[i]._locations[l].x = this._tiles[i]._locations[l].destinationx;
+                         this._tiles[i]._locations[l].y = this._tiles[i]._locations[l].destinationy;
+                         this._tiles[i].width = this._tiles[i].destinationwidth;
+                         this._tiles[i].height = this._tiles[i].destinationheight;
+                     }
+ 
+                     //check if the destination will be in the visible area
+                     if (this._tiles[i]._locations[l].destinationx + this._tiles[i].destinationwidth < 0 || this._tiles[i]._locations[l].destinationx > context.canvas.width || this._tiles[i]._locations[l].destinationy + this._tiles[i].destinationheight < 0 || this._tiles[i]._locations[l].destinationy > context.canvas.height)
+                         this._tiles[i].destinationVisible = false;
+                     else
+                         this._tiles[i].destinationVisible = true;
+                 }
+             }
+         }
 
         //fire zoom event
         if (this._isZooming != isZooming) {
@@ -125,7 +131,7 @@ PivotViewer.Views.TileController = Object.subClass({
         //once properties set then draw
         for (var i = 0; i < this._tiles.length; i++) {
             //only draw if in visible area
-            if (this._tiles[i].x + this._tiles[i].width > 0 && this._tiles[i].x < context.canvas.width && this._tiles[i].y + this._tiles[i].height > 0 && this._tiles[i].y < context.canvas.height) {
+            if (this._tiles[i]._locations[0].x + this._tiles[i].width > 0 && this._tiles[i]._locations[0].x < context.canvas.width && this._tiles[i]._locations[0].y + this._tiles[i].height > 0 && this._tiles[i]._locations[0].y < context.canvas.height) {
                 if (isAnimating)
                     this._tiles[i].DrawEmpty();
                 else
@@ -219,6 +225,7 @@ PivotViewer.Views.Tile = Object.subClass({
         this._selected = false;
         this._level = 0;
         this._images = null;
+        this._locations = [];
     },
 
     IsSelected: function () {
@@ -245,7 +252,7 @@ PivotViewer.Views.Tile = Object.subClass({
         if (this._images != null) {
             if (typeof this._images == "function") {
                 //A DrawLevel function returned - invoke
-                this._images(this.facetItem, this.context, this.x + 4, this.y + 4, this.width - 8, this.height - 8);
+                this._images(this.facetItem, this.context, this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
             }
 
             else if (this._images.length > 0 && this._images[0] instanceof Image) {
@@ -281,10 +288,14 @@ PivotViewer.Views.Tile = Object.subClass({
                     var imageTileHeight = Math.ceil(this._images[i].height * scale);
                     var imageTileWidth = Math.ceil(this._images[i].width * scale);
 
-                    // Creates a grid artfact across the image so comment out for now
-                    //only clearing a small portion of the canvas
-                    //this.context.fillRect(offsetx + this.x, offsety + this.y, imageTileWidth, imageTileHeight);
-                    this.context.drawImage(this._images[i], offsetx + this.x , offsety + this.y, imageTileWidth, imageTileHeight);
+                    // Draw for each location (should only be multiple locations in graph view)
+                    for (l = 0; l < this._locations.length; l++) {
+
+                        // Creates a grid artfact across the image so comment out for now
+                        //only clearing a small portion of the canvas
+                        //this.context.fillRect(offsetx + this.x, offsety + this.y, imageTileWidth, imageTileHeight);
+                        this.context.drawImage(this._images[i], offsetx + this._locations[l].x , offsety + this._locations[l].y, imageTileWidth, imageTileHeight);
+                    }
                 }
             }
         }
@@ -297,7 +308,7 @@ PivotViewer.Views.Tile = Object.subClass({
             this.context.beginPath();
 // JCH - Line fits better round the image if the x offset is 3 not 4.  
 // Not clear why - maybe to do with thickness of the line
-            this.context.rect(this.x + 3, this.y + 4, this.width - 8, this.height - 8);
+            this.context.rect(this._locations[0].x + 3, this._locations[0].y + 4, this.width - 8, this.height - 8);
             this.context.lineWidth = 4;
             this.context.strokeStyle = "#92C4E1";
             this.context.stroke();
@@ -305,16 +316,20 @@ PivotViewer.Views.Tile = Object.subClass({
     },
     //http://simonsarris.com/blog/510-making-html5-canvas-useful
     Contains: function (mx, my) {
-        return (this.x <= mx) && (this.x + this.width >= mx) &&
-        (this.y <= my) && (this.y + this.height >= my);
+        var foundIt = false;
+        for ( i = 0; i < this._locations.length; i++) {
+            foundIt = (this._locations[0].x <= mx) && (this._locations[0].x + this.width >= mx) &&
+        (this._locations[0].y <= my) && (this._locations[0].y + this.height >= my);
+        }
+        return foundIt;
     },
     DrawEmpty: function () {
         if (this._controller.DrawLevel == undefined) {
             //draw an empty square
             this.context.beginPath();
             this.context.fillStyle = "#D7DDDD";
-            this.context.fillRect(this.x + 4, this.y + 4, this.width - 8, this.height - 8);
-            this.context.rect(this.x + 4, this.y + 4, this.width - 8, this.height - 8);
+            this.context.fillRect(this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
+            this.context.rect(this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
             this.context.lineWidth = 1;
             this.context.strokeStyle = "white";
             this.context.stroke();
@@ -326,12 +341,6 @@ PivotViewer.Views.Tile = Object.subClass({
     CollectionRoot: "",
     now: null,
     end: null,
-    x: 0,
-    y: 0,
-    startx: 0,
-    starty: 0,
-    destinationx: 0,
-    destinationy: 0,
     width: 0,
     height: 0,
     ratio: 1,
@@ -342,5 +351,20 @@ PivotViewer.Views.Tile = Object.subClass({
     destinationVisible: true,
     context: null,
     facetItem: null,
+    firstFilterItemDone: false,
     Selected: function (selected) { this._selected = selected }
+});
+///
+/// Tile Location
+/// Used to contain the location of a tile as in the graph view a tile can appear multiple times
+///
+PivotViewer.Views.TileLocation = Object.subClass({
+    init: function () {
+    },
+    x: 0,
+    y: 0,
+    startx: 0,
+    starty: 0,
+    destinationx: 0,
+    destinationy: 0,
 });

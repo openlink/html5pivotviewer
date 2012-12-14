@@ -20,8 +20,8 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 			var filterindex = $.inArray(this.tiles[i].facetItem.Id, this.currentFilter);
 			//set outer location for all tiles not in the filter
 			if (filterindex >= 0) {
-				this.tiles[i].destinationx += offsetX;
-				this.tiles[i].destinationy += offsetY;
+                               this.tiles[i]._locations[0].destinationx += offsetX;
+                               this.tiles[i]._locations[0].destinationy += offsetY;
 			}
 		}
 	},
@@ -30,10 +30,15 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 		var initx = canvasWidth / 2;
 		var inity = canvasHeight / 2;
 		for (var i = 0; i < dzTiles.length; i++) {
-			dzTiles[i].x = initx;
-			dzTiles[i].y = inity;
+			dzTiles[i]._locations[0].x = initx;
+			dzTiles[i]._locations[0].y = inity;
 			dzTiles[i].velocityx = 0;
 			dzTiles[i].velocityy = 0;
+			dzTiles[i]._locations[0].startx = initx;
+			dzTiles[i]._locations[0].starty = inity;
+			dzTiles[i]._locations[0].destinationx = 0;
+			dzTiles[i]._locations[0].destinationy = 0;
+
 			dzTiles[i].startx = initx;
 			dzTiles[i].starty = inity;
 			dzTiles[i].destinationx = 0;
@@ -61,12 +66,14 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 		//http://stackoverflow.com/questions/6091728/line-segment-circle-intersection
 		//Get adjusted x and y
 		// as x2 and y2 are the origin
+		var dx = tile._locations[0].x - (canvasWidth / 2);
+		var dy = tile._locations[0].y - (canvasHeight / 2);
 		var dx = tile.x - (canvasWidth / 2);
 		var dy = tile.y - (canvasHeight / 2);
 		var M = dy / dx;
 		var theta = Math.atan2(dy, dx)
-		tile.destinationx = canvasWidth * Math.cos(theta) + (canvasWidth / 2);
-		tile.destinationy = canvasHeight * Math.sin(theta) + (canvasHeight / 2);
+		tile._locations[0].destinationx = canvasWidth * Math.cos(theta) + (canvasWidth / 2);
+		tile._locations[0].destinationy = canvasHeight * Math.sin(theta) + (canvasHeight / 2);
 	},
 
 	//http://stackoverflow.com/questions/979256/how-to-sort-an-array-of-javascript-objects
