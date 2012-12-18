@@ -52,11 +52,11 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     selectedCol = Math.round((that.tiles[i]._locations[0].x - that.currentOffsetX) / that.tiles[i].width);
                     selectedRow = Math.round((that.canvasHeightUIAdjusted - that.tiles[i]._locations[0].y) / that.tiles[i].height);
                     tileHeight = that.tiles[i].height;
-                    tileWidth = that.tiles[i].width;
+                    tileWidth = that.tiles[i].height / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                     tileOrigHeight = that.tiles[i].origheight;
                     tileOrigWidth = that.tiles[i].origwidth;
                     canvasHeight = that.tiles[i].context.canvas.height
-                    canvasWidth = that.tiles[i].context.canvas.width
+                    canvasWidth = that.tiles[i].context.canvas.width - ($('.pv-filterpanel').width() + $('.pv-infopanel').width());
                 } else {
                     that.tiles[i].Selected(false);
                 }
@@ -76,7 +76,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     origProportion = tileOrigWidth / canvasWidth;
                 //Get scaling factor so max tile dimension is about 60% total
                 //Multiply by two as the zoomslider devides all scaling factors by 2
-                scale = Math.round((0.60 / origProportion) * 2);
+                scale = Math.round((0.75 / origProportion) * 2);
 
                 // Zoom using the slider event
                 if (that.selected == ""){

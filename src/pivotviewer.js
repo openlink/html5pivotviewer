@@ -153,7 +153,7 @@
         //setup zoom slider
         var thatRef = _silderPrev;
         $('.pv-toolbarpanel-zoomslider').slider({
-            max: 20,
+            max: 100,
             change: function (event, ui) {
                 var val = ui.value - thatRef;
                 //Find canvas centre
@@ -1261,11 +1261,11 @@
             _tileController.DrawHelpers([{ x: offsetX, y: offsetY}]);
 
             var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
-            if (delta > 0) { value += 1; }
-            else if (delta < 0) { value -= 1; }
+            if (delta > 0) { value = (value < 5 ) ? 5 : value + 5; }
+            else if (delta < 0) { value = value - 5; }
  
             // Ensure that its limited between 0 and 20
-            value = Math.max(0, Math.min(20, value));
+            value = Math.max(0, Math.min(100, value));
             $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
         });
         //http://stackoverflow.com/questions/6458571/javascript-zoom-and-rotate-using-gesturechange-and-gestureend

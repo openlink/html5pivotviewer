@@ -297,40 +297,21 @@ PivotViewer.Views.Tile = Object.subClass({
                         this.context.drawImage(this._images[i], offsetx + this._locations[l].x , offsety + this._locations[l].y, imageTileWidth, imageTileHeight);
                     }
                 }
-        if (this._selected) {
-            //draw a blue border
-            this.context.beginPath();
-// JCH - Line fits better round the image if the x offset is 3 not 4.  
-// Not clear why - maybe to do with thickness of the line
-           // this.context.rect(this._locations[0].x + 3, this._locations[0].y + 4, this.width - 8, this.height - 8);
-            var offsetx = (Math.floor(blankWidth/2)) + 4;
-            var offsety = 4;
-            this.context.rect(offsetx + this._locations[0].x , offsety + this._locations[0].y, displayWidth, displayHeight);
-            this.context.lineWidth = 4;
-            this.context.strokeStyle = "#92C4E1";
-            this.context.stroke();
-        }
+                if (this._selected) {
+                    //draw a blue border
+                    this.context.beginPath();
+                    var offsetx = (Math.floor(blankWidth/2)) + 4;
+                    var offsety = 4;
+                    this.context.rect(offsetx + this._locations[0].x , offsety + this._locations[0].y, displayWidth, displayHeight);
+                    this.context.lineWidth = 4;
+                    this.context.strokeStyle = "#92C4E1";
+                    this.context.stroke();
+                }
             }
         }
         else {
             this.DrawEmpty();
         }
-
-/*
-        if (this._selected) {
-            //draw a blue border
-            this.context.beginPath();
-// JCH - Line fits better round the image if the x offset is 3 not 4.  
-// Not clear why - maybe to do with thickness of the line
-           // this.context.rect(this._locations[0].x + 3, this._locations[0].y + 4, this.width - 8, this.height - 8);
-                var displayHeight = this.height - 8;
-                var displayWidth = Math.ceil(this._controller.GetWidthForImage(this.facetItem.Img, displayHeight));
-            this.context.rect(offsetx + this._locations[0].x , offsety + this._locations[0].y, displayWidth, displayHeight);
-            this.context.lineWidth = 4;
-            this.context.strokeStyle = "#92C4E1";
-            this.context.stroke();
-        }
-*/
     },
     //http://simonsarris.com/blog/510-making-html5-canvas-useful
     Contains: function (mx, my) {

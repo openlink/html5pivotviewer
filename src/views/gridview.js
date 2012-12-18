@@ -39,11 +39,11 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     selectedRow = Math.round((that.tiles[i]._locations[0].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
                     that.tiles[i].Selected(true);
                     tileHeight = that.tiles[i].height;
-                    tileWidth = that.tiles[i].width;
+                    tileWidth = that.tiles[i].height / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                     tileOrigHeight = that.tiles[i].origheight;
                     tileOrigWidth = that.tiles[i].origwidth;
                     canvasHeight = that.tiles[i].context.canvas.height
-                    canvasWidth = that.tiles[i].context.canvas.width
+                    canvasWidth = that.tiles[i].context.canvas.width - ($('.pv-filterpanel').width() + $('.pv-infopanel').width());
 
                 } else {
                     that.tiles[i].Selected(false);
@@ -59,7 +59,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     origProportion = tileOrigWidth / canvasWidth;
                 //Get scaling factor so max tile dimension is about 60% total
                 //Multiply by two as the zoomslider devides all scaling factors by 2
-                scale = Math.round((0.60 / origProportion) * 2);
+                scale = Math.round((0.75 / origProportion) * 2);
 
                 // Zoom using the slider event
                 if (that.selected == ""){
