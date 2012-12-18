@@ -35,5 +35,7 @@ pivotviewer.js: \
 	@rm -f $@
 	uglifyjs $< > $@
 
+VERSION:=$(shell ./gen_version.sh )
+
 %.js:
-	cat $(filter %.js,$^) > $@
+	cat $(filter %.js,$^) | sed -e 's#@VERSION@#$(VERSION)#' > $@

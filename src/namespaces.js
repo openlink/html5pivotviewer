@@ -16,6 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
+PivotViewer.Version="@VERSION@";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
