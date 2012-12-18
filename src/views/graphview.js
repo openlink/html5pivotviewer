@@ -76,7 +76,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     origProportion = tileOrigWidth / canvasWidth;
                 //Get scaling factor so max tile dimension is about 60% total
                 //Multiply by two as the zoomslider devides all scaling factors by 2
-                scale = Math.round((0.75 / origProportion) * 2);
+                scale = Math.round((0.60 / origProportion) * 2);
 
                 // Zoom using the slider event
                 if (that.selected == ""){
@@ -358,12 +358,22 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             }
         }
 
+        // recalculate max width of images in filter
+        that.maxRatio = that.tiles[0]._controller.GetRatio(that.tiles[0].facetItem.Img);
+        for (var i = 0; i < that.tiles.length; i++) {
+            var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
+            if (filterindex >= 0) {
+                if (that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img) < that.maxRatio)
+                    that.maxRatio = that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
+            }
+        }
+
         var pt2Timeout = currentFilter.length == this.tiles.length ? 0 : 500;
         //Delay pt2 animation
         setTimeout(function () {
             that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted - that.offsetY, that.maxRatio, that.bigCount);
             for (var i = 0; i < that.tiles.length; i++) {
-                that.tiles[i].origwidth = that.rowscols.TileHeight / that.tiles[i].ratio;
+                that.tiles[i].origwidth = that.rowscols.TileHeight / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                 that.tiles[i].origheight = that.rowscols.TileHeight;
             }
             that.SetVisibleTileGraphPositions(that.rowscols, that.offsetX, that.offsetY, false, false);

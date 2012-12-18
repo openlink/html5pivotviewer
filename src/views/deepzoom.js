@@ -25,7 +25,6 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         this._baseUrl = "";
         this._collageMaxLevel = 0;
         this._tileSize = 256;
-//        this._maxLevel = 0;
         this._format = "";
         this._ratio = 1;
         this.MaxRatio = 1;
@@ -96,7 +95,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         if (width > that.MaxWidth)
                             that.MaxWidth = width;
                         if (that._ratio < that.MaxRatio)  // i.e. biggest width cf height upside down....
-                            that.MaxRatio - that._ratio;
+                            that.MaxRatio = that._ratio;
                     }
                 }
                  //Loaded DeepZoom collection
@@ -246,6 +245,13 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         for (var i = 0; i < this._items.length; i++) {
             if (this._items[i].ItemId == id) {
                return this._items[i].Height;
+            }
+        }
+    },
+    GetRatio: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Ratio;
             }
         }
     }
