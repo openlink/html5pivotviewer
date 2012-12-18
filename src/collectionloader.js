@@ -102,45 +102,55 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 if (facetItems.length == 1) {
                     collection.ImageBase = $(facetItems[0]).attr("ImgBase");
                     var facetItem = $(facetItems[0]).find("Item");
-                    for (var i = 0; i < facetItem.length; i++) {
-                        var item = new PivotViewer.Models.Item(
-                            $(facetItem[i]).attr("Img").replace("#", ""),
-                            $(facetItem[i]).attr("Id"),
-                            $(facetItem[i]).attr("Href"),
-                            $(facetItem[i]).attr("Name")
-                        );
-                        var description = $(facetItem[i]).find("Description");
-                        if (description.length == 1 && description[0].childNodes.length)
-                            item.Description = description[0].childNodes[0].nodeValue;
-                        var facets = $(facetItem[i]).find("Facet");
-                        for (var j = 0; j < facets.length; j++) {
-                            var f = new PivotViewer.Models.Facet(
-                                $(facets[j]).attr("Name")
+                    if (facetItem.length == 0) {
+                        //Make sure throbber is removed else everyone thinks the app is still running
+                        $('.pv-loading').remove();
+ 
+                        //Throw an alert so the user knows something is wrong
+                        var msg = '';
+                        msg = msg + 'There are no items in the CXML Collection\r\n\r\n';
+                        window.alert (msg);
+                    } else {
+                        for (var i = 0; i < facetItem.length; i++) {
+                            var item = new PivotViewer.Models.Item(
+                                $(facetItem[i]).attr("Img").replace("#", ""),
+                                $(facetItem[i]).attr("Id"),
+                                $(facetItem[i]).attr("Href"),
+                                $(facetItem[i]).attr("Name")
                             );
-
-                            var facetChildren = $(facets[j]).children();
-                            for (var k = 0; k < facetChildren.length; k++) {
-                                if (facetChildren[k].nodeType == 1) {
-                                    var v = $.trim($(facetChildren[k]).attr("Value"));
-                                    if (v == null) {
-                                        var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
-                                        fValue.Href = $(facetChildren[k]).attr("Href");
-                                        f.AddFacetValue(fValue);
-                                    } else {
-                                        //convert strings to numbers so histogram can work
-                                        if (facetChildren[k].nodeName == "Number") {
-                                            var fValue = new PivotViewer.Models.FacetValue(parseFloat(v));
+                            var description = $(facetItem[i]).find("Description");
+                            if (description.length == 1 && description[0].childNodes.length)
+                                item.Description = description[0].childNodes[0].nodeValue;
+                            var facets = $(facetItem[i]).find("Facet");
+                            for (var j = 0; j < facets.length; j++) {
+                                var f = new PivotViewer.Models.Facet(
+                                    $(facets[j]).attr("Name")
+                                );
+               
+                                var facetChildren = $(facets[j]).children();
+                                for (var k = 0; k < facetChildren.length; k++) {
+                                    if (facetChildren[k].nodeType == 1) {
+                                        var v = $.trim($(facetChildren[k]).attr("Value"));
+                                        if (v == null) {
+                                            var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
+                                            fValue.Href = $(facetChildren[k]).attr("Href");
                                             f.AddFacetValue(fValue);
                                         } else {
-                                            var fValue = new PivotViewer.Models.FacetValue(v);
-                                            f.AddFacetValue(fValue);
+                                            //convert strings to numbers so histogram can work
+                                            if (facetChildren[k].nodeName == "Number") {
+                                                var fValue = new PivotViewer.Models.FacetValue(parseFloat(v));
+                                                f.AddFacetValue(fValue);
+                                            } else {
+                                                var fValue = new PivotViewer.Models.FacetValue(v);
+                                                f.AddFacetValue(fValue);
+                                            }
                                         }
                                     }
                                 }
+                                item.Facets.push(f);
                             }
-                            item.Facets.push(f);
+                            collection.Items.push(item);
                         }
-                        collection.Items.push(item);
                     }
                 }
                 $.publish("/PivotViewer/Models/Collection/Loaded", null);
