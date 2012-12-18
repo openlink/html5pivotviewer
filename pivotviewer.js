@@ -462,45 +462,55 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 if (facetItems.length == 1) {
                     collection.ImageBase = $(facetItems[0]).attr("ImgBase");
                     var facetItem = $(facetItems[0]).find("Item");
-                    for (var i = 0; i < facetItem.length; i++) {
-                        var item = new PivotViewer.Models.Item(
-                            $(facetItem[i]).attr("Img").replace("#", ""),
-                            $(facetItem[i]).attr("Id"),
-                            $(facetItem[i]).attr("Href"),
-                            $(facetItem[i]).attr("Name")
-                        );
-                        var description = $(facetItem[i]).find("Description");
-                        if (description.length == 1 && description[0].childNodes.length)
-                            item.Description = description[0].childNodes[0].nodeValue;
-                        var facets = $(facetItem[i]).find("Facet");
-                        for (var j = 0; j < facets.length; j++) {
-                            var f = new PivotViewer.Models.Facet(
-                                $(facets[j]).attr("Name")
+                    if (facetItem.length == 0) {
+                        //Make sure throbber is removed else everyone thinks the app is still running
+                        $('.pv-loading').remove();
+ 
+                        //Throw an alert so the user knows something is wrong
+                        var msg = '';
+                        msg = msg + 'There are no items in the CXML Collection\r\n\r\n';
+                        window.alert (msg);
+                    } else {
+                        for (var i = 0; i < facetItem.length; i++) {
+                            var item = new PivotViewer.Models.Item(
+                                $(facetItem[i]).attr("Img").replace("#", ""),
+                                $(facetItem[i]).attr("Id"),
+                                $(facetItem[i]).attr("Href"),
+                                $(facetItem[i]).attr("Name")
                             );
-
-                            var facetChildren = $(facets[j]).children();
-                            for (var k = 0; k < facetChildren.length; k++) {
-                                if (facetChildren[k].nodeType == 1) {
-                                    var v = $.trim($(facetChildren[k]).attr("Value"));
-                                    if (v == null) {
-                                        var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
-                                        fValue.Href = $(facetChildren[k]).attr("Href");
-                                        f.AddFacetValue(fValue);
-                                    } else {
-                                        //convert strings to numbers so histogram can work
-                                        if (facetChildren[k].nodeName == "Number") {
-                                            var fValue = new PivotViewer.Models.FacetValue(parseFloat(v));
+                            var description = $(facetItem[i]).find("Description");
+                            if (description.length == 1 && description[0].childNodes.length)
+                                item.Description = description[0].childNodes[0].nodeValue;
+                            var facets = $(facetItem[i]).find("Facet");
+                            for (var j = 0; j < facets.length; j++) {
+                                var f = new PivotViewer.Models.Facet(
+                                    $(facets[j]).attr("Name")
+                                );
+               
+                                var facetChildren = $(facets[j]).children();
+                                for (var k = 0; k < facetChildren.length; k++) {
+                                    if (facetChildren[k].nodeType == 1) {
+                                        var v = $.trim($(facetChildren[k]).attr("Value"));
+                                        if (v == null) {
+                                            var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
+                                            fValue.Href = $(facetChildren[k]).attr("Href");
                                             f.AddFacetValue(fValue);
                                         } else {
-                                            var fValue = new PivotViewer.Models.FacetValue(v);
-                                            f.AddFacetValue(fValue);
+                                            //convert strings to numbers so histogram can work
+                                            if (facetChildren[k].nodeName == "Number") {
+                                                var fValue = new PivotViewer.Models.FacetValue(parseFloat(v));
+                                                f.AddFacetValue(fValue);
+                                            } else {
+                                                var fValue = new PivotViewer.Models.FacetValue(v);
+                                                f.AddFacetValue(fValue);
+                                            }
                                         }
                                     }
                                 }
+                                item.Facets.push(f);
                             }
-                            item.Facets.push(f);
+                            collection.Items.push(item);
                         }
-                        collection.Items.push(item);
                     }
                 }
                 $.publish("/PivotViewer/Models/Collection/Loaded", null);
@@ -685,11 +695,11 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     selectedRow = Math.round((that.tiles[i]._locations[0].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
                     that.tiles[i].Selected(true);
                     tileHeight = that.tiles[i].height;
-                    tileWidth = that.tiles[i].width;
+                    tileWidth = that.tiles[i].height / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                     tileOrigHeight = that.tiles[i].origheight;
                     tileOrigWidth = that.tiles[i].origwidth;
                     canvasHeight = that.tiles[i].context.canvas.height
-                    canvasWidth = that.tiles[i].context.canvas.width
+                    canvasWidth = that.tiles[i].context.canvas.width - ($('.pv-filterpanel').width() + $('.pv-infopanel').width());
 
                 } else {
                     that.tiles[i].Selected(false);
@@ -910,7 +920,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.maxRatio, this.tiles.length);
             var clearFilter = [];
             for (var i = 0; i < this.tiles.length; i++) {
-                this.tiles[i].origwidth = rowscols.TileHeight / this.tiles[i].ratio;
+                this.tiles[i].origwidth = rowscols.TileHeight / this.tiles[i]._controller.GetRatio(this.tiles[i].facetItem.Img);
                 this.tiles[i].origheight = rowscols.TileHeight;
                 clearFilter.push(this.tiles[i].facetItem.Id);
             }
@@ -935,12 +945,22 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 }
             }
 
+            // recalculate max width of images in filter
+            that.maxRatio = that.tiles[0]._controller.GetRatio(that.tiles[0].facetItem.Img);
+            for (var i = 0; i < that.tiles.length; i++) {
+                var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
+                if (filterindex >= 0) {
+                    if (that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img) < that.maxRatio)
+                        that.maxRatio = that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
+                }
+            }
+
             var pt2Timeout = currentFilter.length == that.tiles.length ? 0 : 500;
             //Delay pt2 animation
             setTimeout(function () {
                 var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.maxRatio, that.currentFilter.length);
                 for (var i = 0; i < that.tiles.length; i++) {
-                    that.tiles[i].origwidth = rowscols.TileHeight / that.tiles[i].ratio;
+                    that.tiles[i].origwidth = rowscols.TileHeight / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                     that.tiles[i].origheight = rowscols.TileHeight;
                 }
                 that.SetVisibleTilePositions(rowscols, that.currentFilter, that.offsetX, that.offsetY, false, false, 1000);
@@ -1085,11 +1105,11 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     selectedCol = Math.round((that.tiles[i]._locations[0].x - that.currentOffsetX) / that.tiles[i].width);
                     selectedRow = Math.round((that.canvasHeightUIAdjusted - that.tiles[i]._locations[0].y) / that.tiles[i].height);
                     tileHeight = that.tiles[i].height;
-                    tileWidth = that.tiles[i].width;
+                    tileWidth = that.tiles[i].height / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                     tileOrigHeight = that.tiles[i].origheight;
                     tileOrigWidth = that.tiles[i].origwidth;
                     canvasHeight = that.tiles[i].context.canvas.height
-                    canvasWidth = that.tiles[i].context.canvas.width
+                    canvasWidth = that.tiles[i].context.canvas.width - ($('.pv-filterpanel').width() + $('.pv-infopanel').width());
                 } else {
                     that.tiles[i].Selected(false);
                 }
@@ -1391,12 +1411,22 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             }
         }
 
+        // recalculate max width of images in filter
+        that.maxRatio = that.tiles[0]._controller.GetRatio(that.tiles[0].facetItem.Img);
+        for (var i = 0; i < that.tiles.length; i++) {
+            var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
+            if (filterindex >= 0) {
+                if (that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img) < that.maxRatio)
+                    that.maxRatio = that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
+            }
+        }
+
         var pt2Timeout = currentFilter.length == this.tiles.length ? 0 : 500;
         //Delay pt2 animation
         setTimeout(function () {
             that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted - that.offsetY, that.maxRatio, that.bigCount);
             for (var i = 0; i < that.tiles.length; i++) {
-                that.tiles[i].origwidth = that.rowscols.TileHeight / that.tiles[i].ratio;
+                that.tiles[i].origwidth = that.rowscols.TileHeight / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                 that.tiles[i].origheight = that.rowscols.TileHeight;
             }
             that.SetVisibleTileGraphPositions(that.rowscols, that.offsetX, that.offsetY, false, false);
@@ -1668,7 +1698,6 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         this._baseUrl = "";
         this._collageMaxLevel = 0;
         this._tileSize = 256;
-//        this._maxLevel = 0;
         this._format = "";
         this._ratio = 1;
         this.MaxRatio = 1;
@@ -1739,7 +1768,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         if (width > that.MaxWidth)
                             that.MaxWidth = width;
                         if (that._ratio < that.MaxRatio)  // i.e. biggest width cf height upside down....
-                            that.MaxRatio - that._ratio;
+                            that.MaxRatio = that._ratio;
                     }
                 }
                  //Loaded DeepZoom collection
@@ -1889,6 +1918,13 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         for (var i = 0; i < this._items.length; i++) {
             if (this._items[i].ItemId == id) {
                return this._items[i].Height;
+            }
+        }
+    },
+    GetRatio: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Ratio;
             }
         }
     }
@@ -2205,22 +2241,40 @@ PivotViewer.Views.Tile = Object.subClass({
                         this.context.drawImage(this._images[i], offsetx + this._locations[l].x , offsety + this._locations[l].y, imageTileWidth, imageTileHeight);
                     }
                 }
+        if (this._selected) {
+            //draw a blue border
+            this.context.beginPath();
+// JCH - Line fits better round the image if the x offset is 3 not 4.  
+// Not clear why - maybe to do with thickness of the line
+           // this.context.rect(this._locations[0].x + 3, this._locations[0].y + 4, this.width - 8, this.height - 8);
+            var offsetx = (Math.floor(blankWidth/2)) + 4;
+            var offsety = 4;
+            this.context.rect(offsetx + this._locations[0].x , offsety + this._locations[0].y, displayWidth, displayHeight);
+            this.context.lineWidth = 4;
+            this.context.strokeStyle = "#92C4E1";
+            this.context.stroke();
+        }
             }
         }
         else {
             this.DrawEmpty();
         }
 
+/*
         if (this._selected) {
             //draw a blue border
             this.context.beginPath();
 // JCH - Line fits better round the image if the x offset is 3 not 4.  
 // Not clear why - maybe to do with thickness of the line
-            this.context.rect(this._locations[0].x + 3, this._locations[0].y + 4, this.width - 8, this.height - 8);
+           // this.context.rect(this._locations[0].x + 3, this._locations[0].y + 4, this.width - 8, this.height - 8);
+                var displayHeight = this.height - 8;
+                var displayWidth = Math.ceil(this._controller.GetWidthForImage(this.facetItem.Img, displayHeight));
+            this.context.rect(offsetx + this._locations[0].x , offsety + this._locations[0].y, displayWidth, displayHeight);
             this.context.lineWidth = 4;
             this.context.strokeStyle = "#92C4E1";
             this.context.stroke();
         }
+*/
     },
     //http://simonsarris.com/blog/510-making-html5-canvas-useful
     Contains: function (mx, my) {
@@ -2433,7 +2487,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         //setup zoom slider
         var thatRef = _silderPrev;
         $('.pv-toolbarpanel-zoomslider').slider({
-            max: 20,
+            max: 100,
             change: function (event, ui) {
                 var val = ui.value - thatRef;
                 //Find canvas centre
@@ -3541,11 +3595,11 @@ PivotViewer.Views.TileLocation = Object.subClass({
             _tileController.DrawHelpers([{ x: offsetX, y: offsetY}]);
 
             var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
-            if (delta > 0) { value += 1; }
-            else if (delta < 0) { value -= 1; }
+            if (delta > 0) { value = (value < 5 ) ? 5 : value + 5; }
+            else if (delta < 0) { value = value - 5; }
  
             // Ensure that its limited between 0 and 20
-            value = Math.max(0, Math.min(20, value));
+            value = Math.max(0, Math.min(100, value));
             $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
         });
         //http://stackoverflow.com/questions/6458571/javascript-zoom-and-rotate-using-gesturechange-and-gestureend
