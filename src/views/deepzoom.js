@@ -112,7 +112,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
                 msg = msg + 'Details    : ' + errorThrown + '\r\n';
                 msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                window.alert (msg);
+                var t=setTimeout(function(){window.alert(msg)},1000)
             }
         });
     },
