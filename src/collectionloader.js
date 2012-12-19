@@ -51,7 +51,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                     var msg = '';
                     msg = msg + 'Error parsing CXML Collection\r\n\r\n';
                     msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                    window.alert (msg);
+                    var t=setTimeout(function(){window.alert(msg)},1000)
                     throw "Error parsing CXML Collection";
                 }
 
@@ -109,7 +109,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                         //Throw an alert so the user knows something is wrong
                         var msg = '';
                         msg = msg + 'There are no items in the CXML Collection\r\n\r\n';
-                        window.alert (msg);
+                        var t=setTimeout(function(){window.alert(msg)},1000)
                     } else {
                         for (var i = 0; i < facetItem.length; i++) {
                             var item = new PivotViewer.Models.Item(
@@ -166,7 +166,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
                 msg = msg + 'Details    : ' + errorThrown + '\r\n';
                 msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                window.alert(msg);
+                var t=setTimeout(function(){window.alert(msg)},1000)
             }
         });
     }
