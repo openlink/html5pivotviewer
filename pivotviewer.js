@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.0-e72636d";
+PivotViewer.Version="v0.9.3-fa89237";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -412,7 +412,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                     var msg = '';
                     msg = msg + 'Error parsing CXML Collection\r\n\r\n';
                     msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                    window.alert (msg);
+                    var t=setTimeout(function(){window.alert(msg)},1000)
                     throw "Error parsing CXML Collection";
                 }
 
@@ -470,7 +470,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                         //Throw an alert so the user knows something is wrong
                         var msg = '';
                         msg = msg + 'There are no items in the CXML Collection\r\n\r\n';
-                        window.alert (msg);
+                        var t=setTimeout(function(){window.alert(msg)},1000)
                     } else {
                         for (var i = 0; i < facetItem.length; i++) {
                             var item = new PivotViewer.Models.Item(
@@ -527,7 +527,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
                 msg = msg + 'Details    : ' + errorThrown + '\r\n';
                 msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                window.alert(msg);
+                var t=setTimeout(function(){window.alert(msg)},1000)
             }
         });
     }
@@ -1786,7 +1786,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
                 msg = msg + 'Details    : ' + errorThrown + '\r\n';
                 msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                window.alert (msg);
+                var t=setTimeout(function(){window.alert(msg)},1000)
             }
         });
     },
