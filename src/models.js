@@ -22,6 +22,8 @@ PivotViewer.Models.Collection = Object.subClass({
 		this.Items = [];
 		this.CXMLBase = "";
 		this.ImageBase = "";
+                this.CopyrightName = "";
+                this.CopyrightHref = "";
 	},
 	GetItemById: function (Id) {
 		for (var i = 0; i < this.Items.length; i++) {

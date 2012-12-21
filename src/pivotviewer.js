@@ -193,6 +193,9 @@
         $('.pv-infopanel-controls-navrightdisabled').hide();
         infoPanel.append("<div class='pv-infopanel-heading'></div>");
         infoPanel.append("<div class='pv-infopanel-details'></div>");
+        if (PivotCollection.CopyrightName != "") {
+            infoPanel.append("<div class='pv-infopanel-copyright'><a href=\"" + PivotCollection.CopyrightHref + "\" target=\"_blank\">" + PivotCollection.CopyrightName + "</a></div>");
+        }
         infoPanel.hide();
     };
 
@@ -973,7 +976,7 @@
             }
             infopanelDetails.append(detailDOM.join(''));
             $('.pv-infopanel').fadeIn();
-            infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height()) - 20) + 'px');
+            infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height()) - 20) + 'px');
             _selectedItem = selectedItem;
             return;
         }
