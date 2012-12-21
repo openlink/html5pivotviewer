@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.3-fa89237";
+PivotViewer.Version="v0.9.5-b23f674";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -286,6 +286,8 @@ PivotViewer.Models.Collection = Object.subClass({
 		this.Items = [];
 		this.CXMLBase = "";
 		this.ImageBase = "";
+                this.CopyrightName = "";
+                this.CopyrightHref = "";
 	},
 	GetItemById: function (Id) {
 		for (var i = 0; i < this.Items.length; i++) {
@@ -512,6 +514,15 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                             }
                             collection.Items.push(item);
                         }
+                    }
+                }
+                //Extensions
+                var extension = $(xml).find("Extension");
+                if (extension.length == 1) {
+                    var collectionCopyright = $(extension[0]).find('d1p1\\:Copyright');
+                    if (collectionCopyright.length > 0 != null) { 
+                        collection.CopyrightName = $(collectionCopyright[0]).attr("Name");
+                        collection.CopyrightHref = $(collectionCopyright[0]).attr("Href");
                     }
                 }
                 $.publish("/PivotViewer/Models/Collection/Loaded", null);
@@ -2509,6 +2520,9 @@ PivotViewer.Views.TileLocation = Object.subClass({
         $('.pv-infopanel-controls-navrightdisabled').hide();
         infoPanel.append("<div class='pv-infopanel-heading'></div>");
         infoPanel.append("<div class='pv-infopanel-details'></div>");
+        if (PivotCollection.CopyrightName != "") {
+            infoPanel.append("<div class='pv-infopanel-copyright'><a href=\"" + PivotCollection.CopyrightHref + "\" target=\"_blank\">" + PivotCollection.CopyrightName + "</a></div>");
+        }
         infoPanel.hide();
     };
 
@@ -3289,7 +3303,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
             }
             infopanelDetails.append(detailDOM.join(''));
             $('.pv-infopanel').fadeIn();
-            infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height()) - 20) + 'px');
+            infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height()) - 20) + 'px');
             _selectedItem = selectedItem;
             return;
         }
