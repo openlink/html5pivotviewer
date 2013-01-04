@@ -8,7 +8,7 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -104,7 +104,7 @@ http://dojofoundation.org/license for more information.
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -270,7 +270,7 @@ PivotViewer.Utils.Histogram = function (values) {
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -369,7 +369,7 @@ PivotViewer.Models.FacetType = {
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -553,7 +553,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -586,7 +586,7 @@ PivotViewer.Views.IPivotViewerView = Object.subClass({
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -676,7 +676,7 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -1073,7 +1073,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -1632,7 +1632,7 @@ this.tiles[j].firstFilterItemDone = true;
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -1656,7 +1656,7 @@ PivotViewer.Views.IImageController = Object.subClass({
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -1693,7 +1693,7 @@ PivotViewer.Views.LoadImageSetHelper = Object.subClass({
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -1964,7 +1964,7 @@ PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZ
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -2335,7 +2335,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
