@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.5-b23f674";
+PivotViewer.Version="v0.9.8-b0c21f9";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -2501,6 +2501,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
+        filterPanel.append("<div class='pv-filterpanel-version'>Version: " + $(PivotViewer)[0].Version + "</div>");
         filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
             .append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' /><div class='pv-filterpanel-search-autocomplete'></div>")
             .css('height', mainPanelHeight - 13 + 'px');
@@ -2617,7 +2618,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         var sort = [];
         for (var i = 0; i < PivotCollection.FacetCategories.length; i++) {
             if (PivotCollection.FacetCategories[i].IsFilterVisible) {
-                facets[i + 1] = "<h3><a href='#'>";
+                facets[i + 1] = "<h3><a href='#' title=" + PivotCollection.FacetCategories[i].Name + ">";
                 facets[i + 1] += PivotCollection.FacetCategories[i].Name;
                 facets[i + 1] += "</a><div class='pv-filterpanel-accordion-heading-clear' facetType='" + PivotCollection.FacetCategories[i].Type + "'>&nbsp;</div></h3>";
                 facets[i + 1] += "<div style='height:30%' id='pv-cat-" + PivotViewer.Utils.EscapeItemId(PivotCollection.FacetCategories[i].Name) + "'>";
@@ -3187,7 +3188,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
     DeselectInfoPanel = function () {
         //de-select details
         $('.pv-infopanel').fadeOut();
-        $('.pv-infopanel-heading').text("");
+        $('.pv-infopanel-heading').empty();
         $('.pv-infopanel-details').empty();
     };
 
@@ -3243,7 +3244,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
         var selectedItem = GetItem(evt);
         if (selectedItem != null) {
             var alternate = true;
-            $('.pv-infopanel-heading').text(selectedItem.Name);
+            $('.pv-infopanel-heading').empty();
+            $('.pv-infopanel-heading').append("<a href=\"" + selectedItem.Href + "\">" + selectedItem.Name + "</a></div>");
             var infopanelDetails = $('.pv-infopanel-details');
             infopanelDetails.empty();
             if (selectedItem.Description != undefined && selectedItem.Description.length > 0) {
