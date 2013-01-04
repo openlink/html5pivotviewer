@@ -101,7 +101,7 @@
 .ui-accordion .ui-accordion-header { cursor: pointer; position: relative; margin-top: 1px; margin-bottom: 0px; zoom: 1; border-top: 1px solid #E2E2E2; }
 .ui-accordion .ui-accordion-li-fix { display: inline; }
 .ui-accordion .ui-accordion-header-active { border-bottom: 0 !important; }
-.ui-accordion .ui-accordion-header a { display: block; font-size: 1em; padding: .5em .5em .5em .7em; }
+.ui-accordion .ui-accordion-header a {width: 80%;  display: block; font-size: 1em; padding: .5em .5em .5em .7em; overflow: hidden; text-overflow: ellipsis; }
  .ui-accordion-header.ui-state-default a { width: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 .ui-accordion-icons .ui-accordion-header a { text-decoration:none; color: #05314A; }
 .ui-accordion .ui-accordion-header .ui-icon { position: absolute; left: .5em; top: 50%; margin-top: -8px; }

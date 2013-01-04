@@ -291,7 +291,7 @@
         var sort = [];
         for (var i = 0; i < PivotCollection.FacetCategories.length; i++) {
             if (PivotCollection.FacetCategories[i].IsFilterVisible) {
-                facets[i + 1] = "<h3><a href='#'>";
+                facets[i + 1] = "<h3><a href='#' title=" + PivotCollection.FacetCategories[i].Name + ">";
                 facets[i + 1] += PivotCollection.FacetCategories[i].Name;
                 facets[i + 1] += "</a><div class='pv-filterpanel-accordion-heading-clear' facetType='" + PivotCollection.FacetCategories[i].Type + "'>&nbsp;</div></h3>";
                 facets[i + 1] += "<div style='height:30%' id='pv-cat-" + PivotViewer.Utils.EscapeItemId(PivotCollection.FacetCategories[i].Name) + "'>";
