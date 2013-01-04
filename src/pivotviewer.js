@@ -174,6 +174,7 @@
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
+        filterPanel.append("<div class='pv-filterpanel-version'>Version: " + $(PivotViewer)[0].Version + "</div>");
         filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
             .append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' /><div class='pv-filterpanel-search-autocomplete'></div>")
             .css('height', mainPanelHeight - 13 + 'px');
