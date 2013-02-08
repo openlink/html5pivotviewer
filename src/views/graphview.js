@@ -297,7 +297,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         this.rowscols = null;
         this.bigCount = 0;
     },
-    Filter: function (dzTiles, currentFilter, sortFacet) {
+    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets) {
         var that = this;
         if (!Modernizr.canvas)
             return;
@@ -313,7 +313,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         }));
         this.currentFilter = currentFilter;
 
-        this.buckets = this.Bucketize(dzTiles, currentFilter, this.sortFacet);
+        this.buckets = this.Bucketize(dzTiles, currentFilter, this.sortFacet, stringFacets);
 
         this.columnWidth = (this.width - this.offsetX) / this.buckets.length;
         this.canvasHeightUIAdjusted = this.height - this.titleSpace;
@@ -457,7 +457,7 @@ this.tiles[j].firstFilterItemDone = true;
         }
     },
     //Groups into buckets based on first n chars
-    Bucketize: function (dzTiles, filterList, orderBy) {
+    Bucketize: function (dzTiles, filterList, orderBy, stringFacets) {
         var bkts = [];
         for (var i = 0; i < dzTiles.length; i++) {
             if ($.inArray(dzTiles[i].facetItem.Id, filterList) >= 0) {
@@ -501,6 +501,27 @@ this.tiles[j].firstFilterItemDone = true;
             }
         }
 
+	// If orderBy is one of the string filters then only include buckets that are in the filter
+	if ( stringFacets.length > 0 ) {
+	    var sortIndex;
+	    for ( var f = 0; f < stringFacets.length; f++ ) {
+	        if ( stringFacets[f].facet == orderBy ) {
+		    sortIndex = f;
+		    break;
+	        }
+            }
+	    if ( sortIndex != undefined  && sortIndex >= 0 ) {
+	        var newBktsArray = [];
+	        var filterValues = stringFacets[sortIndex].facetValue;
+	        for ( var b = 0; b < bkts.length; b ++ ) {
+		    var valueIndex = $.inArray(bkts[b].startRange, filterValues ); 
+		    if (valueIndex >= 0 )
+		        newBktsArray.push(bkts[b]);
+	        }
+	        bkts = newBktsArray;
+	    }
+	}
+
         var current = 0;
         while (bkts.length > 8) {
             if (current < bkts.length - 1) {
@@ -542,6 +563,7 @@ this.tiles[j].firstFilterItemDone = true;
         offsetY = selectedTile._locations[0].y;
 
         var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted - that.currentOffsetY, that.maxRatio, that.bigCount);
+
         var padding = 0;
         var gap = that.columnWidth - (rowscols.TileMaxWidth * rowscols.Columns);
         var bucket = Math.floor(selectedCol/ rowscols.Columns);

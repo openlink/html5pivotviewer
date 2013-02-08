@@ -17,7 +17,7 @@
 .pv-toolbarpanel-sort { width: 90px; }
 .pv-mainpanel { height:659px; }
 .pv-filterpanel { position:absolute; z-index:30; margin-left:5px; margin-top:5px; width: 183px; padding: 0px 3px 0px 3px; background:#FEFEFE; border: 1px solid #C5C5C5; -moz-border-radius: 3px; border-radius: 3px; -moz-box-shadow: 0 0 2px 2px #D7D9DA; -webkit-box-shadow: 0 0 2px 2px #D7D9DA; box-shadow: 0 0 2px 2px #D7D9DA; }
-.pv-filterpanel-version { height:24px; width:180px; margin-top: 3px; margin-bottom: 3px; padding: 4px 4px 4px 4px; float:left; font-style:italic; color:#787676;}
+.pv-filterpanel-version { color:#E2E2E2; font-size: 8pt; float:left; height:24px; width:180px; margin-top: 3px; margin-bottom: 3px; padding: 4px 4px 4px 4px;}
 .pv-filterpanel-clearall { width:56px; margin-top: 3px; padding: 4px 4px 4px 4px; float:right; cursor:pointer; color:#97A8B2; background-image: url('../Content/images/FilterPanelClear.png'); background-position	: right center; background-repeat: no-repeat; visibility::hidden; }
 .pv-filterpanel-clearall:hover { background-color:#CBE4F0; }
 .pv-filterpanel-search { margin-top: 9px; margin-bottom:0px; height:24px; border:1px solid #E2E2E2; }
@@ -35,6 +35,42 @@
 .pv-filterpanel-accordion-heading-clear { width:11px; position:absolute; top:6px; right:5px; background-image: url('../Content/images/FilterPanelClear.png'); background-position: center center; background-repeat: no-repeat; cursor:pointer; visibility:hidden; }
 .pv-filterpanel-accordion-facet-list { margin: 0px 0px 0px 0px; padding: 0px 0px 0px 0px; list-style:none; }
 .pv-filterpanel-accordion-facet-list-item { clear: both; }
+.pv-modal-dialog {
+	position: fixed;
+	font-family: Arial, Helvetica, sans-serif;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: rgba(0,0,0,0.8);
+	z-index: 99999;
+	opacity:0;
+	-webkit-transition: opacity 400ms ease-in;
+	-moz-transition: opacity 400ms ease-in;
+	transition: opacity 400ms ease-in;
+	pointer-events: none;
+}
+.pv-modal-dialog:target { opacity:1;pointer-events: auto;}
+.pv-modal-dialog > div { width: 300px; position: relative;margin: 10% auto;padding: 5px 20px 13px 20px;border-radius: 10px;background: #fff;background: -moz-linear-gradient(#fff, #999);background: -webkit-linear-gradient(#fff, #999);background: -o-linear-gradient(#fff, #999);}
+.pv-modal-dialog-close {
+	background: #606061;
+	color: #FFFFFF;
+	line-height: 25px;
+	position: absolute;
+	right: -12px;
+	text-align: center;
+	top: -10px;
+	width: 24px;
+	text-decoration: none;
+	font-weight: bold;
+	-webkit-border-radius: 12px;
+	-moz-border-radius: 12px;
+	border-radius: 12px;
+	-moz-box-shadow: 1px 1px 3px #000;
+	-webkit-box-shadow: 1px 1px 3px #000;
+	box-shadow: 1px 1px 3px #000;
+}
+.pv-modal-dialog-close:hover { background: #00d9ff; }
 .pv-viewpanel { position:absolute; }
 .pv-viewpanel-view { display:none; }
 .pv-viewpanel-unabletodisplay { margin-top:60px; margin-left:60px; }
