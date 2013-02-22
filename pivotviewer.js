@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.11-46044b9";
+PivotViewer.Version="v0.9.14-3c68678";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -2370,12 +2370,15 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _facetNumericItemTotals = [], //used to store the counts of all the numeric facets - used when resetting the filters
         _facetDateTimeItemTotals = [], //used to store the counts of all the datetime facets - used when resetting the filters
         _wordWheelItems = [], //used for quick access to search values
+	_stringFacets = [],
+	_numericFacets = [],
         _currentView = 0,
         _loadingInterval,
         _tileController,
         _tiles = [],
         _filterItems = [],
         _selectedItem = "",
+        _currentSort = "",
         _imageController,
         _mouseDrag = null,
         _mouseMove = null,
@@ -2866,8 +2869,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
     //Applies the filters and sorted facet from the viewer state
     ApplyViewerState = function () {
         //Sort
-        if (_viewerState.Facet != null)
+        if (_viewerState.Facet != null) {
             $('.pv-toolbarpanel-sort').val(_viewerState.Facet).attr('selected', 'selected');
+	    _currentSort = $('.pv-toolbarpanel-sort option:selected').text();
+	}
 
         //Filters
         for (var i = 0, _iLen = _viewerState.Filters.length; i < _iLen; i++) {
@@ -3065,6 +3070,9 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 $('.pv-filterpanel-clearall').css('visibility', 'visible');
         }
 
+	// Tidy this up
+	_numericFacets = numericFacets;
+	_stringFacets = stringFacets;
 
         $('.pv-viewpanel-view').hide();
         $('#pv-viewpanel-view-' + _currentView).show();
@@ -3086,6 +3094,9 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 sortedFilter.push(_views[_currentView].tiles[i].facetItem.Id);
         }
         _filterItems = sortedFilter;
+
+	// Update the bookmark
+        UpdateBookmark ();
 
         DeselectInfoPanel();
     };
@@ -3224,7 +3235,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         var bc = $('.pv-toolbarpanel-facetbreadcrumb');
         bc.empty();
 
-        if (stringFacets.length == 0)
+        if (stringFacets.length == 0 && numericFacets.length == 0)
             return;
 
         var bcItems = "|";
@@ -3283,6 +3294,102 @@ PivotViewer.Views.TileLocation = Object.subClass({
         }
         return null;
     };
+
+    UpdateBookmark = function ()
+        {
+            // CurrentViewerState
+            var currentViewerState = "#";
+
+            // Add the ViewerState fragment
+	    // Add view
+	    var viewNum = _currentView + 1;
+	    currentViewerState += "$view$=" + viewNum;
+	    // Add sort facet
+	    if ( _currentSort )
+	    	currentViewerState += "&$facet0$=" + _currentSort;
+	    // Add selection
+	    if ( _selectedItem )
+	    	currentViewerState += "&$selection$=" + _selectedItem;
+	    // Add filters and create title
+            var title = PivotCollection.CollectionName;
+            if (_numericFacets.length + _stringFacets.length > 0)
+                title = title + " | ";
+
+	    if (_stringFacets.length > 0 ) {
+		for ( i = 0; i < _stringFacets.length; i++ ) {
+			for ( j = 0; j < _stringFacets[i].facetValue.length; j++ ) {
+	        	    currentViewerState += "&";
+			    currentViewerState += _stringFacets[i].facet;
+			    currentViewerState += "=EQ." + _stringFacets[i].facetValue[j];
+			}
+			title += _stringFacets[i].facet + ": ";
+			title += _stringFacets[i].facetValue.join(', ');;
+			if ( i < _stringFacets.length - 1)
+			    title += " > "
+	        }
+	    }
+	    if (_numericFacets.length > 0 ) {
+		for ( i = 0; i < _numericFacets.length; i++ ) {
+	        	currentViewerState += "&";
+			currentViewerState += _numericFacets[i].facet;
+			title += _numericFacets[i].facet + ": ";
+			if (_numericFacets[i].selectedMin == _numericFacets[i].rangeMin) {
+			    currentViewerState += "=LE." + _numericFacets[i].selectedMax;
+			    title += "Under " + _numericFacets[i].selectedMax;
+			} else if (_numericFacets[i].selectedMax == _numericFacets[i].rangeMax) {
+			    currentViewerState += "=GE." + _numericFacets[i].selectedMin;
+			    title += "Over " + _numericFacets[i].selectedMin;
+			} else {
+			    currentViewerState += "=GE." + _numericFacets[i].selectedMin + "_LE." + _numericFilters[i].selectedMax;
+			    title += "Between " + _numericFacets[i].selectedMin + " and " + _numericFilters[i].selectedMax;
+			}
+			if ( i < _numericFacets.length - 1)
+			    title += " > "
+	        }
+	    }
+            SetBookmark( currentViewerState, title);
+        }
+
+    SetBookmark = function (bookmark, title) {
+	var query = location.search.substring( 0, location.search.indexOf("%23%") );
+	var new_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/' + query + encodeURIComponent( bookmark );
+	var edit_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/edit.vsp' + query + encodeURIComponent( bookmark );
+	var el;
+
+	//
+	//  Update AddThis links
+	//
+	el = document.getElementById ("sharelink");
+	if (el) { 
+		try {
+			el.setAttribute ('addthis:url', new_bookmark); 
+			el.setAttribute ('addthis:title', title); 
+
+			addthis.update('share', 'url', new_bookmark);
+			addthis.update('share', 'title', title);
+			addthis.update('config', 'ui_cobrand', 'PivotViewer');
+
+			addthis.toolbox ('#sharelink');		// redraw 
+			addthis.init();
+		} catch (e) {}
+	}
+
+	//
+	//  Updated permalink
+	//
+	el = document.getElementById ("permalink");
+	if (el) {
+		el.href = new_bookmark;
+	}
+
+	//
+	//  Updated edit link
+	//
+	el = document.getElementById ("editlink");
+	if (el) {
+		el.href = edit_bookmark;
+	}
+    }
 
     //Events
     //Collection loading complete
@@ -3409,6 +3516,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         });
         //Sort change
         $('.pv-toolbarpanel-sort').on('change', function (e) {
+	    _currentSort = $('.pv-toolbarpanel-sort option:selected').text();
             FilterCollection();
         });
         //Facet sort
