@@ -257,7 +257,7 @@
                                     var itemId = PivotViewer.Utils.EscapeItemId("pv-facet-item-" + currentItemFacet.Name + "__" + currentItemFacet.FacetValues[k].Value);
                                     for (var n = 0; n < _facetDateTimeItemTotals.length; n++) {
                                         if (_facetDateTimeItemTotals[n].itemId == itemId) {
-                                            _facetDateTImeItemTotals[n].count += 1;
+                                            _facetDateTimeItemTotals[n].count += 1;
                                             dateTimeFound = true;
                                             break;
                                         }
@@ -1002,9 +1002,21 @@
         }
 
     SetBookmark = function (bookmark, title) {
-	var query = location.search.substring( 0, location.search.indexOf("%23%") );
-	var new_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/' + query + encodeURIComponent( bookmark );
-	var edit_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/edit.vsp' + query + encodeURIComponent( bookmark );
+	var query = location.search; 
+	// Remove fragment (uri encoded hash)
+	var hashIndex;
+	hashIndex = location.search.indexOf("%23%");
+	if ( hashIndex > 0 )
+		query = location.search.substring( 0, hashIndex );
+	// Remove fragment (non uri encoded hash)
+	if (!query) {
+		hashIndex = location.search.indexOf("#");
+		if ( hashIndex > 0 )
+			query = location.search.substring( 0, hashIndex );
+	}
+	
+	var new_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/' + query + bookmark;
+	var edit_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/edit.vsp' + query + bookmark;
 	var el;
 
 	//
