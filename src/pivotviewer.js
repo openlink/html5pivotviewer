@@ -73,6 +73,9 @@
                         //Sorted by
                         else if (splitItem[0] == '$facet0$')
                             _viewerState.Facet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Selected Item
+                        else if (splitItem[0] == '$selection$')
+                            _viewerState.Selection = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
                             var filter = { Facet: splitItem[0], Predicates: [] };
@@ -128,6 +131,7 @@
 
         //Apply ViewerState filters
         ApplyViewerState();
+        viewerStateSelected = _viewerState.Selection;
 
         //select first view
         if (_viewerState.View != null)
@@ -136,7 +140,7 @@
             SelectView(0, true);
 
         //Begin tile animation
-        _tileController.BeginAnimation();
+        _tileController.BeginAnimation(true, viewerStateSelected);
     };
 
     InitUI = function () {
@@ -475,6 +479,7 @@
         _views[viewNumber].init = init;
 
         _currentView = viewNumber;
+        _selectedItem = "";
         FilterCollection();
     };
 
@@ -960,7 +965,7 @@
 	    	currentViewerState += "&$facet0$=" + _currentSort;
 	    // Add selection
 	    if ( _selectedItem )
-	    	currentViewerState += "&$selection$=" + _selectedItem;
+	    	currentViewerState += "&$selection$=" + _selectedItem.Id;
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
@@ -1015,8 +1020,8 @@
 			query = location.search.substring( 0, hashIndex );
 	}
 	
-	var new_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/' + query + bookmark;
-	var edit_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/edit.vsp' + query + bookmark;
+	var new_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/' + query + encodeURIComponent( bookmark );
+	var edit_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/edit.vsp' + query + encodeURIComponent( bookmark );
 	var el;
 
 	//
@@ -1073,6 +1078,9 @@
 
         if (evt === undefined || evt === null || evt === "") {
             DeselectInfoPanel();
+            _selectedItem = "";
+	    // Update the bookmark
+            UpdateBookmark ();
             return;
         }
 
@@ -1143,6 +1151,10 @@
             $('.pv-infopanel').fadeIn();
             infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height()) - 20) + 'px');
             _selectedItem = selectedItem;
+
+	    // Update the bookmark
+            UpdateBookmark ();
+
             return;
         }
 
@@ -1155,7 +1167,8 @@
 
         for (var i = 0, _iLen = PivotCollection.FacetCategories.length; i < _iLen; i++) {
             if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
-                PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String) {
+                (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
+                PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime)) {
 
             var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Item)) + " input");
             cb.attr('checked', 'checked');

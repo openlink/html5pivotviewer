@@ -41,7 +41,7 @@ PivotViewer.Views.TileController = Object.subClass({
         return this._tiles;
     },
 
-    AnimateTiles: function () {
+    AnimateTiles: function (doInitialSelection, selectedId) {
         var that = this;
         this._started = true;
         var context = null;
@@ -105,6 +105,21 @@ PivotViewer.Views.TileController = Object.subClass({
                          this._tiles[i]._locations[l].y = this._tiles[i]._locations[l].destinationy;
                          this._tiles[i].width = this._tiles[i].destinationwidth;
                          this._tiles[i].height = this._tiles[i].destinationheight;
+			 // if now and end are numbers when we get here then the animation 
+			 // has finished
+			 if (!isNaN(now) && !isNaN(end) && doInitialSelection) {
+                             var selectedTile = "";
+                             for ( t = 0; t < this._tiles.length; t ++ ) {
+                                 if (this._tiles[t].facetItem.Id == selectedId) {
+                                    selectedTile = this._tiles[t];
+                                    break;
+                                 }
+                             }
+	                     if (selectedId && selectedTile) 
+                        	$.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[0].destinationx, y: selectedTile._locations[0].destinationy}]);
+                                doInitialSelection = false;
+                                selectedId = 0;
+                        }
                      }
  
                      //check if the destination will be in the visible area
@@ -173,7 +188,7 @@ PivotViewer.Views.TileController = Object.subClass({
         // request new frame
         if (!this._breaks) {
             requestAnimFrame(function () {
-                that.AnimateTiles();
+                that.AnimateTiles(doInitialSelection, selectedId);
             });
         } else {
             this._started = false;
@@ -181,10 +196,10 @@ PivotViewer.Views.TileController = Object.subClass({
         }
     },
 
-    BeginAnimation: function () {
+    BeginAnimation: function (doInitialSelection, viewerStateSelected) {
         if (!this._started && this._tiles.length > 0) {
             this._breaks = false;
-            this.AnimateTiles();
+            this.AnimateTiles(doInitialSelection, viewerStateSelected);
         }
     },
     StopAnimation: function () {

@@ -28,69 +28,17 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 return;
 
             var selectedItem = null;
-            var selectedCol = 0;
-            var selectedRow = 0;
-            var offsetX = 0, offsetY = 0;
+            var selectedTile = null;
             for (var i = 0; i < that.tiles.length; i++) {
                 if (that.tiles[i].Contains(evt.x, evt.y)) {
+                    selectedTile = that.tiles[i];
                     selectedItem = that.tiles[i].facetItem.Id;
-                    //determine row and column that tile is in in relation to the first tile
-                    selectedCol = Math.round((that.tiles[i]._locations[0].x - that.currentOffsetX) / that.tiles[i].width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
-                    selectedRow = Math.round((that.tiles[i]._locations[0].y - that.currentOffsetY) / that.tiles[i].height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
-                    that.tiles[i].Selected(true);
-                    tileHeight = that.tiles[i].height;
-                    tileWidth = that.tiles[i].height / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
-                    tileOrigHeight = that.tiles[i].origheight;
-                    tileOrigWidth = that.tiles[i].origwidth;
-                    canvasHeight = that.tiles[i].context.canvas.height
-                    canvasWidth = that.tiles[i].context.canvas.width - ($('.pv-filterpanel').width() + $('.pv-infopanel').width());
-
                 } else {
                     that.tiles[i].Selected(false);
                 }
             }
-
-            //zoom in on selected tile
-            if (selectedItem != null && that.selected != selectedItem) {
-                // Find which is proportionally bigger, height or width
-                if (tileHeight / canvasHeight > tileWidth/canvasWidth) 
-                    origProportion = tileOrigHeight / canvasHeight;
-                else
-                    origProportion = tileOrigWidth / canvasWidth;
-                //Get scaling factor so max tile dimension is about 60% total
-                //Multiply by two as the zoomslider devides all scaling factors by 2
-                scale = Math.round((0.75 / origProportion) * 2);
-
-                // Zoom using the slider event
-                if (that.selected == ""){
-                    var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
-                    value = scale; 
-                    $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
-                }
-                that.selected = selectedItem;
-                that.CentreOnSelectedTile(selectedCol, selectedRow);
-
-/*
-                var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
-
-                that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2);
-                that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
-
-                that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
-*/
-            } else {
-                that.selected = selectedItem = "";
-                //zoom out
-                that.currentOffsetX = that.offsetX;
-                that.currentOffsetY = that.offsetY;
-                // Zoom using the slider event
-                var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
-                value = 0;
-                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
-            }
-
-            $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
-        });
+	    that.handleSelection (selectedItem, selectedTile);
+	});
 
         $.subscribe("/PivotViewer/Views/Canvas/Hover", function (evt) {
             if (!that.isActive || that.selected.length > 0)
@@ -393,5 +341,65 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2);
         that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
         that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
+    },
+    handleSelection: function (selectedItem, selectedTile) {
+        var that = this;
+        var selectedCol = 0;
+        var selectedRow = 0;
+        var offsetX = 0, offsetY = 0;
+ 
+        if ( selectedItem != null && selectedTile !=null) {
+            //determine row and column that tile is in in relation to the first tile
+            selectedCol = Math.round((selectedTile._locations[0].x - that.currentOffsetX) / selectedTile.width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
+            selectedRow = Math.round((selectedTile._locations[0].y - that.currentOffsetY) / selectedTile.height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
+            selectedTile.Selected(true);
+            tileHeight = selectedTile.height;
+            tileWidth = selectedTile.height / selectedTile._controller.GetRatio(selectedTile.facetItem.Img);
+            tileOrigHeight = selectedTile.origheight;
+            tileOrigWidth = selectedTile.origwidth;
+            canvasHeight = selectedTile.context.canvas.height
+            canvasWidth = selectedTile.context.canvas.width - ($('.pv-filterpanel').width() + $('.pv-infopanel').width());
+        }
+
+        //zoom in on selected tile
+        if (selectedItem != null && that.selected != selectedItem) {
+            // Find which is proportionally bigger, height or width
+            if (tileHeight / canvasHeight > tileWidth/canvasWidth) 
+                origProportion = tileOrigHeight / canvasHeight;
+            else
+                origProportion = tileOrigWidth / canvasWidth;
+            //Get scaling factor so max tile dimension is about 60% total
+            //Multiply by two as the zoomslider devides all scaling factors by 2
+            scale = Math.round((0.75 / origProportion) * 2);
+
+            // Zoom using the slider event
+            if (that.selected == ""){
+                var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+                value = scale; 
+                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
+            }
+            that.selected = selectedItem;
+            that.CentreOnSelectedTile(selectedCol, selectedRow);
+
+/*
+            var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
+
+            that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2);
+            that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
+
+            that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
+*/
+        } else {
+            that.selected = selectedItem = "";
+            //zoom out
+            that.currentOffsetX = that.offsetX;
+            that.currentOffsetY = that.offsetY;
+            // Zoom using the slider event
+            var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+            value = 0;
+            $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
+        }
+
+        $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
     }
 });
