@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.18-55987f6";
+PivotViewer.Version="v0.9.21-212fa83";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -2756,7 +2756,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         for (var i = 0; i < _facetItemTotals.length; i++) {
             if (_facetItemTotals[i].facet == facetName) {
                 facetControls[i + 1] = "<li class='pv-filterpanel-accordion-facet-list-item'  id='" + _facetItemTotals[i].itemId + "'>";
-                facetControls[i + 1] += "<input itemvalue='" + _facetItemTotals[i].itemValue.replace(/\s+/gi, "|") + "' itemfacet='" + facetName.replace(/\s+/gi, "|") + "' class='pv-facet-facetitem' type='checkbox' style='input:focus {outline: none; }'/>"
+                facetControls[i + 1] += "<input itemvalue='" + _facetItemTotals[i].itemValue.replace(/\s+/gi, "|") + "' itemfacet='" + facetName.replace(/\s+/gi, "|") + "' class='pv-facet-facetitem' type='checkbox' />"
                 facetControls[i + 1] += "<span class='pv-facet-facetitem-label' title='" + _facetItemTotals[i].itemValue + "'>" + _facetItemTotals[i].itemValue + "</span>";
                 facetControls[i + 1] += "<span class='pv-facet-facetitem-count'>0</span>"
                 facetControls[i + 1] += "</li>";
@@ -3388,6 +3388,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
 
     SetBookmark = function (bookmark, title) {
 	var query = location.search; 
+        if (!query)
+          query = "?url=" + encodeURIComponent(collectionUri.attributes[1].value);
 	// Remove fragment (uri encoded hash)
 	var hashIndex;
 	hashIndex = location.search.indexOf("%23%");
