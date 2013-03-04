@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.21-212fa83";
+PivotViewer.Version="v0.9.23-dec7715";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -3389,7 +3389,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
     SetBookmark = function (bookmark, title) {
 	var query = location.search; 
         if (!query)
-          query = "?url=" + encodeURIComponent(collectionUri.attributes[1].value);
+          query = "?url=" + encodeURIComponent(collectionUri.defaultValue);
 	// Remove fragment (uri encoded hash)
 	var hashIndex;
 	hashIndex = location.search.indexOf("%23%");
