@@ -1008,6 +1008,8 @@
 
     SetBookmark = function (bookmark, title) {
 	var query = location.search; 
+        if (!query)
+          query = "?url=" + encodeURIComponent(collectionUri.defaultValue);
 	// Remove fragment (uri encoded hash)
 	var hashIndex;
 	hashIndex = location.search.indexOf("%23%");
