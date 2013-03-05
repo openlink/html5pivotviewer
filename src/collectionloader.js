@@ -156,12 +156,13 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 //Extensions
                 var extension = $(xml).find("Extension");
                 if (extension.length == 1) {
-                    var collectionCopyright = $(extension[0]).find('d1p1\\:Copyright');
-                    if (collectionCopyright.length > 0 != null) { 
+                    var collectionCopyright = $(extension[0]).find('d1p1\\:Copyright, Copyright');
+                    if (collectionCopyright != undefined) { 
                         collection.CopyrightName = $(collectionCopyright[0]).attr("Name");
                         collection.CopyrightHref = $(collectionCopyright[0]).attr("Href");
                     }
                 }
+
                 $.publish("/PivotViewer/Models/Collection/Loaded", null);
             },
             error: function (jqXHR, textStatus, errorThrown) {
