@@ -35,7 +35,6 @@
         _mouseMove = null,
         _viewerState = { View: null, Facet: null, Filters: [] },
         _self = null,
-        _silderPrev = 0,
         PivotCollection = new PivotViewer.Models.Collection();
 
     var methods = {
@@ -159,7 +158,7 @@
         _self.append(toolbarPanel);
 
         //setup zoom slider
-        var thatRef = _silderPrev;
+        var thatRef = 0;
         $('.pv-toolbarpanel-zoomslider').slider({
             max: 100,
             change: function (event, ui) {

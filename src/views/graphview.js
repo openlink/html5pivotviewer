@@ -484,12 +484,26 @@ this.tiles[j].firstFilterItemDone = true;
             var dontFilter = false;
             var offsetX = 0, offsetY = 0;
 
+            //First get the position of the selected tile
             if ( selectedItem != null && selectedTile !=null) {
                 //determine row and column that tile is in in relation to the first tile
                 //Actual position not really row/column so different from similarly 
                 //named variables in gridview.js
                 selectedX = selectedTile._locations[0].x;
                 selectedY = selectedTile._locations[0].y;
+            }
+
+            //Reset slider to zero before zooming ( do this before sorting the tile selection
+            //because zooming to zero unselects everything...)
+            if (selectedItem != null && that.selected != selectedItem) {
+                if (that.selected == ""){
+                    var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+                    if (value != 0)
+                       $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 0);
+                }
+            }
+
+            if ( selectedItem != null && selectedTile !=null) {
                 selectedTile.Selected(true);
                 found = true;
 
