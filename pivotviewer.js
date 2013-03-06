@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.25-fe2cf86";
+PivotViewer.Version="v0.9.27-35c3c2e";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -1017,10 +1017,24 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         var selectedRow = 0;
         var offsetX = 0, offsetY = 0;
  
+        //First get the row and column of the selected tile
         if ( selectedItem != null && selectedTile !=null) {
             //determine row and column that tile is in in relation to the first tile
-            selectedCol = Math.round((selectedTile._locations[0].x - that.currentOffsetX) / selectedTile.width); //Math.floor((that.tiles[i].x - that.tiles[0].x) / that.tiles[i].width);
-            selectedRow = Math.round((selectedTile._locations[0].y - that.currentOffsetY) / selectedTile.height);  //Math.floor((that.tiles[i].y - that.tiles[0].y) / that.tiles[i].height); //Math.floor((that.tiles[i].y - that.offsetY) / (that.tiles[i].height + 4));
+            selectedCol = Math.round((selectedTile._locations[0].x - that.currentOffsetX) / selectedTile.width);
+            selectedRow = Math.round((selectedTile._locations[0].y - that.currentOffsetY) / selectedTile.height);
+        }
+ 
+        //Reset slider to zero before zooming ( do this before sorting the tile selection
+        //because zooming to zero unselects everything...)
+        if (selectedItem != null && that.selected != selectedItem) {
+            if (that.selected == ""){
+                var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+                if (value != 0)
+                   $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 0);
+            }
+        }
+
+        if ( selectedItem != null && selectedTile !=null) {
             selectedTile.Selected(true);
             tileHeight = selectedTile.height;
             tileWidth = selectedTile.height / selectedTile._controller.GetRatio(selectedTile.facetItem.Img);
@@ -1558,12 +1572,26 @@ this.tiles[j].firstFilterItemDone = true;
             var dontFilter = false;
             var offsetX = 0, offsetY = 0;
 
+            //First get the position of the selected tile
             if ( selectedItem != null && selectedTile !=null) {
                 //determine row and column that tile is in in relation to the first tile
                 //Actual position not really row/column so different from similarly 
                 //named variables in gridview.js
                 selectedX = selectedTile._locations[0].x;
                 selectedY = selectedTile._locations[0].y;
+            }
+
+            //Reset slider to zero before zooming ( do this before sorting the tile selection
+            //because zooming to zero unselects everything...)
+            if (selectedItem != null && that.selected != selectedItem) {
+                if (that.selected == ""){
+                    var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+                    if (value != 0)
+                       $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 0);
+                }
+            }
+
+            if ( selectedItem != null && selectedTile !=null) {
                 selectedTile.Selected(true);
                 found = true;
 
@@ -2416,7 +2444,6 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _mouseMove = null,
         _viewerState = { View: null, Facet: null, Filters: [] },
         _self = null,
-        _silderPrev = 0,
         PivotCollection = new PivotViewer.Models.Collection();
 
     var methods = {
@@ -2540,7 +2567,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _self.append(toolbarPanel);
 
         //setup zoom slider
-        var thatRef = _silderPrev;
+        var thatRef = 0;
         $('.pv-toolbarpanel-zoomslider').slider({
             max: 100,
             change: function (event, ui) {
