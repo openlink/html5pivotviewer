@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.27-35c3c2e";
+PivotViewer.Version="v0.9.29-c37faa1";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -494,7 +494,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                 for (var k = 0; k < facetChildren.length; k++) {
                                     if (facetChildren[k].nodeType == 1) {
                                         var v = $.trim($(facetChildren[k]).attr("Value"));
-                                        if (v == null) {
+                                        if (v == null || v == "") {
                                             var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
                                             fValue.Href = $(facetChildren[k]).attr("Href");
                                             f.AddFacetValue(fValue);
