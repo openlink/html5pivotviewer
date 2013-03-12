@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.29-c37faa1";
+PivotViewer.Version="v0.9.32-eac6898";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -3499,7 +3499,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         if (selectedItem != null) {
             var alternate = true;
             $('.pv-infopanel-heading').empty();
-            $('.pv-infopanel-heading').append("<a href=\"" + selectedItem.Href + "\">" + selectedItem.Name + "</a></div>");
+            $('.pv-infopanel-heading').append("<a href=\"" + selectedItem.Href + "\" target=\"_blank\">" + selectedItem.Name + "</a></div>");
             var infopanelDetails = $('.pv-infopanel-details');
             infopanelDetails.empty();
             if (selectedItem.Description != undefined && selectedItem.Description.length > 0) {
