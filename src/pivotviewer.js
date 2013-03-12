@@ -1090,7 +1090,7 @@
         if (selectedItem != null) {
             var alternate = true;
             $('.pv-infopanel-heading').empty();
-            $('.pv-infopanel-heading').append("<a href=\"" + selectedItem.Href + "\">" + selectedItem.Name + "</a></div>");
+            $('.pv-infopanel-heading').append("<a href=\"" + selectedItem.Href + "\" target=\"_blank\">" + selectedItem.Name + "</a></div>");
             var infopanelDetails = $('.pv-infopanel-details');
             infopanelDetails.empty();
             if (selectedItem.Description != undefined && selectedItem.Description.length > 0) {
