@@ -82,7 +82,7 @@
 .pv-infopanel-controls-navbar { height: 10px; width: 0px; border-left: 1px solid #C8CFD3; margin-left:8px; float: left; }
 .pv-infopanel-controls-navright { height: 10px; width: 10px; margin-left:8px; background-image: url('../Content/images/InfoPanelRight.png'); float: left; cursor:pointer;}
 .pv-infopanel-controls-navrightdisabled { height: 10px; width: 10px; margin-left:8px; background-image: url('../Content/images/InfoPanelRightDisabled.png'); float: left; cursor:pointer;}
-.pv-infopanel-heading { font-size: 12pt; float:left; clear:both; }
+.pv-infopanel-heading { font-size: 12pt; float:left; clear:both;word-break: break-all;}
 .pv-infopanel-details { margin-top: 15px; float: left; clear:both; width:181px; overflow-y:auto; overflow-x:hidden;}
 .pv-infopanel-detail-description { margin-bottom:5px; overflow:hidden; }
 .pv-infopanel-detail-description-more { background-color: #DCECF4; color: #4F7192; cursor:default; padding:5px 3px 5px 3px; margin-bottom:5px; width:28px; }
@@ -137,7 +137,7 @@
 .ui-accordion .ui-accordion-header {  outline: none; cursor: pointer; position: relative; margin-top: 1px; margin-bottom: 0px; zoom: 1; border-top: 1px solid #E2E2E2; }
 .ui-accordion .ui-accordion-li-fix { display: inline; }
 .ui-accordion .ui-accordion-header-active { border-bottom: 0 !important; }
-.ui-accordion .ui-accordion-header a {width: 80%;  display: block; font-size: 1em; padding: .5em .5em .5em .7em; overflow: hidden; text-overflow: ellipsis; }
+.ui-accordion .ui-accordion-header a { width: 80%;  display: block; font-size: 1em; padding: .5em .5em .5em .7em; overflow: hidden; text-overflow: ellipsis; }
  .ui-accordion-header.ui-state-default a { width: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 .ui-accordion-icons .ui-accordion-header a { outline: none; text-decoration:none; color: #05314A; }
 .ui-accordion .ui-accordion-header .ui-icon { position: absolute; left: .5em; top: 50%; margin-top: -8px; }
