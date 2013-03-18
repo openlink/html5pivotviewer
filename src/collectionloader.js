@@ -24,13 +24,18 @@ PivotViewer.Models.Loaders.ICollectionLoader = Object.subClass({
 
 //CXML loader
 PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLoader.subClass({
-    init: function (CXMLUri) {
-        this.CXMLUri = CXMLUri;
+    init: function (CXMLUri, proxy) {
+        this.CXMLUriNoProxy = CXMLUri;
+        if (proxy)
+            this.CXMLUri = proxy + CXMLUri;
+        else 
+            this.CXMLUri = CXMLUri;
     },
     LoadCollection: function (collection) {
         var collection = collection;
         this._super(collection);
 
+        collection.CXMLBaseNoProxy = this.CXMLUriNoProxy;
         collection.CXMLBase = this.CXMLUri;
 
         $.ajax({
