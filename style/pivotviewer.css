@@ -34,7 +34,7 @@
 .pv-facet-facetitem-count { margin-top:3px; color:#A8A9AA; position:absolute; right:0px; padding-right:5px; padding-left:25px; background-image: url('../Content/images/CountGradient.png'); background-position: 5px 50%; background-repeat:repeat-y;  }
 .pv-filterpanel-accordion-heading-clear { width:11px; position:absolute; top:6px; right:5px; background-image: url('../Content/images/FilterPanelClear.png'); background-position: center center; background-repeat: no-repeat; cursor:pointer; visibility:hidden; }
 .pv-filterpanel-accordion-facet-list { margin: 0px 0px 0px 0px; padding: 0px 0px 0px 0px; list-style:none; }
-.pv-filterpanel-accordion-facet-list-item { clear: both; }
+.pv-filterpanel-accordion-facet-list-item { clear: both; white-space: nowrap; }
 .pv-modal-dialog {
 	position: fixed;
 	font-family: Arial, Helvetica, sans-serif;
