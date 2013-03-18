@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.32-eac6898";
+PivotViewer.Version="v0.9.34-7231fc4";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -387,13 +387,18 @@ PivotViewer.Models.Loaders.ICollectionLoader = Object.subClass({
 
 //CXML loader
 PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLoader.subClass({
-    init: function (CXMLUri) {
-        this.CXMLUri = CXMLUri;
+    init: function (CXMLUri, proxy) {
+        this.CXMLUriNoProxy = CXMLUri;
+        if (proxy)
+            this.CXMLUri = proxy + CXMLUri;
+        else 
+            this.CXMLUri = CXMLUri;
     },
     LoadCollection: function (collection) {
         var collection = collection;
         this._super(collection);
 
+        collection.CXMLBaseNoProxy = this.CXMLUriNoProxy;
         collection.CXMLBase = this.CXMLUri;
 
         $.ajax({
@@ -3411,63 +3416,12 @@ PivotViewer.Views.TileLocation = Object.subClass({
 			    title += " > "
 	        }
 	    }
-            SetBookmark( currentViewerState, title);
+            // Permalink bookmarks can be enabled by implementing a function 
+            // SetBookmark(bookmark string, title string)  
+            if ( typeof (SetBookmark) != undefined && typeof(SetBookmark) === "function") { 
+                SetBookmark( PivotCollection.CXMLBaseNoProxy, currentViewerState, title);
+            }
         }
-
-    SetBookmark = function (bookmark, title) {
-	var query = location.search; 
-        if (!query)
-          query = "?url=" + encodeURIComponent(collectionUri.defaultValue);
-	// Remove fragment (uri encoded hash)
-	var hashIndex;
-	hashIndex = location.search.indexOf("%23%");
-	if ( hashIndex > 0 )
-		query = location.search.substring( 0, hashIndex );
-	// Remove fragment (non uri encoded hash)
-	if (!query) {
-		hashIndex = location.search.indexOf("#");
-		if ( hashIndex > 0 )
-			query = location.search.substring( 0, hashIndex );
-	}
-	
-	var new_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/' + query + encodeURIComponent( bookmark );
-	var edit_bookmark = location.protocol + '//' + location.host + '/HtmlPivotViewer/edit.vsp' + query + encodeURIComponent( bookmark );
-	var el;
-
-	//
-	//  Update AddThis links
-	//
-	el = document.getElementById ("sharelink");
-	if (el) { 
-		try {
-			el.setAttribute ('addthis:url', new_bookmark); 
-			el.setAttribute ('addthis:title', title); 
-
-			addthis.update('share', 'url', new_bookmark);
-			addthis.update('share', 'title', title);
-			addthis.update('config', 'ui_cobrand', 'PivotViewer');
-
-			addthis.toolbox ('#sharelink');		// redraw 
-			addthis.init();
-		} catch (e) {}
-	}
-
-	//
-	//  Updated permalink
-	//
-	el = document.getElementById ("permalink");
-	if (el) {
-		el.href = new_bookmark;
-	}
-
-	//
-	//  Updated edit link
-	//
-	el = document.getElementById ("editlink");
-	if (el) {
-		el.href = edit_bookmark;
-	}
-    }
 
     //Events
     //Collection loading complete
