@@ -597,7 +597,7 @@ this.tiles[j].firstFilterItemDone = true;
 
         if (!found && !dontFilter) {
             var bucketNumber = Math.floor((clickX - that.offsetX) / that.columnWidth);
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange}]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange, ClearFacetFilters:true}]);
         }
     }
 });
