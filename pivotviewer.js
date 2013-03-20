@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.34-7231fc4";
+PivotViewer.Version="v0.9.37-d93798a";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -1690,7 +1690,7 @@ this.tiles[j].firstFilterItemDone = true;
 
         if (!found && !dontFilter) {
             var bucketNumber = Math.floor((clickX - that.offsetX) / that.columnWidth);
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange}]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange, ClearFacetFilters:true}]);
         }
     }
 });
@@ -3409,8 +3409,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
 			    currentViewerState += "=GE." + _numericFacets[i].selectedMin;
 			    title += "Over " + _numericFacets[i].selectedMin;
 			} else {
-			    currentViewerState += "=GE." + _numericFacets[i].selectedMin + "_LE." + _numericFilters[i].selectedMax;
-			    title += "Between " + _numericFacets[i].selectedMin + " and " + _numericFilters[i].selectedMax;
+			    currentViewerState += "=GE." + _numericFacets[i].selectedMin + "_LE." + _numericFacets[i].selectedMax;
+			    title += "Between " + _numericFacets[i].selectedMin + " and " + _numericFacets[i].selectedMax;
 			}
 			if ( i < _numericFacets.length - 1)
 			    title += " > "
@@ -3528,6 +3528,23 @@ PivotViewer.Views.TileLocation = Object.subClass({
     $.subscribe("/PivotViewer/Views/Item/Filtered", function (evt) {
         if (evt == undefined || evt == null)
             return;
+
+        // If the facet used for the sort is the same as the facet that the filter is 
+        // changing on then clear all the other values?
+        // This is only the case when comming from drill down in the graph view.
+        if (evt.ClearFacetFilters == true) {
+            for (var i = 0, _iLen = PivotCollection.FacetCategories.length; i < _iLen; i++) {
+                if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
+                    (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
+                    PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime)) {
+                    var checkedValues = $('.pv-facet-facetitem[itemfacet="' + evt.Facet + '"]')
+                    for (var j = 0; j < checkedValues.length; j++) {
+                        $(checkedValues[j]).removeAttr('checked');
+                        $(checkedValues[j]).checked = false;
+                    }
+                }
+            }
+        }
 
         for (var i = 0, _iLen = PivotCollection.FacetCategories.length; i < _iLen; i++) {
             if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
@@ -3653,7 +3670,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         });
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text()}]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text(), ClearFacetFilters: true }]);
             return false;
         });
         $('.pv-infopanel-details').on('click', '.pv-infopanel-detail-description-more', function (e) {
