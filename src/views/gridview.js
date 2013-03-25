@@ -280,7 +280,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     /// Sets the tiles position based on the GetRowsAndColumns layout function
     SetVisibleTilePositions: function (rowscols, filter, offsetX, offsetY, initTiles, keepColsRows, miliseconds) {
         //re-use previous columns
-        var columns = keepColsRows ? this.rowscols.Columns : rowscols.Columns;
+        var columns = (keepColsRows && this.rowscols)  ? this.rowscols.Columns : rowscols.Columns;
         if (!keepColsRows)
             this.rowscols = rowscols;
 
@@ -333,9 +333,6 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 break;
             }
         }
-        offsetX = selectedTile._locations[0].x;
-        offsetY = selectedTile._locations[0].y;
-
         var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
 
         that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2);
@@ -394,15 +391,6 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             }
             that.selected = selectedItem;
             that.CentreOnSelectedTile(selectedCol, selectedRow);
-
-/*
-            var rowscols = that.GetRowsAndColumns(that.currentWidth - that.offsetX, that.currentHeight - that.offsetY, that.maxRatio, that.currentFilter.length);
-
-            that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2);
-            that.currentOffsetY = ((rowscols.TileHeight * selectedRow) * -1) + (that.height / 2) - (rowscols.TileHeight / 2);
-
-            that.SetVisibleTilePositions(rowscols, that.currentFilter, that.currentOffsetX, that.currentOffsetY, true, true, 1000);
-*/
         } else {
             that.selected = selectedItem = "";
             //zoom out
