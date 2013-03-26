@@ -30,7 +30,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             var selectedItem = null;
             var selectedTile = null;
             for (var i = 0; i < that.tiles.length; i++) {
-                if (that.tiles[i].Contains(evt.x, evt.y)) {
+                var loc = that.tiles[i].Contains(evt.x, evt.y);
+                if ( loc >= 0 ) {
                     selectedTile = that.tiles[i];
                     selectedItem = that.tiles[i].facetItem.Id;
                 } else {
@@ -45,7 +46,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 return;
 
             for (var i = 0; i < that.tiles.length; i++) {
-                if (that.tiles[i].Contains(evt.x, evt.y))
+                var loc = that.tiles[i].Contains(evt.x, evt.y); 
+                if ( loc >= 0 )
                     that.tiles[i].Selected(true);
                 else
                     that.tiles[i].Selected(false);
@@ -190,6 +192,10 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         for (var l = 0; l < this.tiles.length; l++) {
           while (this.tiles[l]._locations.length > 1) 
               this.tiles[l]._locations.pop();   
+        }
+        // Ensure any selected location is zero
+        for (var i = 0; i < this.tiles.length; i++) {
+            this.tiles[i].selectedLoc = 0;
         }
 
         //Sort

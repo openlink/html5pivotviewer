@@ -116,7 +116,7 @@ PivotViewer.Views.TileController = Object.subClass({
                                  }
                              }
 	                     if (selectedId && selectedTile) 
-                        	$.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[0].destinationx, y: selectedTile._locations[0].destinationy}]);
+                        	$.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].destinationx, y: selectedTile._locations[selectedTile.selectedLoc].destinationy}]);
                                 doInitialSelection = false;
                                 selectedId = 0;
                         }
@@ -146,11 +146,13 @@ PivotViewer.Views.TileController = Object.subClass({
         //once properties set then draw
         for (var i = 0; i < this._tiles.length; i++) {
             //only draw if in visible area
-            if (this._tiles[i]._locations[0].x + this._tiles[i].width > 0 && this._tiles[i]._locations[0].x < context.canvas.width && this._tiles[i]._locations[0].y + this._tiles[i].height > 0 && this._tiles[i]._locations[0].y < context.canvas.height) {
+            for (var l = 0; l < this._tiles[i]._locations.length; l++) {
+                if (this._tiles[i]._locations[l].x + this._tiles[i].width > 0 && this._tiles[i]._locations[l].x < context.canvas.width && this._tiles[i]._locations[l].y + this._tiles[i].height > 0 && this._tiles[i]._locations[l].y < context.canvas.height) {
                 if (isAnimating)
-                    this._tiles[i].DrawEmpty();
+                    this._tiles[i].DrawEmpty(l);
                 else
-                    this._tiles[i].Draw();
+                    this._tiles[i].Draw(l);
+                }
             }
         }
 
@@ -247,7 +249,7 @@ PivotViewer.Views.Tile = Object.subClass({
        return this._selected;
     },
 
-    Draw: function () {
+    Draw: function (loc) {
         //Is the tile destination in visible area?
         //If not, then re-use the old level images
         if (this.destinationVisible) {
@@ -267,7 +269,7 @@ PivotViewer.Views.Tile = Object.subClass({
         if (this._images != null) {
             if (typeof this._images == "function") {
                 //A DrawLevel function returned - invoke
-                this._images(this.facetItem, this.context, this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
+                this._images(this.facetItem, this.context, this._locations[loc].x + 4, this._locations[loc].y + 4, this.width - 8, this.height - 8);
             }
 
             else if (this._images.length > 0 && this._images[0] instanceof Image) {
@@ -303,21 +305,17 @@ PivotViewer.Views.Tile = Object.subClass({
                     var imageTileHeight = Math.ceil(this._images[i].height * scale);
                     var imageTileWidth = Math.ceil(this._images[i].width * scale);
 
-                    // Draw for each location (should only be multiple locations in graph view)
-                    for (l = 0; l < this._locations.length; l++) {
-
-                        // Creates a grid artfact across the image so comment out for now
-                        //only clearing a small portion of the canvas
-                        //this.context.fillRect(offsetx + this.x, offsety + this.y, imageTileWidth, imageTileHeight);
-                        this.context.drawImage(this._images[i], offsetx + this._locations[l].x , offsety + this._locations[l].y, imageTileWidth, imageTileHeight);
-                    }
+                    // Creates a grid artfact across the image so comment out for now
+                    //only clearing a small portion of the canvas
+                    //this.context.fillRect(offsetx + this.x, offsety + this.y, imageTileWidth, imageTileHeight);
+                    this.context.drawImage(this._images[i], offsetx + this._locations[loc].x , offsety + this._locations[loc].y, imageTileWidth, imageTileHeight);
                 }
                 if (this._selected) {
                     //draw a blue border
                     this.context.beginPath();
                     var offsetx = (Math.floor(blankWidth/2)) + 4;
                     var offsety = 4;
-                    this.context.rect(offsetx + this._locations[0].x , offsety + this._locations[0].y, displayWidth, displayHeight);
+                    this.context.rect(offsetx + this._locations[this.selectedLoc].x , offsety + this._locations[this.selectedLoc].y, displayWidth, displayHeight);
                     this.context.lineWidth = 4;
                     this.context.strokeStyle = "#92C4E1";
                     this.context.stroke();
@@ -325,31 +323,34 @@ PivotViewer.Views.Tile = Object.subClass({
             }
         }
         else {
-            this.DrawEmpty();
+            this.DrawEmpty(loc);
         }
     },
     //http://simonsarris.com/blog/510-making-html5-canvas-useful
     Contains: function (mx, my) {
         var foundIt = false;
+        var loc = -1;
         for ( i = 0; i < this._locations.length; i++) {
-            foundIt = (this._locations[0].x <= mx) && (this._locations[0].x + this.width >= mx) &&
-        (this._locations[0].y <= my) && (this._locations[0].y + this.height >= my);
+            foundIt = (this._locations[i].x <= mx) && (this._locations[i].x + this.width >= mx) &&
+        (this._locations[i].y <= my) && (this._locations[i].y + this.height >= my);
+            if (foundIt)
+              loc = i;
         }
-        return foundIt;
+        return loc;
     },
-    DrawEmpty: function () {
+    DrawEmpty: function (loc) {
         if (this._controller.DrawLevel == undefined) {
             //draw an empty square
             this.context.beginPath();
             this.context.fillStyle = "#D7DDDD";
-            this.context.fillRect(this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
-            this.context.rect(this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
+            this.context.fillRect(this._locations[loc].x + 4, this._locations[loc].y + 4, this.width - 8, this.height - 8);
+            this.context.rect(this._locations[loc].x + 4, this._locations[loc].y + 4, this.width - 8, this.height - 8);
             this.context.lineWidth = 1;
             this.context.strokeStyle = "white";
             this.context.stroke();
         } else {
             //use the controllers blank tile
-            this._controller.DrawLevel(this.facetItem, this.context, this._locations[0].x + 4, this._locations[0].y + 4, this.width - 8, this.height - 8);
+            this._controller.DrawLevel(this.facetItem, this.context, this._locations[loc].x + 4, this._locations[loc].y + 4, this.width - 8, this.height - 8);
         }
     },
     CollectionRoot: "",
@@ -368,6 +369,7 @@ PivotViewer.Views.Tile = Object.subClass({
     context: null,
     facetItem: null,
     firstFilterItemDone: false,
+    selectedLoc: 0,
     Selected: function (selected) { this._selected = selected }
 });
 ///

@@ -33,15 +33,18 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
             var selectedItem = null;
             var selectedTile = null;
+            var selectedLoc = null;
             for (var i = 0; i < that.tiles.length; i++) {
-                if (that.tiles[i].Contains(evt.x, evt.y)) {
+	        var loc = that.tiles[i].Contains(evt.x, evt.y);
+                if ( loc >= 0 ) {
                     selectedTile = that.tiles[i];
                     selectedItem = that.tiles[i].facetItem.Id;
+                    selectedLoc = loc;
                 } else {
                     that.tiles[i].Selected(false);
                 }
             }
-	    that.handleSelection (selectedItem, selectedTile, evt.x);
+	    that.handleSelection (selectedItem, selectedTile, evt.x, selectedLoc);
 	});
 
         $.subscribe("/PivotViewer/Views/Canvas/Hover", function (evt) {
@@ -54,8 +57,11 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             bucketDiv.addClass('graphview-bucket-hover');
             //determine tile
             for (var i = 0; i < that.tiles.length; i++) {
-                if (that.tiles[i].Contains(evt.x, evt.y))
+	        var loc = that.tiles[i].Contains(evt.x, evt.y);
+                if (loc >= 0) {
                     that.tiles[i].Selected(true);
+                    that.tiles[i].selectedLoc = loc;
+                }
                 else
                     that.tiles[i].Selected(false);
             }
@@ -121,6 +127,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             if (that.Scale == 1 && oldScale != 1) {
                 for (var i = 0; i < that.tiles.length; i++) {
                     that.tiles[i].Selected(false);
+                    that.tiles[i].selectedLoc = 0;
                 }
                 that.selected = "";
                 $.publish("/PivotViewer/Views/Item/Selected", [that.selected]);
@@ -261,10 +268,20 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     that.maxRatio = that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
             }
         }
-
+        
         var pt2Timeout = currentFilter.length == this.tiles.length ? 0 : 500;
         //Delay pt2 animation
         setTimeout(function () {
+            // Clear selection
+            var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+            if (value > 0) { 
+                this.selected = selectedItem = "";
+                //zoom out
+                this.currentOffsetX = this.offsetX;
+                this.currentOffsetY = this.offsetY;
+                // Zoom using the slider event
+                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 1);
+            }
             that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted - that.offsetY, that.maxRatio, that.bigCount);
             for (var i = 0; i < that.tiles.length; i++) {
                 that.tiles[i].origwidth = that.rowscols.TileHeight / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
@@ -293,7 +310,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
     },
     /// Sets the tiles position based on the GetRowsAndColumns layout function
     SetVisibleTileGraphPositions: function (rowscols, offsetX, offsetY, initTiles, keepColsRows) {
-        var columns = keepColsRows ? this.rowscols.Columns : rowscols.Columns;
+        var columns = (keepColsRows && this.rowscols)  ? this.rowscols.Columns : rowscols.Columns;
         if (!keepColsRows)
             this.rowscols = rowscols;
 
@@ -303,8 +320,8 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         // First clear all tile locations greater that 1
         for (var l = 0; l < this.tiles.length; l++) {
             this.tiles[l].firstFilterItemDone = false;
-          while (this.tiles[l]._locations.length > 1) 
-              this.tiles[l]._locations.pop();   
+            while (this.tiles[l]._locations.length > 1) 
+                this.tiles[l]._locations.pop();   
         }
              
         for (var i = 0; i < this.buckets.length; i++) {
@@ -313,32 +330,32 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             for (var j = 0, _jLen = this.tiles.length; j < _jLen; j++) {
                 if ($.inArray(this.tiles[j].facetItem.Id, this.buckets[i].Ids) >= 0) {
 
-if (!this.tiles[j].firstFilterItemDone) {
-                    if (initTiles) {
-                        //setup tile initial positions
-                        this.tiles[j]._locations[0].startx = this.tiles[j]._locations[0].x;
-                        this.tiles[j]._locations[0].starty = this.tiles[j]._locations[0].y;
-                        this.tiles[j].startwidth = this.tiles[j].width;
-                        this.tiles[j].startheight = this.tiles[j].height;
+                    if (!this.tiles[j].firstFilterItemDone) {
+                        if (initTiles) {
+                            //setup tile initial positions
+                            this.tiles[j]._locations[0].startx = this.tiles[j]._locations[0].x;
+                            this.tiles[j]._locations[0].starty = this.tiles[j]._locations[0].y;
+                            this.tiles[j].startwidth = this.tiles[j].width;
+                            this.tiles[j].startheight = this.tiles[j].height;
+                        }
+                   
+                        this.tiles[j].destinationwidth = rowscols.TileMaxWidth;
+                        this.tiles[j].destinationheight = rowscols.TileHeight;
+                        this.tiles[j]._locations[0].destinationx = (i * this.columnWidth) + (currentColumn * rowscols.TileMaxWidth) + offsetX;
+                        this.tiles[j]._locations[0].destinationy = this.canvasHeightUIAdjusted - rowscols.TileHeight - (currentRow * rowscols.TileHeight) + offsetY;
+                        this.tiles[j].start = PivotViewer.Utils.Now();
+                        this.tiles[j].end = this.tiles[j].start + 1000;
+                        this.tiles[j].firstFilterItemDone = true;
+                    } else {
+                        tileLocation = new PivotViewer.Views.TileLocation();
+                        tileLocation.startx = this.tiles[j]._locations[0].startx;
+                        tileLocation.starty = this.tiles[j]._locations[0].starty;
+                        tileLocation.x = this.tiles[j]._locations[0].x;
+                        tileLocation.y = this.tiles[j]._locations[0].y;
+                        tileLocation.destinationx = (i * this.columnWidth) + (currentColumn * rowscols.TileMaxWidth) + offsetX;
+                        tileLocation.destinationy = this.canvasHeightUIAdjusted - rowscols.TileHeight - (currentRow * rowscols.TileHeight) + offsetY;
+                        this.tiles[j]._locations.push(tileLocation);
                     }
-
-                    this.tiles[j].destinationwidth = rowscols.TileMaxWidth;
-                    this.tiles[j].destinationheight = rowscols.TileHeight;
-                    this.tiles[j]._locations[0].destinationx = (i * this.columnWidth) + (currentColumn * rowscols.TileMaxWidth) + offsetX;
-                    this.tiles[j]._locations[0].destinationy = this.canvasHeightUIAdjusted - rowscols.TileHeight - (currentRow * rowscols.TileHeight) + offsetY;
-                    this.tiles[j].start = PivotViewer.Utils.Now();
-                    this.tiles[j].end = this.tiles[j].start + 1000;
-this.tiles[j].firstFilterItemDone = true;
-} else {
-                    tileLocation = new PivotViewer.Views.TileLocation();
-                    tileLocation.startx = this.tiles[j]._locations[0].startx;
-                    tileLocation.starty = this.tiles[j]._locations[0].starty;
-                    tileLocation.x = this.tiles[j]._locations[0].x;
-                    tileLocation.y = this.tiles[j]._locations[0].y;
-                    tileLocation.destinationx = (i * this.columnWidth) + (currentColumn * rowscols.TileMaxWidth) + offsetX;
-                    tileLocation.destinationy = this.canvasHeightUIAdjusted - rowscols.TileHeight - (currentRow * rowscols.TileHeight) + offsetY;
-                    this.tiles[j]._locations.push(tileLocation);
-}
 
                     if (currentColumn == columns - 1) {
                         currentColumn = 0;
@@ -465,11 +482,11 @@ this.tiles[j].firstFilterItemDone = true;
         that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2) + padding;
 
         //that.currentOffsetY = rowscols.TileHeight * (selectedRow - 1) - (that.canvasHeightUIAdjusted / 2) - (rowscols.TileHeight / 2);  
-        that.currentOffsetY =   - rowscols.TileHeight * ((rowscols.Rows / 2) - (selectedRow + 1)) - ( that.canvasHeightUIAdjusted / 2 ) - (rowscols.TileHeight / 2);
+        that.currentOffsetY = - rowscols.TileHeight * ((rowscols.Rows / 2) - (selectedRow + 1)) - ( that.canvasHeightUIAdjusted / 2 ) - (rowscols.TileHeight / 2);
 
         that.SetVisibleTileGraphPositions(rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
     },
-    handleSelection: function (selectedItem, selectedTile, clickX) {
+    handleSelection: function (selectedItem, selectedTile, clickX, selectedLoc) {
         var that = this;
             var selectedCol = 0;
             var selectedRow = 0;
@@ -482,8 +499,8 @@ this.tiles[j].firstFilterItemDone = true;
                 //determine row and column that tile is in in relation to the first tile
                 //Actual position not really row/column so different from similarly 
                 //named variables in gridview.js
-                selectedX = selectedTile._locations[0].x;
-                selectedY = selectedTile._locations[0].y;
+                selectedX = selectedTile._locations[selectedLoc].x;
+                selectedY = selectedTile._locations[selectedLoc].y;
             }
 
             //Reset slider to zero before zooming ( do this before sorting the tile selection
@@ -498,11 +515,12 @@ this.tiles[j].firstFilterItemDone = true;
 
             if ( selectedItem != null && selectedTile !=null) {
                 selectedTile.Selected(true);
+                selectedTile.selectedLoc = selectedLoc;
                 found = true;
 
                 //Used for scaling and centering 
-                selectedCol = Math.round((selectedTile._locations[0].x - that.currentOffsetX) / selectedTile.width);
-                selectedRow = Math.round((that.canvasHeightUIAdjusted - (selectedTile._locations[0].y - that.currentOffsetY)) / selectedTile.height);
+                selectedCol = Math.round((selectedTile._locations[selectedLoc].x - that.currentOffsetX) / selectedTile.width);
+                selectedRow = Math.round((that.canvasHeightUIAdjusted - (selectedTile._locations[selectedLoc].y - that.currentOffsetY)) / selectedTile.height);
                 tileHeight = selectedTile.height;
                 tileWidth = selectedTile.height / selectedTile._controller.GetRatio(selectedTile.facetItem.Img);
                 tileOrigHeight = selectedTile.origheight;
