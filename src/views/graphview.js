@@ -121,6 +121,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             }
 
             var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
+            if (rowscols.TileHeight < 10 ) rowscols.TileHeight = 10;
             that.SetVisibleTileGraphPositions(rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
 
             //deselect tiles if zooming back to min size
@@ -283,6 +284,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 1);
             }
             that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted - that.offsetY, that.maxRatio, that.bigCount);
+            if (that.rowscols.TileHeight < 10 ) that.rowscols.TileHeight = 10;
             for (var i = 0; i < that.tiles.length; i++) {
                 that.tiles[i].origwidth = that.rowscols.TileHeight / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
                 that.tiles[i].origheight = that.rowscols.TileHeight;
@@ -472,6 +474,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         }
 
         var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
+        if (rowscols.TileHeight < 10 ) rowscols.TileHeight = 10;
         var bucket = Math.floor(selectedCol/ rowscols.Columns);
         var padding = rowscols.PaddingX * bucket;
 
