@@ -472,14 +472,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         }
 
         var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
-
-        var padding = 0;
-        var gap = that.columnWidth - (rowscols.TileMaxWidth * rowscols.Columns);
         var bucket = Math.floor(selectedCol/ rowscols.Columns);
-        if (gap > 0)
-           padding = bucket * gap;
+        var padding = rowscols.PaddingX * bucket;
 
-        that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2) + padding;
+        that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2) - padding;
 
         //that.currentOffsetY = rowscols.TileHeight * (selectedRow - 1) - (that.canvasHeightUIAdjusted / 2) - (rowscols.TileHeight / 2);  
         that.currentOffsetY = - rowscols.TileHeight * ((rowscols.Rows / 2) - (selectedRow + 1)) - ( that.canvasHeightUIAdjusted / 2 ) - (rowscols.TileHeight / 2);
