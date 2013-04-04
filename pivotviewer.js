@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.43-13a7bcd";
+PivotViewer.Version="v0.9.45-f225029";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -1480,7 +1480,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                                 }
                             }
                             if (!found)
-                                bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id] });
+                                bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id], Values: [val] });
 
                             hasValue = true;
                         }
@@ -1493,11 +1493,12 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     for (var k = 0; k < bkts.length; k++) {
                         if (bkts[k].startRange == val) {
                             bkts[k].Ids.push(dzTiles[i].facetItem.Id);
+                            bkts[k].Values.push(val);
                             found = true;
                         }
                     }
                     if (!found)
-                        bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id] });
+                        bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id], Values: [val] });
                 }
             }
         }
@@ -1530,6 +1531,8 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 for (var i = 0; i < bkts[current + 1].Ids.length; i++) {
                     if ($.inArray(bkts[current+1].Ids[i], bkts[current].Ids) < 0) 
                         bkts[current].Ids.push(bkts[current + 1].Ids[i]);
+                        if ($.inArray(bkts[current + 1].endRange, bkts[current].Values) < 0) 
+                            bkts[current].Values.push(bkts[current + 1].endRange);
                 }
                 bkts.splice(current + 1, 1);
                 current++;
@@ -1685,7 +1688,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
         if (!found && !dontFilter) {
             var bucketNumber = Math.floor((clickX - that.offsetX) / that.columnWidth);
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange, ClearFacetFilters:true}]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange, Values: that.buckets[bucketNumber].Values, ClearFacetFilters:true}]);
         }
     }
 });
@@ -3548,9 +3551,17 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
                 PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime)) {
 
-            var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Item)) + " input");
-            cb.attr('checked', 'checked');
-            FacetItemClick(cb[0]);
+                if (evt.Values) {
+	            for ( var j = 0; j < evt.Values.length; j++) {
+                        var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Values[j])) + " input");
+                        cb.attr('checked', 'checked');
+                        FacetItemClick(cb[0]);
+                    }
+                } else {
+                    var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Item)) + " input");
+                    cb.attr('checked', 'checked');
+                    FacetItemClick(cb[0]);
+                }
             }
             if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
                 PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Number) {
@@ -3667,7 +3678,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         });
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text(), ClearFacetFilters: true }]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text(), Values: null, ClearFacetFilters: true }]);
             return false;
         });
         $('.pv-infopanel-details').on('click', '.pv-infopanel-detail-description-more', function (e) {
