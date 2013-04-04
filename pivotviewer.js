@@ -655,20 +655,37 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
 	},
 
 	//http://stackoverflow.com/questions/979256/how-to-sort-an-array-of-javascript-objects
-	SortBy: function (field, reverse, primer) {
+	SortBy: function (field, reverse, primer, filterValues) {
 
-		var key = function (x) {
+		var key = function (x, filterValues) {
 			if (primer) {
 				for (var i = x.facetItem.Facets.length - 1; i > -1; i -= 1) {
-					if (x.facetItem.Facets[i].Name == field && x.facetItem.Facets[i].FacetValues.length > 0)
-						return primer(x.facetItem.Facets[i].FacetValues[0].Value);
+					if (x.facetItem.Facets[i].Name == field && x.facetItem.Facets[i].FacetValues.length > 0) {
+                                            // If a numeric value could check if value is within filter 
+                                            // bounds but will have been done already
+                                            if ($.isNumeric(x.facetItem.Facets[i].FacetValues[0].Value) )
+					            return primer(x.facetItem.Facets[i].FacetValues[0].Value);
+                                            // If a string facet then could have a number of values.  Only
+                                            // sort on values in the filter 
+                                            else {                      
+                                                for (var j = 0; j < x.facetItem.Facets[i].FacetValues.length; j++) {
+                                                    for (var k = 0; k < filterValues.length; k++) {
+                                                        if (filterValues[k].facet == field)
+                                                             for (var l = 0; l < filterValues[k].facetValue.length; l++) {
+                                                                 if ( x.facetItem.Facets[i].FacetValues[j].Value == filterValues[k].facetValue[l])  
+					                             return primer(x.facetItem.Facets[i].FacetValues[j].Value);
+                                                             }
+                                                    }
+                                                }
+                                            }
+                                        }
 				}
 			}
 			return null;
 		};
 
 		return function (a, b) {
-			var A = key(a), B = key(b);
+			var A = key(a, filterValues), B = key(b, filterValues);
 			return (A < B ? -1 : (A > B ? 1 : 0)) * [1, -1][+!!reverse];
 		}
 	}
@@ -851,7 +868,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this.currentOffsetX = this.offsetX;
         this.currentOffsetY = this.offsetY;
     },
-    Filter: function (dzTiles, currentFilter, sortFacet) {
+    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets) {
         var that = this;
         if (!Modernizr.canvas)
             return;
@@ -876,7 +893,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         //Sort
         this.tiles = this.tiles.sort(this.SortBy(sortFacet, false, function (a) {
             return $.isNumeric(a) ? a : a.toUpperCase();
-        }));
+        }, stringFacets));
         this.currentFilter = currentFilter;
 
         var pt1Timeout = 0;
@@ -1300,7 +1317,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         //Sort
         this.tiles = dzTiles.sort(this.SortBy(this.sortFacet, false, function (a) {
             return $.isNumeric(a) ? a : a.toUpperCase();
-        }));
+        }, stringFacets));
         this.currentFilter = currentFilter;
 
         this.buckets = this.Bucketize(dzTiles, currentFilter, this.sortFacet, stringFacets);

@@ -176,7 +176,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this.currentOffsetX = this.offsetX;
         this.currentOffsetY = this.offsetY;
     },
-    Filter: function (dzTiles, currentFilter, sortFacet) {
+    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets) {
         var that = this;
         if (!Modernizr.canvas)
             return;
@@ -201,7 +201,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         //Sort
         this.tiles = this.tiles.sort(this.SortBy(sortFacet, false, function (a) {
             return $.isNumeric(a) ? a : a.toUpperCase();
-        }));
+        }, stringFacets));
         this.currentFilter = currentFilter;
 
         var pt1Timeout = 0;

@@ -212,7 +212,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         //Sort
         this.tiles = dzTiles.sort(this.SortBy(this.sortFacet, false, function (a) {
             return $.isNumeric(a) ? a : a.toUpperCase();
-        }));
+        }, stringFacets));
         this.currentFilter = currentFilter;
 
         this.buckets = this.Bucketize(dzTiles, currentFilter, this.sortFacet, stringFacets);
