@@ -1137,9 +1137,17 @@
                 (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
                 PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime)) {
 
-            var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Item)) + " input");
-            cb.attr('checked', 'checked');
-            FacetItemClick(cb[0]);
+                if (evt.Values) {
+	            for ( var j = 0; j < evt.Values.length; j++) {
+                        var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Values[j])) + " input");
+                        cb.attr('checked', 'checked');
+                        FacetItemClick(cb[0]);
+                    }
+                } else {
+                    var cb = $(PivotViewer.Utils.EscapeMetaChars(PivotViewer.Utils.EscapeItemId("#pv-facet-item-" + evt.Facet + "__" + evt.Item)) + " input");
+                    cb.attr('checked', 'checked');
+                    FacetItemClick(cb[0]);
+                }
             }
             if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
                 PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Number) {
@@ -1256,7 +1264,7 @@
         });
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text(), ClearFacetFilters: true }]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text(), Values: null, ClearFacetFilters: true }]);
             return false;
         });
         $('.pv-infopanel-details').on('click', '.pv-infopanel-detail-description-more', function (e) {

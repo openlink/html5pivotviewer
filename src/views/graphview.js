@@ -392,7 +392,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                                 }
                             }
                             if (!found)
-                                bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id] });
+                                bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id], Values: [val] });
 
                             hasValue = true;
                         }
@@ -405,11 +405,12 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     for (var k = 0; k < bkts.length; k++) {
                         if (bkts[k].startRange == val) {
                             bkts[k].Ids.push(dzTiles[i].facetItem.Id);
+                            bkts[k].Values.push(val);
                             found = true;
                         }
                     }
                     if (!found)
-                        bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id] });
+                        bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id], Values: [val] });
                 }
             }
         }
@@ -442,6 +443,8 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 for (var i = 0; i < bkts[current + 1].Ids.length; i++) {
                     if ($.inArray(bkts[current+1].Ids[i], bkts[current].Ids) < 0) 
                         bkts[current].Ids.push(bkts[current + 1].Ids[i]);
+                        if ($.inArray(bkts[current + 1].endRange, bkts[current].Values) < 0) 
+                            bkts[current].Values.push(bkts[current + 1].endRange);
                 }
                 bkts.splice(current + 1, 1);
                 current++;
@@ -597,7 +600,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
         if (!found && !dontFilter) {
             var bucketNumber = Math.floor((clickX - that.offsetX) / that.columnWidth);
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange, ClearFacetFilters:true}]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange, Values: that.buckets[bucketNumber].Values, ClearFacetFilters:true}]);
         }
     }
 });
