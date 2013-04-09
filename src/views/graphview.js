@@ -120,9 +120,9 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-viewarea-graphview-overlay div').fadeOut('slow');
             }
 
-            var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
-            if (rowscols.TileHeight < 10 ) rowscols.TileHeight = 10;
-            that.SetVisibleTileGraphPositions(rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
+            that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
+            if (that.rowscols.TileHeight < 10 ) that.rowscols.TileHeight = 10;
+            that.SetVisibleTileGraphPositions(that.rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
 
             //deselect tiles if zooming back to min size
             if (that.Scale == 1 && oldScale != 1) {
