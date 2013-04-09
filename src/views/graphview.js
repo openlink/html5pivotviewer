@@ -457,7 +457,13 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
     // These need fixing
     GetSelectedCol: function (tile) {
         var that = this;
-        selectedCol = Math.round((tile._locations[0].x - that.currentOffsetX) / tile.width);
+        //Need to account for padding in each column...
+        padding = that.rowscols.PaddingX;
+        colsInBar = that.rowscols.Columns;
+        tileMaxWidth = that.rowscols.TileMaxWidth;
+        selectedBar = Math.floor((tile._locations[tile.selectedLoc].x - that.currentOffsetX) / ((tileMaxWidth * colsInBar) + padding));
+        selectedColInBar = Math.round(((tile._locations[tile.selectedLoc].x - that.currentOffsetX) - (selectedBar * (colsInBar * tileMaxWidth + padding))) / tileMaxWidth);
+        selectedCol = (selectedBar * colsInBar) + selectedColInBar;
         return selectedCol;
     },
     GetSelectedRow: function (tile) {
@@ -476,17 +482,18 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             }
         }
 
-        var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
-        if (rowscols.TileHeight < 10 ) rowscols.TileHeight = 10;
-        var bucket = Math.floor(selectedCol/ rowscols.Columns);
-        var padding = rowscols.PaddingX * bucket;
+        //var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
+        that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
+        if (that.rowscols.TileHeight < 10 ) that.rowscols.TileHeight = 10;
+        var bucket = Math.floor(selectedCol/ that.rowscols.Columns);
+        var padding = that.rowscols.PaddingX * bucket;
 
-        that.currentOffsetX = ((rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (rowscols.TileMaxWidth / 2) - padding;
+        that.currentOffsetX = ((that.rowscols.TileMaxWidth * selectedCol) * -1) + (that.width / 2) - (that.rowscols.TileMaxWidth / 2) - padding;
 
         //that.currentOffsetY = rowscols.TileHeight * (selectedRow - 1) - (that.canvasHeightUIAdjusted / 2) - (rowscols.TileHeight / 2);  
-        that.currentOffsetY = - rowscols.TileHeight * ((rowscols.Rows / 2) - (selectedRow + 1)) - ( that.canvasHeightUIAdjusted / 2 ) - (rowscols.TileHeight / 2);
+        that.currentOffsetY = - that.rowscols.TileHeight * ((that.rowscols.Rows / 2) - (selectedRow + 1)) - ( that.canvasHeightUIAdjusted / 2 ) - (that.rowscols.TileHeight / 2);
 
-        that.SetVisibleTileGraphPositions(rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
+        that.SetVisibleTileGraphPositions(that.rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
     },
     handleSelection: function (selectedItem, selectedTile, clickX, selectedLoc) {
         var that = this;
@@ -521,7 +528,13 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 found = true;
 
                 //Used for scaling and centering 
-                selectedCol = Math.round((selectedTile._locations[selectedLoc].x - that.currentOffsetX) / selectedTile.width);
+                //Need to account for paddingin each column...
+                padding = that.rowscols.PaddingX;
+                colsInBar = that.rowscols.Columns;
+                tileMaxWidth = that.rowscols.TileMaxWidth;
+                selectedBar = Math.floor((selectedTile._locations[selectedLoc].x - that.currentOffsetX) / ((selectedTile.width * colsInBar) + padding));
+                selectedColInBar = Math.round(((selectedTile._locations[selectedLoc].x - that.currentOffsetX) - (selectedBar * (colsInBar * tileMaxWidth + padding))) / tileMaxWidth);
+                selectedCol = (selectedBar * colsInBar) + selectedColInBar;
                 selectedRow = Math.round((that.canvasHeightUIAdjusted - (selectedTile._locations[selectedLoc].y - that.currentOffsetY)) / selectedTile.height);
                 tileHeight = selectedTile.height;
                 tileWidth = selectedTile.height / selectedTile._controller.GetRatio(selectedTile.facetItem.Img);
