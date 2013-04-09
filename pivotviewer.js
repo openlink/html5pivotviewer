@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.48-8a6deb5";
+PivotViewer.Version="v0.9.50-12e7094";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -1225,9 +1225,9 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-viewarea-graphview-overlay div').fadeOut('slow');
             }
 
-            var rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
-            if (rowscols.TileHeight < 10 ) rowscols.TileHeight = 10;
-            that.SetVisibleTileGraphPositions(rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
+            that.rowscols = that.GetRowsAndColumns(that.columnWidth - 2, that.canvasHeightUIAdjusted, that.maxRatio, that.bigCount);
+            if (that.rowscols.TileHeight < 10 ) that.rowscols.TileHeight = 10;
+            that.SetVisibleTileGraphPositions(that.rowscols, that.currentOffsetX, that.currentOffsetY, true, true);
 
             //deselect tiles if zooming back to min size
             if (that.Scale == 1 && oldScale != 1) {
@@ -1569,7 +1569,6 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         selectedBar = Math.floor((tile._locations[tile.selectedLoc].x - that.currentOffsetX) / ((tileMaxWidth * colsInBar) + padding));
         selectedColInBar = Math.round(((tile._locations[tile.selectedLoc].x - that.currentOffsetX) - (selectedBar * (colsInBar * tileMaxWidth + padding))) / tileMaxWidth);
         selectedCol = (selectedBar * colsInBar) + selectedColInBar;
-        //selectedCol = Math.round((tile._locations[0].x - that.currentOffsetX) / tile.width);
         return selectedCol;
     },
     GetSelectedRow: function (tile) {
