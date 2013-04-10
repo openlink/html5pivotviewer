@@ -29,6 +29,7 @@
         _tiles = [],
         _filterItems = [],
         _selectedItem = "",
+        _selectedItemBkt = 0,
         _currentSort = "",
         _imageController,
         _mouseDrag = null,
@@ -743,10 +744,19 @@
 
         // Maintain a list of items in the filter in sort order.
         var sortedFilter = [];
-        for (var i = 0; i < _views[_currentView].tiles.length; i++) {
-            var filterindex = $.inArray(_views[_currentView].tiles[i].facetItem.Id, filterItems);
-            if (filterindex >= 0)
-                sortedFilter.push(_views[_currentView].tiles[i].facetItem.Id);
+        // More compicated for the graphview...
+        if (_views[_currentView].GetViewName() == 'Graph View')
+           sortedFilter = _views[_currentView].GetSortedFilter();
+        else {
+            for (var i = 0; i < _views[_currentView].tiles.length; i++) {
+                var filterindex = $.inArray(_views[_currentView].tiles[i].facetItem.Id, filterItems);
+                if (filterindex >= 0) {
+                    var obj = new Object ();
+                    obj.Id = _views[_currentView].tiles[i].facetItem.Id;
+                    obj.Bucket = 0;
+                    sortedFilter.push(obj);
+                }
+            }
         }
         _filterItems = sortedFilter;
 
@@ -1035,7 +1045,7 @@
         }
 
         //if (evt.length > 0) {
-        var selectedItem = GetItem(evt);
+        var selectedItem = GetItem(evt.id);
         if (selectedItem != null) {
             var alternate = true;
             $('.pv-infopanel-heading').empty();
@@ -1046,17 +1056,17 @@
                 infopanelDetails.append("<div class='pv-infopanel-detail-description' style='height:100px;'>" + selectedItem.Description + "</div><div class='pv-infopanel-detail-description-more'>More</div>");
             }
             // nav arrows...
-            if (selectedItem.Id == _filterItems[0] && selectedItem == _filterItems[_filterItems.length - 1]) {
+            if (selectedItem.Id == _filterItems[0].Id && selectedItem == _filterItems[_filterItems.length - 1]) {
                 $('.pv-infopanel-controls-navright').hide();
                 $('.pv-infopanel-controls-navrightdisabled').show();
                 $('.pv-infopanel-controls-navleft').hide();
                 $('.pv-infopanel-controls-navleftdisabled').show();
-            } else if (selectedItem.Id == _filterItems[0]) {
+            } else if (selectedItem.Id == _filterItems[0].Id) {
                 $('.pv-infopanel-controls-navleft').hide();
                 $('.pv-infopanel-controls-navleftdisabled').show();
                 $('.pv-infopanel-controls-navright').show();
                 $('.pv-infopanel-controls-navrightdisabled').hide();
-            } else if (selectedItem.Id == _filterItems[_filterItems.length - 1]) {
+            } else if (selectedItem.Id == _filterItems[_filterItems.length - 1].Id) {
                 $('.pv-infopanel-controls-navright').hide();
                 $('.pv-infopanel-controls-navrightdisabled').show();
                 $('.pv-infopanel-controls-navleft').show();
@@ -1101,6 +1111,7 @@
             $('.pv-infopanel').fadeIn();
             infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height()) - 20) + 'px');
             _selectedItem = selectedItem;
+            _selectedItemBkt = evt.bkt;
 
 	    // Update the bookmark
             UpdateBookmark ();
@@ -1280,15 +1291,15 @@
         });
         $('.pv-infopanel-controls-navleft').on('click', function (e) {
           for (var i = 0; i < _filterItems.length; i++) {
-              if (_filterItems[i] == _selectedItem.Id){
+              if (_filterItems[i].Id == _selectedItem.Id && _filterItems[i].Bucket == _selectedItemBkt){
                   if (i >= 0)
-                      $.publish("/PivotViewer/Views/Item/Selected", [_filterItems[i - 1]]);
+                      $.publish("/PivotViewer/Views/Item/Selected", [{id: _filterItems[i - 1].Id, bkt: _filterItems[i - 1].Bucket}]);
                       //jch need to move the images
                       for (var j = 0; j < _tiles.length; j++) {
-                          if (_tiles[j].facetItem.Id == _filterItems[i - 1]) {
+                          if (_tiles[j].facetItem.Id == _filterItems[i - 1].Id) {
                                 _tiles[j].Selected(true);
-                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j]);
-                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j]);
+                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i - 1].Bucket);
+                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i - 1].Bucket);
                                 _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
                           } else {
                                 _tiles[j].Selected(false);
@@ -1300,15 +1311,15 @@
         });
         $('.pv-infopanel-controls-navright').on('click', function (e) {
           for (var i = 0; i < _filterItems.length; i++) {
-              if (_filterItems[i] == _selectedItem.Id){
+              if (_filterItems[i].Id == _selectedItem.Id && _filterItems[i].Bucket == _selectedItemBkt){
                   if (i < _filterItems.length) {
-                      $.publish("/PivotViewer/Views/Item/Selected", [_filterItems[i + 1]]);
+                      $.publish("/PivotViewer/Views/Item/Selected", [{id: _filterItems[i + 1].Id, bkt: _filterItems[i + 1].Bucket}]);
                       //jch need to move the images
                       for (var j = 0; j < _tiles.length; j++) {
-                          if (_tiles[j].facetItem.Id == _filterItems[i + 1]) {
+                          if (_tiles[j].facetItem.Id == _filterItems[i + 1].Id) {
                                 _tiles[j].Selected(true);
-                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j]);
-                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j]);
+                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i + 1].Bucket);
+                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i + 1].Bucket);
                                 _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
                           } else {
                                 _tiles[j].Selected(false);

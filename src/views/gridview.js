@@ -111,7 +111,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     that.tiles[i].Selected(false);
                 }
                 that.selected = "";
-                $.publish("/PivotViewer/Views/Item/Selected", [that.selected]);
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: that.selected, bkt: 0}]);
             }
         });
 
@@ -408,6 +408,6 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
         }
 
-        $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
+        $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem, bkt: 0}]);
     }
 });

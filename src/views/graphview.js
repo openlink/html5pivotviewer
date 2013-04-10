@@ -131,7 +131,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     that.tiles[i].selectedLoc = 0;
                 }
                 that.selected = "";
-                $.publish("/PivotViewer/Views/Item/Selected", [that.selected]);
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: that.selected, bkt: 0}]);
             }
         });
 
@@ -310,6 +310,18 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
     GetViewName: function () {
         return 'Graph View';
     },
+    GetSortedFilter: function () {
+      var itemArray = [];
+      for (i = 0; i < this.buckets.length; i++) {
+          for (j = 0; j < this.buckets[i].Ids.length; j++) {
+             var obj = new Object ();
+             obj.Id = this.buckets[i].Ids[j];
+             obj.Bucket = i;
+             itemArray.push(obj);
+          }
+      }
+      return itemArray;
+    },
     /// Sets the tiles position based on the GetRowsAndColumns layout function
     SetVisibleTileGraphPositions: function (rowscols, offsetX, offsetY, initTiles, keepColsRows) {
         var columns = (keepColsRows && this.rowscols)  ? this.rowscols.Columns : rowscols.Columns;
@@ -455,20 +467,32 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         return bkts;
     },
     // These need fixing
-    GetSelectedCol: function (tile) {
+    GetSelectedCol: function (tile, bucket) {
         var that = this;
+        var selectedLoc = 0;
+        for (i = 0; i < bucket; i++) {
+          if ($.inArray(tile.facetItem.Id, this.buckets[i].Ids) > 0)
+            selectedLoc++;
+        }
+        //var selectedLoc = tile.selectedLoc;
         //Need to account for padding in each column...
         padding = that.rowscols.PaddingX;
         colsInBar = that.rowscols.Columns;
         tileMaxWidth = that.rowscols.TileMaxWidth;
-        selectedBar = Math.floor((tile._locations[tile.selectedLoc].x - that.currentOffsetX) / ((tileMaxWidth * colsInBar) + padding));
-        selectedColInBar = Math.round(((tile._locations[tile.selectedLoc].x - that.currentOffsetX) - (selectedBar * (colsInBar * tileMaxWidth + padding))) / tileMaxWidth);
+        selectedBar = Math.floor((tile._locations[selectedLoc].x - that.currentOffsetX) / ((tileMaxWidth * colsInBar) + padding));
+        selectedColInBar = Math.round(((tile._locations[selectedLoc].x - that.currentOffsetX) - (selectedBar * (colsInBar * tileMaxWidth + padding))) / tileMaxWidth);
         selectedCol = (selectedBar * colsInBar) + selectedColInBar;
         return selectedCol;
     },
-    GetSelectedRow: function (tile) {
+    GetSelectedRow: function (tile, bucket) {
         var that = this;
-        selectedRow = Math.round((that.canvasHeightUIAdjusted - (tile._locations[0].y - that.currentOffsetY)) / tile.height);
+        var selectedLoc = 0;
+        for (i = 0; i < bucket; i++) {
+          if ($.inArray(tile.facetItem.Id, this.buckets[i].Ids) > 0)
+            selectedLoc++;
+        }
+        //var selectedLoc = tile.selectedLoc;
+        selectedRow = Math.round((that.canvasHeightUIAdjusted - (tile._locations[selectedLoc].y - that.currentOffsetY)) / tile.height);
         return selectedRow;
     },
     /// Centres the selected tile
@@ -609,7 +633,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
                 $('.pv-viewarea-graphview-overlay div').fadeIn('slow');
             }
-             $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
+             $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem, bkt: selectedBar}]);
 
         if (!found && !dontFilter) {
             var bucketNumber = Math.floor((clickX - that.offsetX) / that.columnWidth);
