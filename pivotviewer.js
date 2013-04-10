@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.50-12e7094";
+PivotViewer.Version="v0.9.52-ca1ce81";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -803,7 +803,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     that.tiles[i].Selected(false);
                 }
                 that.selected = "";
-                $.publish("/PivotViewer/Views/Item/Selected", [that.selected]);
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: that.selected, bkt: 0}]);
             }
         });
 
@@ -1100,7 +1100,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
         }
 
-        $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
+        $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem, bkt: 0}]);
     }
 });
 //
@@ -1236,7 +1236,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                     that.tiles[i].selectedLoc = 0;
                 }
                 that.selected = "";
-                $.publish("/PivotViewer/Views/Item/Selected", [that.selected]);
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: that.selected, bkt: 0}]);
             }
         });
 
@@ -1415,6 +1415,18 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
     GetViewName: function () {
         return 'Graph View';
     },
+    GetSortedFilter: function () {
+      var itemArray = [];
+      for (i = 0; i < this.buckets.length; i++) {
+          for (j = 0; j < this.buckets[i].Ids.length; j++) {
+             var obj = new Object ();
+             obj.Id = this.buckets[i].Ids[j];
+             obj.Bucket = i;
+             itemArray.push(obj);
+          }
+      }
+      return itemArray;
+    },
     /// Sets the tiles position based on the GetRowsAndColumns layout function
     SetVisibleTileGraphPositions: function (rowscols, offsetX, offsetY, initTiles, keepColsRows) {
         var columns = (keepColsRows && this.rowscols)  ? this.rowscols.Columns : rowscols.Columns;
@@ -1560,20 +1572,32 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         return bkts;
     },
     // These need fixing
-    GetSelectedCol: function (tile) {
+    GetSelectedCol: function (tile, bucket) {
         var that = this;
+        var selectedLoc = 0;
+        for (i = 0; i < bucket; i++) {
+          if ($.inArray(tile.facetItem.Id, this.buckets[i].Ids) > 0)
+            selectedLoc++;
+        }
+        //var selectedLoc = tile.selectedLoc;
         //Need to account for padding in each column...
         padding = that.rowscols.PaddingX;
         colsInBar = that.rowscols.Columns;
         tileMaxWidth = that.rowscols.TileMaxWidth;
-        selectedBar = Math.floor((tile._locations[tile.selectedLoc].x - that.currentOffsetX) / ((tileMaxWidth * colsInBar) + padding));
-        selectedColInBar = Math.round(((tile._locations[tile.selectedLoc].x - that.currentOffsetX) - (selectedBar * (colsInBar * tileMaxWidth + padding))) / tileMaxWidth);
+        selectedBar = Math.floor((tile._locations[selectedLoc].x - that.currentOffsetX) / ((tileMaxWidth * colsInBar) + padding));
+        selectedColInBar = Math.round(((tile._locations[selectedLoc].x - that.currentOffsetX) - (selectedBar * (colsInBar * tileMaxWidth + padding))) / tileMaxWidth);
         selectedCol = (selectedBar * colsInBar) + selectedColInBar;
         return selectedCol;
     },
-    GetSelectedRow: function (tile) {
+    GetSelectedRow: function (tile, bucket) {
         var that = this;
-        selectedRow = Math.round((that.canvasHeightUIAdjusted - (tile._locations[0].y - that.currentOffsetY)) / tile.height);
+        var selectedLoc = 0;
+        for (i = 0; i < bucket; i++) {
+          if ($.inArray(tile.facetItem.Id, this.buckets[i].Ids) > 0)
+            selectedLoc++;
+        }
+        //var selectedLoc = tile.selectedLoc;
+        selectedRow = Math.round((that.canvasHeightUIAdjusted - (tile._locations[selectedLoc].y - that.currentOffsetY)) / tile.height);
         return selectedRow;
     },
     /// Centres the selected tile
@@ -1714,7 +1738,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
                 $('.pv-viewarea-graphview-overlay div').fadeIn('slow');
             }
-             $.publish("/PivotViewer/Views/Item/Selected", [selectedItem]);
+             $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem, bkt: selectedBar}]);
 
         if (!found && !dontFilter) {
             var bucketNumber = Math.floor((clickX - that.offsetX) / that.columnWidth);
@@ -2473,6 +2497,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _tiles = [],
         _filterItems = [],
         _selectedItem = "",
+        _selectedItemBkt = 0,
         _currentSort = "",
         _imageController,
         _mouseDrag = null,
@@ -3187,10 +3212,19 @@ PivotViewer.Views.TileLocation = Object.subClass({
 
         // Maintain a list of items in the filter in sort order.
         var sortedFilter = [];
-        for (var i = 0; i < _views[_currentView].tiles.length; i++) {
-            var filterindex = $.inArray(_views[_currentView].tiles[i].facetItem.Id, filterItems);
-            if (filterindex >= 0)
-                sortedFilter.push(_views[_currentView].tiles[i].facetItem.Id);
+        // More compicated for the graphview...
+        if (_views[_currentView].GetViewName() == 'Graph View')
+           sortedFilter = _views[_currentView].GetSortedFilter();
+        else {
+            for (var i = 0; i < _views[_currentView].tiles.length; i++) {
+                var filterindex = $.inArray(_views[_currentView].tiles[i].facetItem.Id, filterItems);
+                if (filterindex >= 0) {
+                    var obj = new Object ();
+                    obj.Id = _views[_currentView].tiles[i].facetItem.Id;
+                    obj.Bucket = 0;
+                    sortedFilter.push(obj);
+                }
+            }
         }
         _filterItems = sortedFilter;
 
@@ -3479,7 +3513,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         }
 
         //if (evt.length > 0) {
-        var selectedItem = GetItem(evt);
+        var selectedItem = GetItem(evt.id);
         if (selectedItem != null) {
             var alternate = true;
             $('.pv-infopanel-heading').empty();
@@ -3490,17 +3524,17 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 infopanelDetails.append("<div class='pv-infopanel-detail-description' style='height:100px;'>" + selectedItem.Description + "</div><div class='pv-infopanel-detail-description-more'>More</div>");
             }
             // nav arrows...
-            if (selectedItem.Id == _filterItems[0] && selectedItem == _filterItems[_filterItems.length - 1]) {
+            if (selectedItem.Id == _filterItems[0].Id && selectedItem == _filterItems[_filterItems.length - 1]) {
                 $('.pv-infopanel-controls-navright').hide();
                 $('.pv-infopanel-controls-navrightdisabled').show();
                 $('.pv-infopanel-controls-navleft').hide();
                 $('.pv-infopanel-controls-navleftdisabled').show();
-            } else if (selectedItem.Id == _filterItems[0]) {
+            } else if (selectedItem.Id == _filterItems[0].Id) {
                 $('.pv-infopanel-controls-navleft').hide();
                 $('.pv-infopanel-controls-navleftdisabled').show();
                 $('.pv-infopanel-controls-navright').show();
                 $('.pv-infopanel-controls-navrightdisabled').hide();
-            } else if (selectedItem.Id == _filterItems[_filterItems.length - 1]) {
+            } else if (selectedItem.Id == _filterItems[_filterItems.length - 1].Id) {
                 $('.pv-infopanel-controls-navright').hide();
                 $('.pv-infopanel-controls-navrightdisabled').show();
                 $('.pv-infopanel-controls-navleft').show();
@@ -3545,6 +3579,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
             $('.pv-infopanel').fadeIn();
             infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height()) - 20) + 'px');
             _selectedItem = selectedItem;
+            _selectedItemBkt = evt.bkt;
 
 	    // Update the bookmark
             UpdateBookmark ();
@@ -3724,15 +3759,15 @@ PivotViewer.Views.TileLocation = Object.subClass({
         });
         $('.pv-infopanel-controls-navleft').on('click', function (e) {
           for (var i = 0; i < _filterItems.length; i++) {
-              if (_filterItems[i] == _selectedItem.Id){
+              if (_filterItems[i].Id == _selectedItem.Id && _filterItems[i].Bucket == _selectedItemBkt){
                   if (i >= 0)
-                      $.publish("/PivotViewer/Views/Item/Selected", [_filterItems[i - 1]]);
+                      $.publish("/PivotViewer/Views/Item/Selected", [{id: _filterItems[i - 1].Id, bkt: _filterItems[i - 1].Bucket}]);
                       //jch need to move the images
                       for (var j = 0; j < _tiles.length; j++) {
-                          if (_tiles[j].facetItem.Id == _filterItems[i - 1]) {
+                          if (_tiles[j].facetItem.Id == _filterItems[i - 1].Id) {
                                 _tiles[j].Selected(true);
-                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j]);
-                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j]);
+                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i - 1].Bucket);
+                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i - 1].Bucket);
                                 _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
                           } else {
                                 _tiles[j].Selected(false);
@@ -3744,15 +3779,15 @@ PivotViewer.Views.TileLocation = Object.subClass({
         });
         $('.pv-infopanel-controls-navright').on('click', function (e) {
           for (var i = 0; i < _filterItems.length; i++) {
-              if (_filterItems[i] == _selectedItem.Id){
+              if (_filterItems[i].Id == _selectedItem.Id && _filterItems[i].Bucket == _selectedItemBkt){
                   if (i < _filterItems.length) {
-                      $.publish("/PivotViewer/Views/Item/Selected", [_filterItems[i + 1]]);
+                      $.publish("/PivotViewer/Views/Item/Selected", [{id: _filterItems[i + 1].Id, bkt: _filterItems[i + 1].Bucket}]);
                       //jch need to move the images
                       for (var j = 0; j < _tiles.length; j++) {
-                          if (_tiles[j].facetItem.Id == _filterItems[i + 1]) {
+                          if (_tiles[j].facetItem.Id == _filterItems[i + 1].Id) {
                                 _tiles[j].Selected(true);
-                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j]);
-                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j]);
+                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i + 1].Bucket);
+                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i + 1].Bucket);
                                 _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
                           } else {
                                 _tiles[j].Selected(false);
