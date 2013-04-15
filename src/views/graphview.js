@@ -622,6 +622,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-viewarea-graphview-overlay div').fadeOut('slow');
             } else {
                 that.selected = selectedItem = "";
+                selectedBar = 0;
                 //zoom out
                 that.currentOffsetX = that.offsetX;
                 that.currentOffsetY = that.offsetY;
