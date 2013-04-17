@@ -23,7 +23,7 @@
 .pv-filterpanel-search { margin-top: 9px; margin-bottom:0px; height:24px; border:1px solid #E2E2E2; }
 .pv-filterpanel-search::-webkit-input-placeholder { color:#787676; font-style:italic; font-size:9pt; }
 .pv-filterpanel-search:-moz-placeholder { color:#787676; font-style:italic; font-family: 'Segoe UI', Tahoma, Arial, Helvetica, Sans-Serif; font-size:9pt; }
-.pv-filterpanel-search-autocomplete { position:absolute; z-index:10; background-color: #FFF; border:1px solid #E2E2E2; margin-right:3px; padding: 3px; }
+.pv-filterpanel-search-autocomplete {height: 150px; overflow-y: scroll; overflow-x: hidden; position:absolute; z-index:10; background-color: #FFF; border:1px solid #E2E2E2; margin-right:3px; padding: 3px;}
 .pv-filterpanel-search-autocomplete span { float:left; width:100%; }
 .pv-filterpanel-search-autocomplete span:hover { cursor:pointer; background-color:#CBE4F0; }
 .pv-filterpanel-accordion-facet-sort { background-color: #DCECF4; color: #4F7192; margin-left:4px; padding: 0px 2px 0px 2px; cursor:default; }
