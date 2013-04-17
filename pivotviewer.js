@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.56-f73755a";
+PivotViewer.Version="v0.9.59-1a846b2";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -443,7 +443,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                         facetElement.attr("Type"),
                         facetElement.attr(namespacePrefix + ":IsFilterVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsFilterVisible").toLowerCase() == "true" ? true : false) : true,
                         facetElement.attr(namespacePrefix + ":IsMetaDataVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsMetaDataVisible").toLowerCase() == "true" ? true : false) : true,
-                        facetElement.attr(namespacePrefix + ":IsWordWheelVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsWordWheelVisible").toLowerCase() == "true" ? true : false) : false
+                        facetElement.attr(namespacePrefix + ":IsWordWheelVisible") != undefined ? (facetElement.attr(namespacePrefix + ":IsWordWheelVisible").toLowerCase() == "true" ? true : false) : true
                         );
 
                     //Add custom sort order
