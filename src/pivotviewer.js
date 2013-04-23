@@ -1042,7 +1042,7 @@
     //Item selected - show the info panel
     $.subscribe("/PivotViewer/Views/Item/Selected", function (evt) {
 
-        if (evt === undefined || evt === null || evt === "") {
+        if (evt.id === undefined || evt.id === null || evt.id === "") {
             DeselectInfoPanel();
             _selectedItem = "";
 	    // Update the bookmark
@@ -1140,7 +1140,7 @@
                 if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
                     (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
                     PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime)) {
-                    var checkedValues = $('.pv-facet-facetitem[itemfacet="' + evt.Facet + '"]')
+                    var checkedValues = $('.pv-facet-facetitem[itemfacet="' + CleanName(evt.Facet) + '"]')
                     for (var j = 0; j < checkedValues.length; j++) {
                         $(checkedValues[j]).prop('checked', false);
                     }
