@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.59-1a846b2";
+PivotViewer.Version="v0.9.61-7932a5e";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -3511,7 +3511,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
     //Item selected - show the info panel
     $.subscribe("/PivotViewer/Views/Item/Selected", function (evt) {
 
-        if (evt === undefined || evt === null || evt === "") {
+        if (evt.id === undefined || evt.id === null || evt.id === "") {
             DeselectInfoPanel();
             _selectedItem = "";
 	    // Update the bookmark
@@ -3609,7 +3609,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
                     (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
                     PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime)) {
-                    var checkedValues = $('.pv-facet-facetitem[itemfacet="' + evt.Facet + '"]')
+                    var checkedValues = $('.pv-facet-facetitem[itemfacet="' + CleanName(evt.Facet) + '"]')
                     for (var j = 0; j < checkedValues.length; j++) {
                         $(checkedValues[j]).prop('checked', false);
                     }
