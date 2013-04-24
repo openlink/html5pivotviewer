@@ -186,7 +186,10 @@
         filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
             .append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' /><div class='pv-filterpanel-search-autocomplete'></div>")
             .css('height', mainPanelHeight - 13 + 'px');
-        $('.pv-filterpanel-search').css('width', filterPanel.width() - 2 + 'px');
+        if (navigator.userAgent.match(/iPad/i) != null)
+            $('.pv-filterpanel-search').css('width', filterPanel.width() - 10 + 'px');
+        else
+            $('.pv-filterpanel-search').css('width', filterPanel.width() - 2 + 'px');
         $('.pv-filterpanel-search-autocomplete')
             .css('width', filterPanel.width() - 8 + 'px')
             .hide();
