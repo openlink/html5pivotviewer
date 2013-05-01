@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.61-7932a5e";
+PivotViewer.Version="v0.9.66-16b3b47";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -415,11 +415,12 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                     //Make sure throbber is removed else everyone thinks the app is still running
                     $('.pv-loading').remove();
  
-                    //Throw an alert so the user knows something is wrong
+                    //Display message so the user knows something is wrong
                     var msg = '';
-                    msg = msg + 'Error parsing CXML Collection\r\n\r\n';
-                    msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                    var t=setTimeout(function(){window.alert(msg)},1000)
+                    msg = msg + 'Error parsing CXML Collection<br>';
+                    msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                    $('.pv-wrapper').append("<div id=\"pv-parse-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                    var t=setTimeout(function(){window.open("#pv-parse-error","_self")},1000)
                     throw "Error parsing CXML Collection";
                 }
 
@@ -474,10 +475,11 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                         //Make sure throbber is removed else everyone thinks the app is still running
                         $('.pv-loading').remove();
  
-                        //Throw an alert so the user knows something is wrong
+                        //Display a message so the user knows something is wrong
                         var msg = '';
-                        msg = msg + 'There are no items in the CXML Collection\r\n\r\n';
-                        var t=setTimeout(function(){window.alert(msg)},1000)
+                        msg = msg + 'There are no items in the CXML Collection<br><br>';
+                        $('.pv-wrapper').append("<div id=\"pv-empty-collection-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                        var t=setTimeout(function(){window.open("#pv-empty-collection-error","_self")},1000)
                     } else {
                         for (var i = 0; i < facetItem.length; i++) {
                             var item = new PivotViewer.Models.Item(
@@ -537,14 +539,15 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 //Make sure throbber is removed else everyone thinks the app is still running
                 $('.pv-loading').remove();
 
-                //Throw an alert so the user knows something is wrong
+                //Display a message so the user knows something is wrong
                 var msg = '';
-                msg = msg + 'Error loading CXML Collection\r\n\r\n';
-                msg = msg + 'URL        : ' + this.url + '\r\n';
-                msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
-                msg = msg + 'Details    : ' + errorThrown + '\r\n';
-                msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                var t=setTimeout(function(){window.alert(msg)},1000)
+                msg = msg + 'Error loading CXML Collection<br><br>';
+                msg = msg + 'URL        : ' + this.url + '<br>';
+                msg = msg + 'Status : ' + jqXHR.status + ' ' + errorThrown + '<br>';
+                msg = msg + 'Details    : ' + jqXHR.responseText + '<br>';
+                msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                $('.pv-wrapper').append("<div id=\"pv-loading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                var t=setTimeout(function(){window.open("#pv-loading-error","_self")},1000)
             }
         });
     }
@@ -1917,12 +1920,13 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
 
                 //Throw an alert so the user knows something is wrong
                 var msg = '';
-                msg = msg + 'Error loading from DeepZoom Cache\r\n\r\n';
-                msg = msg + 'URL        : ' + this.url + '\r\n';
-                msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
-                msg = msg + 'Details    : ' + errorThrown + '\r\n';
-                msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                var t=setTimeout(function(){window.alert(msg)},1000)
+                msg = msg + 'Error loading from DeepZoom Cache<br><br>';
+                msg = msg + 'URL        : ' + this.url + '<br>';
+                msg = msg + 'Status : ' + jqXHR.status + ' ' + errorThrown + '<br>';
+                msg = msg + 'Details    : ' + jqXHR.responseText + '<br>';
+                msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                $('.pv-wrapper').append("<div id=\"pv-dzloading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                var t=setTimeout(function(){window.open("#pv-dzloading-error","_self")},1000)
             }
         });
     },
@@ -2655,7 +2659,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
         filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
             .append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' /><div class='pv-filterpanel-search-autocomplete'></div>")
             .css('height', mainPanelHeight - 13 + 'px');
-        $('.pv-filterpanel-search').css('width', filterPanel.width() - 2 + 'px');
+        if (navigator.userAgent.match(/iPad/i) != null)
+            $('.pv-filterpanel-search').css('width', filterPanel.width() - 10 + 'px');
+        else
+            $('.pv-filterpanel-search').css('width', filterPanel.width() - 2 + 'px');
         $('.pv-filterpanel-search-autocomplete')
             .css('width', filterPanel.width() - 8 + 'px')
             .hide();
@@ -2927,7 +2934,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
                     viewPanel.append("<div class='pv-viewpanel-view' id='pv-viewpanel-view-" + i + "'>" + _views[i].GetUI() + "</div>");
                     $('.pv-toolbarpanel-viewcontrols').append("<div class='pv-toolbarpanel-view' id='pv-toolbarpanel-view-" + i + "' title='" + _views[i].GetViewName() + "'><img id='pv-viewpanel-view-" + i + "-image' src='" + _views[i].GetButtonImage() + "' alt='" + _views[i].GetViewName() + "' /></div>");
                 } else {
-                    alert('View does not inherit from PivotViewer.Views.IPivotViewerView');
+                    var msg = '';
+                    msg = msg + 'View does not inherit from PivotViewer.Views.IPivotViewerView<br>';
+                    $('.pv-wrapper').append("<div id=\"pv-view-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                    window.open("#pv-view-error","_self")
                 }
             } catch (ex) { alert(ex.Message); }
         }
