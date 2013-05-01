@@ -107,12 +107,13 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
 
                 //Throw an alert so the user knows something is wrong
                 var msg = '';
-                msg = msg + 'Error loading from DeepZoom Cache\r\n\r\n';
-                msg = msg + 'URL        : ' + this.url + '\r\n';
-                msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
-                msg = msg + 'Details    : ' + errorThrown + '\r\n';
-                msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                var t=setTimeout(function(){window.alert(msg)},1000)
+                msg = msg + 'Error loading from DeepZoom Cache<br><br>';
+                msg = msg + 'URL        : ' + this.url + '<br>';
+                msg = msg + 'Status : ' + jqXHR.status + ' ' + errorThrown + '<br>';
+                msg = msg + 'Details    : ' + jqXHR.responseText + '<br>';
+                msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                $('.pv-wrapper').append("<div id=\"pv-dzloading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                var t=setTimeout(function(){window.open("#pv-dzloading-error","_self")},1000)
             }
         });
     },
