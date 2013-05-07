@@ -4,7 +4,7 @@
 .pv-loading span { position: absolute; top:66px; left:23px; }
 .pv-toolbarpanel { height: 22px; width: 100%; border-bottom: 1px solid #D3D4D4; padding: 3px 0px 3px 0px; background: #FDFDFD; filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FDFDFD', endColorstr='#F4F4F4');  background: -webkit-gradient(linear, left top, left bottom, from(#FDFDFD), to(#F4F4F4));  background: -moz-linear-gradient(top,  #FDFDFD,  #F4F4F4); }
 .pv-toolbarpanel-brandimage { height: 22px; float:left; }
-.pv-toolbarpanel-facetbreadcrumb { margin-top:5px; margin-left:5px; float:left; }
+.pv-toolbarpanel-facetbreadcrumb { margin-top:5px; margin-left:5px; float:left; white-space: nowrap; overflow: hidden; text-overflow:ellipsis}
 .pv-toolbarpanel-facetbreadcrumb-facet { margin-left: 5px; color:#787676; }
 .pv-toolbarpanel-facetbreadcrumb-values { margin-left:3px; color: #05314A; }
 .pv-toolbarpanel-facetbreadcrumb-separator { margin-left: 5px; color:#787676; }

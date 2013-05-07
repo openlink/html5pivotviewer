@@ -134,6 +134,10 @@
         ApplyViewerState();
         viewerStateSelected = _viewerState.Selection;
 
+        //Set the width for displaying breadcrumbs as we now know the control sizes 
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (20 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+        $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
+
         //select first view
         if (_viewerState.View != null)
             SelectView(_viewerState.View, true);
