@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.66-16b3b47";
+PivotViewer.Version="v0.9.70-3342ffa";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -2606,6 +2606,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
         //Apply ViewerState filters
         ApplyViewerState();
         viewerStateSelected = _viewerState.Selection;
+
+        //Set the width for displaying breadcrumbs as we now know the control sizes 
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (20 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+        $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
         if (_viewerState.View != null)
