@@ -206,6 +206,9 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
 
         Debug.Log('Graph View Filtered: ' + currentFilter.length);
 
+        $('.pv-tableview-table').fadeOut();
+        $('.pv-viewarea-canvas').fadeIn();
+
         this.sortFacet = sortFacet;
         this.tiles = dzTiles;
 

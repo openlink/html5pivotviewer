@@ -135,7 +135,7 @@
         viewerStateSelected = _viewerState.Selection;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
-        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (20 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (25 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
@@ -184,6 +184,24 @@
         $('.pv-mainpanel').append("<div class='pv-filterpanel'></div>");
         $('.pv-mainpanel').append("<div class='pv-viewpanel'><canvas class='pv-viewarea-canvas' width='" + _self.width() + "' height='" + mainPanelHeight + "px'></canvas></div>");
         $('.pv-mainpanel').append("<div class='pv-infopanel'></div>");
+ 
+        //add grid for tableview to the mainpanl
+        var tableDiv = "<div class='pv-tableview-table' id='pv-table'>";
+/*
+        tableDiv += "<tr>";
+        tableDiv += "<td>row 1, cell 1</td>";
+tableDiv += "<td>row 1, cell 2</td>";
+tableDiv += "</tr>";
+tableDiv += "<tr>";
+tableDiv += "<td>row 2, cell 1</td>";
+tableDiv += "<td>row 2, cell 2</td>";
+tableDiv += "</tr>";
+tableDiv += "</table>";
+*/
+tableDiv += "</div>";
+        $('.pv-viewpanel').append(tableDiv);
+
+
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
@@ -456,6 +474,7 @@
         //Create instances of all the views
         _views.push(new PivotViewer.Views.GridView());
         _views.push(new PivotViewer.Views.GraphView());
+        _views.push(new PivotViewer.Views.TableView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -489,7 +508,7 @@
         _views[viewNumber].init = init;
 
         _currentView = viewNumber;
-        _selectedItem = "";
+        //_selectedItem = "";
         FilterCollection();
     };
 
@@ -1055,6 +1074,8 @@
         if (evt.id === undefined || evt.id === null || evt.id === "") {
             DeselectInfoPanel();
             _selectedItem = "";
+            if (_currentView == 2)
+                _views[_currentView].Selected(_selectedItem.Id); 
 	    // Update the bookmark
             UpdateBookmark ();
             return;
@@ -1128,6 +1149,9 @@
             infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height()) - 20) + 'px');
             _selectedItem = selectedItem;
             _selectedItemBkt = evt.bkt;
+
+            if (_currentView == 2)
+                _views[_currentView].Selected(_selectedItem.Id); 
 
 	    // Update the bookmark
             UpdateBookmark ();
