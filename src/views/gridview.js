@@ -23,6 +23,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this._super();
         var that = this;
         //Event Handlers
+
         $.subscribe("/PivotViewer/Views/Canvas/Click", function (evt) {
             if (!that.isActive)
                 return;
@@ -176,15 +177,24 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this.currentOffsetX = this.offsetX;
         this.currentOffsetY = this.offsetY;
     },
-    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets) {
+    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, selectedItem) {
         var that = this;
         if (!Modernizr.canvas)
             return;
 
         Debug.Log('Grid View Filtered: ' + currentFilter.length);
 
-        $('.pv-tableview-table').fadeOut();
-        $('.pv-viewarea-canvas').fadeIn();
+        this.changingView = false;
+        if (changingView) {
+            $('.pv-tableview-table').fadeOut();
+            $('.pv-viewarea-canvas').fadeIn();
+            //this.selectedId = selectedItem.Id;
+            this.selected = "";
+            this.changingView = true;
+       //     $('.pv-viewarea-canvas').fadeIn("slow", function(){
+       //         $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);
+       //     });
+        }
 
         this.tiles = dzTiles;
         if (this.init) {
