@@ -775,8 +775,11 @@
         //Filter view
         _tileController.SetCircularEasingBoth();
         if (!_handledInitSettings){
-            _views[_currentView].SetSelectedFacet(_initTableFacet);
-            _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            if (_currentView == 2) { 
+                _views[_currentView].SetSelectedFacet(_initTableFacet);
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            } else 
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
         }
         else
