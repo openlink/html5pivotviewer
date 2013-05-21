@@ -30,6 +30,9 @@
         _filterItems = [],
         _selectedItem = "",
         _selectedItemBkt = 0,
+        _initSelectedItem = "",
+        _initTableFacet = "",
+        _handledInitSettings = false,
         _currentSort = "",
         _imageController,
         _mouseDrag = null,
@@ -77,6 +80,9 @@
                         //Selected Item
                         else if (splitItem[0] == '$selection$')
                             _viewerState.Selection = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Table Selected Facet
+                        else if (splitItem[0] == '$tableFacet$')
+                            _viewerState.TableFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
                             var filter = { Facet: splitItem[0], Predicates: [] };
@@ -132,7 +138,8 @@
 
         //Apply ViewerState filters
         ApplyViewerState();
-        viewerStateSelected = _viewerState.Selection;
+        _initSelectedItem = GetItem(_viewerState.Selection);
+        _initTableFacet = _viewerState.TableFacet;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
         var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (25 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
@@ -145,7 +152,8 @@
             SelectView(0, true);
 
         //Begin tile animation
-        _tileController.BeginAnimation(true, viewerStateSelected);
+        var id = (_initSelectedItem && _initSelectedItem.Id) ? _initSelectedItem.Id : "";
+        _tileController.BeginAnimation(true, id);
     };
 
     InitUI = function () {
@@ -766,7 +774,13 @@
 
         //Filter view
         _tileController.SetCircularEasingBoth();
-        _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
+        if (!_handledInitSettings){
+            _views[_currentView].SetSelectedFacet(_initTableFacet);
+            _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            _handledInitSettings = true;
+        }
+        else
+            _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
 
         // Maintain a list of items in the filter in sort order.
         var sortedFilter = [];
@@ -1001,6 +1015,9 @@
 	    // Add selection
 	    if ( _selectedItem )
 	    	currentViewerState += "&$selection$=" + _selectedItem.Id;
+            // Handle bookmark params for specific views
+            if (_currentView == 2)
+	    	currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
@@ -1038,6 +1055,7 @@
 			    title += " > "
 	        }
 	    }
+
             // Permalink bookmarks can be enabled by implementing a function 
             // SetBookmark(bookmark string, title string)  
             if ( typeof (SetBookmark) != undefined && typeof(SetBookmark) === "function") { 
@@ -1204,6 +1222,11 @@
         }
     });
 
+    //Trigger a bookmark update
+    $.subscribe("/PivotViewer/Views/Item/Updated", function () {
+        UpdateBookmark ();
+    });
+ 
     AttachEventHandlers = function () {
         //Event Handlers
         //View click

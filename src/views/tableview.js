@@ -49,14 +49,14 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-tableview-table').fadeIn(function(){
-                $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);
+                if (selectedItem)
+                    $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);
             });
         }
 
         this.tiles = dzTiles;
         this.currentFilter = currentFilter;
 
-        this.selectedFacet = "";
         this.selectedId = "";
         this.sortReverseEntity = true;
         this.sortReverseAttribute = true;
@@ -125,6 +125,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
                 this.selectedFacet = "";
                 this.CreateTable( filter, "" );
             }
+            $.publish("/PivotViewer/Views/Item/Updated", null);
         } else if (columnId == 'pv-value'){
             // filter on this value...
             $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: cells[1].innerHTML, Item: cells[2].innerHTML, Values: null, ClearFacetFilters: true }]);
@@ -324,5 +325,11 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
             return visible;
         else
             return false;
+    },
+    SetSelectedFacet: function (facet) {
+        this.selectedFacet = facet;
+    },
+    GetSelectedFacet: function () {
+        return this.selectedFacet;
     }
 });
