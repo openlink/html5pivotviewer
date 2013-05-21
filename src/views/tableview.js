@@ -255,7 +255,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
 
         // Table view events
         $('.pv-tableview-heading').on('click', function (e) {
-            var id = (typeof e.originalEvent.explicitOriginalTarget.id != 'undefined')  ? e.originalEvent.explicitOriginalTarget.id : e.originalEvent.explicitOriginalTarget.parentElement.id;
+            var id = e.originalEvent.target.id;
 
             var filter = [];
 
@@ -290,11 +290,11 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
             //that.SortTable(id);
         }); 
         $('.pv-tableview-odd-row').on('click', function (e) {
-            var id = (typeof e.originalEvent.explicitOriginalTarget.id != 'undefined')  ? e.originalEvent.explicitOriginalTarget.id : e.originalEvent.explicitOriginalTarget.parentElement.id;
+            var id = e.originalEvent.target.id;
             that.CellClick(id, e.currentTarget.cells );
         }); 
         $('.pv-tableview-even-row').on('click', function (e) {
-            var id = (typeof e.originalEvent.explicitOriginalTarget.id != 'undefined')  ? e.originalEvent.explicitOriginalTarget.id : e.originalEvent.explicitOriginalTarget.parentElement.id;
+            var id = e.originalEvent.target.id;
             that.CellClick(id, e.currentTarget.cells );
         }); 
     },
