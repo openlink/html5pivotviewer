@@ -30,6 +30,9 @@
         _filterItems = [],
         _selectedItem = "",
         _selectedItemBkt = 0,
+        _initSelectedItem = "",
+        _initTableFacet = "",
+        _handledInitSettings = false,
         _currentSort = "",
         _imageController,
         _mouseDrag = null,
@@ -77,6 +80,9 @@
                         //Selected Item
                         else if (splitItem[0] == '$selection$')
                             _viewerState.Selection = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Table Selected Facet
+                        else if (splitItem[0] == '$tableFacet$')
+                            _viewerState.TableFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
                             var filter = { Facet: splitItem[0], Predicates: [] };
@@ -132,10 +138,11 @@
 
         //Apply ViewerState filters
         ApplyViewerState();
-        viewerStateSelected = _viewerState.Selection;
+        _initSelectedItem = GetItem(_viewerState.Selection);
+        _initTableFacet = _viewerState.TableFacet;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
-        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (20 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (25 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
@@ -145,7 +152,8 @@
             SelectView(0, true);
 
         //Begin tile animation
-        _tileController.BeginAnimation(true, viewerStateSelected);
+        var id = (_initSelectedItem && _initSelectedItem.Id) ? _initSelectedItem.Id : "";
+        _tileController.BeginAnimation(true, id);
     };
 
     InitUI = function () {
@@ -184,6 +192,9 @@
         $('.pv-mainpanel').append("<div class='pv-filterpanel'></div>");
         $('.pv-mainpanel').append("<div class='pv-viewpanel'><canvas class='pv-viewarea-canvas' width='" + _self.width() + "' height='" + mainPanelHeight + "px'></canvas></div>");
         $('.pv-mainpanel').append("<div class='pv-infopanel'></div>");
+ 
+        //add grid for tableview to the mainpanl
+        $('.pv-viewpanel').append("<div class='pv-tableview-table' id='pv-table'></div>");
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
@@ -438,7 +449,7 @@
                     thisWrapped.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
                 else if (ui.values[0] == thisMin && ui.values[1] == thisMax)
                     thisWrapped.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
-                FilterCollection();
+                FilterCollection(false);
             }
         });
     };
@@ -456,6 +467,7 @@
         //Create instances of all the views
         _views.push(new PivotViewer.Views.GridView());
         _views.push(new PivotViewer.Views.GraphView());
+        _views.push(new PivotViewer.Views.TableView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -472,6 +484,10 @@
                 }
             } catch (ex) { alert(ex.Message); }
         }
+
+       // The table view needs to know about the facet categories
+       _views[2].SetFacetCategories(PivotCollection);
+
     };
 
     /// Set the current view
@@ -488,9 +504,17 @@
         _views[viewNumber].Activate();
         _views[viewNumber].init = init;
 
+        var previousView = _currentView;
+        var previousSelectedItem = _selectedItem.Id;
         _currentView = viewNumber;
-        _selectedItem = "";
-        FilterCollection();
+        //if (viewNumber == 0 && previousView != 1) 
+        //   _tileController.StopAnimation();
+        //_selectedItem = "";
+        FilterCollection(true);
+        //if (viewNumber == 0 && previousView != 1) 
+        //   _tileController.BeginAnimation(true, previousSelectedItem);
+        //if (viewNumber != 0 && viewNumber != 1)
+        //   _tileController.StopAnimation();
     };
 
     ///Sorts the facet items based on a specific sort type
@@ -588,7 +612,7 @@
     };
 
     /// Filters the collection of items and updates the views
-    FilterCollection = function () {
+    FilterCollection = function (changingView) {
         var filterItems = [];
         var foundItemsCount = [];
         var selectedFacets = [];
@@ -750,7 +774,13 @@
 
         //Filter view
         _tileController.SetCircularEasingBoth();
-        _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets);
+        if (!_handledInitSettings){
+            _views[_currentView].SetSelectedFacet(_initTableFacet);
+            _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            _handledInitSettings = true;
+        }
+        else
+            _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
 
         // Maintain a list of items in the filter in sort order.
         var sortedFilter = [];
@@ -985,6 +1015,9 @@
 	    // Add selection
 	    if ( _selectedItem )
 	    	currentViewerState += "&$selection$=" + _selectedItem.Id;
+            // Handle bookmark params for specific views
+            if (_currentView == 2)
+	    	currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
@@ -1022,6 +1055,7 @@
 			    title += " > "
 	        }
 	    }
+
             // Permalink bookmarks can be enabled by implementing a function 
             // SetBookmark(bookmark string, title string)  
             if ( typeof (SetBookmark) != undefined && typeof(SetBookmark) === "function") { 
@@ -1055,6 +1089,8 @@
         if (evt.id === undefined || evt.id === null || evt.id === "") {
             DeselectInfoPanel();
             _selectedItem = "";
+            if (_currentView == 2)
+                _views[_currentView].Selected(_selectedItem.Id); 
 	    // Update the bookmark
             UpdateBookmark ();
             return;
@@ -1129,6 +1165,9 @@
             _selectedItem = selectedItem;
             _selectedItemBkt = evt.bkt;
 
+            if (_currentView == 2)
+                _views[_currentView].Selected(_selectedItem.Id); 
+
 	    // Update the bookmark
             UpdateBookmark ();
 
@@ -1183,6 +1222,11 @@
         }
     });
 
+    //Trigger a bookmark update
+    $.subscribe("/PivotViewer/Views/Item/Updated", function () {
+        UpdateBookmark ();
+    });
+ 
     AttachEventHandlers = function () {
         //Event Handlers
         //View click
@@ -1194,7 +1238,7 @@
         //Sort change
         $('.pv-toolbarpanel-sort').on('change', function (e) {
 	    _currentSort = $('.pv-toolbarpanel-sort option:selected').text();
-            FilterCollection();
+            FilterCollection(false);
         });
         //Facet sort
         $('.pv-filterpanel-accordion-facet-sort').on('click', function (e) {
@@ -1254,7 +1298,7 @@
             $('.pv-filterpanel-search').val('');
             //turn off clear buttons
             $('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
-            FilterCollection();
+            FilterCollection(false);
         });
         //Facet clear click
         $('.pv-filterpanel-accordion-heading-clear').on('click', function (e) {
@@ -1281,7 +1325,7 @@
                 slider.slider('values', 1, thisMax);
                 slider.prev().prev().html('&nbsp;');
             }
-            FilterCollection();
+            FilterCollection(false);
             $(this).css('visibility', 'hidden');
         });
         //Numeric facet type slider drag
@@ -1394,7 +1438,7 @@
                 autocomplete.show();
 
             if (found)
-                FilterCollection();
+                FilterCollection(false);
         });
         $('.pv-filterpanel-search').on('blur', function (e) {
             e.target.value = '';
@@ -1532,7 +1576,7 @@
         if ($(checkbox).prop('checked') == true) {
             $(checkbox.parentElement.parentElement.parentElement).prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
         }
-        FilterCollection();
+        FilterCollection(false);
     };
 
     FacetSliderDrag = function (slider, min, max) {
@@ -1549,7 +1593,7 @@
         }
         else if (min == thisMin && max == thisMax)
             thisWrapped.parent().parent().prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'hidden');
-        FilterCollection();
+        FilterCollection(false);
     };
 
     //Constructor
