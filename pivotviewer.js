@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.76-579b1c4";
+PivotViewer.Version="v0.9.79-7df43ed";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -3599,8 +3599,11 @@ PivotViewer.Views.TileLocation = Object.subClass({
         //Filter view
         _tileController.SetCircularEasingBoth();
         if (!_handledInitSettings){
-            _views[_currentView].SetSelectedFacet(_initTableFacet);
-            _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            if (_currentView == 2) { 
+                _views[_currentView].SetSelectedFacet(_initTableFacet);
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            } else 
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
         }
         else
