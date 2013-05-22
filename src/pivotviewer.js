@@ -33,6 +33,8 @@
         _initSelectedItem = "",
         _initTableFacet = "",
         _handledInitSettings = false,
+        _handleChangeToTileViewSelect = false,
+        _changeToTileViewSelectedItem = "",
         _currentSort = "",
         _imageController,
         _mouseDrag = null,
@@ -1228,6 +1230,29 @@
     //Trigger a bookmark update
     $.subscribe("/PivotViewer/Views/Item/Updated", function () {
         UpdateBookmark ();
+    });
+ 
+    //Changing to grid view
+    $.subscribe("/PivotViewer/Views/ChangeTo/Grid", function (evt) {
+        //Signal that when the animation has finished we need to select item
+        _changeToTileViewSelectedItem = evt.Item;
+        _handleChangeToTileViewSelect = true;
+    });
+ 
+    //Tile animation finished
+    $.subscribe("/PivotViewer/Views/Animation/Finished", function () {
+        if (_handleChangeToTileViewSelect) {
+            var selectedTile = "";
+            for ( t = 0; t < _tiles.length; t ++ ) {
+                if (_tiles[t].facetItem == _changeToTileViewSelectedItem) {
+                   selectedTile = _tiles[t];
+                   break;
+                }
+            }
+            if (selectedTile)
+                 $.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].x, y: selectedTile._locations[selectedTile.selectedLoc].y}]);
+            _handleChangeToTileViewSelect = false;
+        }
     });
  
     AttachEventHandlers = function () {
