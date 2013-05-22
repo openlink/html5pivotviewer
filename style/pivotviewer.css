@@ -113,7 +113,7 @@
 .graphview-bucket-dark { background-color: #E6E8ED; }
 .graphview-bucket-light { background-color: #EBEDF1; }
 .graphview-bucket-hover { background-color: #DCECF4; }
-.pv-tableview-table { position: absolute; top:0px; left:193px; padding: 0px 3px 0px 3px; display:none; overflow-y: scroll; margin-top:5px; margin-left:5px;}
+.pv-tableview-table { position: absolute; top:0px; left:193px; padding: 0px 3px 0px 3px; display:none; overflow-y: auto; margin-top:5px; margin-left:5px;}
 .pv-tableview-odd-row { background-color: #EBEDF1;}
 .pv-tableview-even-row { background-color: #F0F2F5;}
 .pv-tableview-heading { background: #E0E0FD; filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#DDDDDD', endColorstr='#D4D4D4');  background: -webkit-gradient(linear, left top, left bottom, from(#DDDDDD), to(#D4D4D4));  background: -moz-linear-gradient(top,  #DDDDDD,  #D4D4D4); cursor:pointer;}
