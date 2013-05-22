@@ -1022,7 +1022,8 @@
 	    	currentViewerState += "&$selection$=" + _selectedItem.Id;
             // Handle bookmark params for specific views
             if (_currentView == 2)
-	    	currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
+                if (_views[_currentView].GetSelectedFacet())
+	    	  currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
