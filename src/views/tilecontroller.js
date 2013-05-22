@@ -120,6 +120,9 @@ PivotViewer.Views.TileController = Object.subClass({
                                 doInitialSelection = false;
                                 selectedId = 0;
                         }
+			else  if (!isNaN(now) && !isNaN(end)) {
+                       	    $.publish("/PivotViewer/Views/Animation/Finished", null);
+                        } 
                      }
  
                      //check if the destination will be in the visible area
