@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.79-7df43ed";
+PivotViewer.Version="v0.9.81-87daffc";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -872,7 +872,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this.currentOffsetX = this.offsetX;
         this.currentOffsetY = this.offsetY;
     },
-    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, selectedItem) {
+    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, changeViewSelectedItem) {
         var that = this;
         if (!Modernizr.canvas)
             return;
@@ -882,13 +882,10 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this.changingView = false;
         if (changingView) {
             $('.pv-tableview-table').fadeOut();
-            $('.pv-viewarea-canvas').fadeIn();
-            //this.selectedId = selectedItem.Id;
             this.selected = "";
-            this.changingView = true;
-       //     $('.pv-viewarea-canvas').fadeIn("slow", function(){
-       //         $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);
-       //     });
+            $('.pv-viewarea-canvas').fadeIn(function(){
+                $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+            });
         }
 
         this.tiles = dzTiles;
@@ -912,67 +909,70 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         }, stringFacets));
         this.currentFilter = currentFilter;
 
-        var pt1Timeout = 0;
-        //zoom out first
-        Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
-          var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
-          if (value > 0) { 
-            this.selected = selectedItem = "";
-            //zoom out
-            this.currentOffsetX = this.offsetX;
-            this.currentOffsetY = this.offsetY;
-            // Zoom using the slider event
-            $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 1);
-            var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.maxRatio, this.tiles.length);
-            var clearFilter = [];
-            for (var i = 0; i < this.tiles.length; i++) {
-                this.tiles[i].origwidth = rowscols.TileHeight / this.tiles[i]._controller.GetRatio(this.tiles[i].facetItem.Img);
-                this.tiles[i].origheight = rowscols.TileHeight;
-                clearFilter.push(this.tiles[i].facetItem.Id);
-            }
-            this.SetVisibleTilePositions(rowscols, clearFilter, this.currentOffsetX, this.currentOffsetY, true, false, 1000);
-            pt1Timeout = 1000;
-        }
-
-        setTimeout(function () {
-            for (var i = 0; i < that.tiles.length; i++) {
-                //setup tiles
-                that.tiles[i]._locations[0].startx = that.tiles[i]._locations[0].x;
-                that.tiles[i]._locations[0].starty = that.tiles[i]._locations[0].y;
-                that.tiles[i].startwidth = that.tiles[i].width;
-                that.tiles[i].startheight = that.tiles[i].height;
-
-                var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
-                //set outer location for all tiles not in the filter
-                if (filterindex < 0) {
-                    that.SetOuterTileDestination(that.width, that.height, that.tiles[i]);
-                    that.tiles[i].start = PivotViewer.Utils.Now();
-                    that.tiles[i].end = that.tiles[i].start + 1000;
+        // Don't calculate positions if changing view with item already selected
+        if (!changingView || (changeViewSelectedItem == "")) {
+            var pt1Timeout = 0;
+            //zoom out first
+            Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
+              var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
+              if (value > 0) { 
+                this.selected = selectedItem = "";
+                //zoom out
+                this.currentOffsetX = this.offsetX;
+                this.currentOffsetY = this.offsetY;
+                // Zoom using the slider event
+                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 1);
+                var rowscols = this.GetRowsAndColumns(this.currentWidth - this.offsetX, this.currentHeight - this.offsetY, this.maxRatio, this.tiles.length);
+                var clearFilter = [];
+                for (var i = 0; i < this.tiles.length; i++) {
+                    this.tiles[i].origwidth = rowscols.TileHeight / this.tiles[i]._controller.GetRatio(this.tiles[i].facetItem.Img);
+                    this.tiles[i].origheight = rowscols.TileHeight;
+                    clearFilter.push(this.tiles[i].facetItem.Id);
                 }
+                this.SetVisibleTilePositions(rowscols, clearFilter, this.currentOffsetX, this.currentOffsetY, true, false, 1000);
+                pt1Timeout = 1000;
             }
-
-            // recalculate max width of images in filter
-            that.maxRatio = that.tiles[0]._controller.GetRatio(that.tiles[0].facetItem.Img);
-            for (var i = 0; i < that.tiles.length; i++) {
-                var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
-                if (filterindex >= 0) {
-                    if (that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img) < that.maxRatio)
-                        that.maxRatio = that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
-                }
-            }
-
-            var pt2Timeout = currentFilter.length == that.tiles.length ? 0 : 500;
-            //Delay pt2 animation
+ 
             setTimeout(function () {
-                var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.maxRatio, that.currentFilter.length);
                 for (var i = 0; i < that.tiles.length; i++) {
-                    that.tiles[i].origwidth = rowscols.TileHeight / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
-                    that.tiles[i].origheight = rowscols.TileHeight;
+                    //setup tiles
+                    that.tiles[i]._locations[0].startx = that.tiles[i]._locations[0].x;
+                    that.tiles[i]._locations[0].starty = that.tiles[i]._locations[0].y;
+                    that.tiles[i].startwidth = that.tiles[i].width;
+                    that.tiles[i].startheight = that.tiles[i].height;
+ 
+                    var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
+                    //set outer location for all tiles not in the filter
+                    if (filterindex < 0) {
+                        that.SetOuterTileDestination(that.width, that.height, that.tiles[i]);
+                        that.tiles[i].start = PivotViewer.Utils.Now();
+                        that.tiles[i].end = that.tiles[i].start + 1000;
+                    }
                 }
-                that.SetVisibleTilePositions(rowscols, that.currentFilter, that.offsetX, that.offsetY, false, false, 1000);
-            }, pt2Timeout);
-
-        }, pt1Timeout);
+ 
+                // recalculate max width of images in filter
+                that.maxRatio = that.tiles[0]._controller.GetRatio(that.tiles[0].facetItem.Img);
+                for (var i = 0; i < that.tiles.length; i++) {
+                    var filterindex = $.inArray(that.tiles[i].facetItem.Id, currentFilter);
+                    if (filterindex >= 0) {
+                        if (that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img) < that.maxRatio)
+                            that.maxRatio = that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
+                    }
+                }
+ 
+                var pt2Timeout = currentFilter.length == that.tiles.length ? 0 : 500;
+                //Delay pt2 animation
+                setTimeout(function () {
+                    var rowscols = that.GetRowsAndColumns(that.width - that.offsetX, that.height - that.offsetY, that.maxRatio, that.currentFilter.length);
+                    for (var i = 0; i < that.tiles.length; i++) {
+                        that.tiles[i].origwidth = rowscols.TileHeight / that.tiles[i]._controller.GetRatio(that.tiles[i].facetItem.Img);
+                        that.tiles[i].origheight = rowscols.TileHeight;
+                    }
+                    that.SetVisibleTilePositions(rowscols, that.currentFilter, that.offsetX, that.offsetY, false, false, 1000);
+                }, pt2Timeout);
+ 
+            }, pt1Timeout);
+        }
 
         this.init = false;
     },
@@ -2556,6 +2556,9 @@ PivotViewer.Views.TileController = Object.subClass({
                                 doInitialSelection = false;
                                 selectedId = 0;
                         }
+			else  if (!isNaN(now) && !isNaN(end)) {
+                       	    $.publish("/PivotViewer/Views/Animation/Finished", null);
+                        } 
                      }
  
                      //check if the destination will be in the visible area
@@ -2857,6 +2860,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _initSelectedItem = "",
         _initTableFacet = "",
         _handledInitSettings = false,
+        _handleChangeToTileViewSelect = false,
+        _changeToTileViewSelectedItem = "",
         _currentSort = "",
         _imageController,
         _mouseDrag = null,
@@ -4052,6 +4057,29 @@ PivotViewer.Views.TileLocation = Object.subClass({
     //Trigger a bookmark update
     $.subscribe("/PivotViewer/Views/Item/Updated", function () {
         UpdateBookmark ();
+    });
+ 
+    //Changing to grid view
+    $.subscribe("/PivotViewer/Views/ChangeTo/Grid", function (evt) {
+        //Signal that when the animation has finished we need to select item
+        _changeToTileViewSelectedItem = evt.Item;
+        _handleChangeToTileViewSelect = true;
+    });
+ 
+    //Tile animation finished
+    $.subscribe("/PivotViewer/Views/Animation/Finished", function () {
+        if (_handleChangeToTileViewSelect) {
+            var selectedTile = "";
+            for ( t = 0; t < _tiles.length; t ++ ) {
+                if (_tiles[t].facetItem == _changeToTileViewSelectedItem) {
+                   selectedTile = _tiles[t];
+                   break;
+                }
+            }
+            if (selectedTile)
+                 $.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].x, y: selectedTile._locations[selectedTile.selectedLoc].y}]);
+            _handleChangeToTileViewSelect = false;
+        }
     });
  
     AttachEventHandlers = function () {
