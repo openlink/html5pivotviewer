@@ -234,70 +234,74 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
             }
         }
 
-        tableRows.sort(function(a, b){
-          if(a.key > b.key){
-            return 1;
-          }
-          else if(a.key < b.key){
-            return -1;
-          } 
-          return 0;
-        });
-
-        if (sortReverse)
-          tableRows.reverse();
-
-        for (var i = 0; i < tableRows.length; i++) {
-           tableContent += tableRows[i].value;
-        }
-
-        tableContent += "</table>";
-        table.append(tableContent);
-
-        // Table view events
-        $('.pv-tableview-heading').on('click', function (e) {
-            var id = e.originalEvent.target.id;
-
-            var filter = [];
-
-            if (that.selectedId == "" || that.selectedId == null )
-                filter = that.currentFilter;
-            else
-                filter[0] = that.selectedId;
-
-            var sortReverse;
-            if (id == 'pv-key') {
-                if (that.sortReverseEntity)
-                  sortReverse = false;
-                else 
-                  sortReverse = true;
-                that.sortReverseEntity = sortReverse;
-            } else if (id == 'pv-facet'){
-                if (that.sortReverseAttribute)
-                  sortReverse = false;
-                else 
-                  sortReverse = true;
-                that.sortReverseAttribute = sortReverse;
-            } else if (id == 'pv-value'){
-                if (that.sortReverseValue)
-                  sortReverse = false;
-                else 
-                  sortReverse = true;
-                that.sortReverseValue = sortReverse;
+        if (tableRows.length == 0)
+            this.CreateTable( currentFilter, "", sortKey, sortReverse )
+        else { 
+            tableRows.sort(function(a, b){
+              if(a.key > b.key){
+                return 1;
+              }
+              else if(a.key < b.key){
+                return -1;
+              } 
+              return 0;
+            });
+         
+            if (sortReverse)
+              tableRows.reverse();
+         
+            for (var i = 0; i < tableRows.length; i++) {
+               tableContent += tableRows[i].value;
             }
-
-            that.sortKey = id;
-            that.CreateTable (filter, that.selectedFacet, id, sortReverse);
-            //that.SortTable(id);
-        }); 
-        $('.pv-tableview-odd-row').on('click', function (e) {
-            var id = e.originalEvent.target.id;
-            that.CellClick(id, e.currentTarget.cells );
-        }); 
-        $('.pv-tableview-even-row').on('click', function (e) {
-            var id = e.originalEvent.target.id;
-            that.CellClick(id, e.currentTarget.cells );
-        }); 
+         
+            tableContent += "</table>";
+            table.append(tableContent);
+         
+            // Table view events
+            $('.pv-tableview-heading').on('click', function (e) {
+                var id = e.originalEvent.target.id;
+         
+                var filter = [];
+         
+                if (that.selectedId == "" || that.selectedId == null )
+                    filter = that.currentFilter;
+                else
+                    filter[0] = that.selectedId;
+         
+                var sortReverse;
+                if (id == 'pv-key') {
+                    if (that.sortReverseEntity)
+                      sortReverse = false;
+                    else 
+                      sortReverse = true;
+                    that.sortReverseEntity = sortReverse;
+                } else if (id == 'pv-facet'){
+                    if (that.sortReverseAttribute)
+                      sortReverse = false;
+                    else 
+                      sortReverse = true;
+                    that.sortReverseAttribute = sortReverse;
+                } else if (id == 'pv-value'){
+                    if (that.sortReverseValue)
+                      sortReverse = false;
+                    else 
+                      sortReverse = true;
+                    that.sortReverseValue = sortReverse;
+                }
+         
+                that.sortKey = id;
+                that.CreateTable (filter, that.selectedFacet, id, sortReverse);
+                //that.SortTable(id);
+            }); 
+            $('.pv-tableview-odd-row').on('click', function (e) {
+                var id = e.originalEvent.target.id;
+                that.CellClick(id, e.currentTarget.cells );
+            }); 
+            $('.pv-tableview-even-row').on('click', function (e) {
+                var id = e.originalEvent.target.id;
+                that.CellClick(id, e.currentTarget.cells );
+            }); 
+        }
     },
     Selected: function (itemId) {
         var filter = [];
