@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.81-87daffc";
+PivotViewer.Version="v0.9.87-10f374d";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -2002,70 +2002,74 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
             }
         }
 
-        tableRows.sort(function(a, b){
-          if(a.key > b.key){
-            return 1;
-          }
-          else if(a.key < b.key){
-            return -1;
-          } 
-          return 0;
-        });
-
-        if (sortReverse)
-          tableRows.reverse();
-
-        for (var i = 0; i < tableRows.length; i++) {
-           tableContent += tableRows[i].value;
-        }
-
-        tableContent += "</table>";
-        table.append(tableContent);
-
-        // Table view events
-        $('.pv-tableview-heading').on('click', function (e) {
-            var id = e.originalEvent.target.id;
-
-            var filter = [];
-
-            if (that.selectedId == "" || that.selectedId == null )
-                filter = that.currentFilter;
-            else
-                filter[0] = that.selectedId;
-
-            var sortReverse;
-            if (id == 'pv-key') {
-                if (that.sortReverseEntity)
-                  sortReverse = false;
-                else 
-                  sortReverse = true;
-                that.sortReverseEntity = sortReverse;
-            } else if (id == 'pv-facet'){
-                if (that.sortReverseAttribute)
-                  sortReverse = false;
-                else 
-                  sortReverse = true;
-                that.sortReverseAttribute = sortReverse;
-            } else if (id == 'pv-value'){
-                if (that.sortReverseValue)
-                  sortReverse = false;
-                else 
-                  sortReverse = true;
-                that.sortReverseValue = sortReverse;
+        if (tableRows.length == 0)
+            this.CreateTable( currentFilter, "", sortKey, sortReverse )
+        else { 
+            tableRows.sort(function(a, b){
+              if(a.key > b.key){
+                return 1;
+              }
+              else if(a.key < b.key){
+                return -1;
+              } 
+              return 0;
+            });
+         
+            if (sortReverse)
+              tableRows.reverse();
+         
+            for (var i = 0; i < tableRows.length; i++) {
+               tableContent += tableRows[i].value;
             }
-
-            that.sortKey = id;
-            that.CreateTable (filter, that.selectedFacet, id, sortReverse);
-            //that.SortTable(id);
-        }); 
-        $('.pv-tableview-odd-row').on('click', function (e) {
-            var id = e.originalEvent.target.id;
-            that.CellClick(id, e.currentTarget.cells );
-        }); 
-        $('.pv-tableview-even-row').on('click', function (e) {
-            var id = e.originalEvent.target.id;
-            that.CellClick(id, e.currentTarget.cells );
-        }); 
+         
+            tableContent += "</table>";
+            table.append(tableContent);
+         
+            // Table view events
+            $('.pv-tableview-heading').on('click', function (e) {
+                var id = e.originalEvent.target.id;
+         
+                var filter = [];
+         
+                if (that.selectedId == "" || that.selectedId == null )
+                    filter = that.currentFilter;
+                else
+                    filter[0] = that.selectedId;
+         
+                var sortReverse;
+                if (id == 'pv-key') {
+                    if (that.sortReverseEntity)
+                      sortReverse = false;
+                    else 
+                      sortReverse = true;
+                    that.sortReverseEntity = sortReverse;
+                } else if (id == 'pv-facet'){
+                    if (that.sortReverseAttribute)
+                      sortReverse = false;
+                    else 
+                      sortReverse = true;
+                    that.sortReverseAttribute = sortReverse;
+                } else if (id == 'pv-value'){
+                    if (that.sortReverseValue)
+                      sortReverse = false;
+                    else 
+                      sortReverse = true;
+                    that.sortReverseValue = sortReverse;
+                }
+         
+                that.sortKey = id;
+                that.CreateTable (filter, that.selectedFacet, id, sortReverse);
+                //that.SortTable(id);
+            }); 
+            $('.pv-tableview-odd-row').on('click', function (e) {
+                var id = e.originalEvent.target.id;
+                that.CellClick(id, e.currentTarget.cells );
+            }); 
+            $('.pv-tableview-even-row').on('click', function (e) {
+                var id = e.originalEvent.target.id;
+                that.CellClick(id, e.currentTarget.cells );
+            }); 
+        }
     },
     Selected: function (itemId) {
         var filter = [];
@@ -3333,17 +3337,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _views[viewNumber].Activate();
         _views[viewNumber].init = init;
 
-        var previousView = _currentView;
-        var previousSelectedItem = _selectedItem.Id;
         _currentView = viewNumber;
-        //if (viewNumber == 0 && previousView != 1) 
-        //   _tileController.StopAnimation();
-        //_selectedItem = "";
+        if (viewNumber == 1)
+          _selectedItem = "";
         FilterCollection(true);
-        //if (viewNumber == 0 && previousView != 1) 
-        //   _tileController.BeginAnimation(true, previousSelectedItem);
-        //if (viewNumber != 0 && viewNumber != 1)
-        //   _tileController.StopAnimation();
     };
 
     ///Sorts the facet items based on a specific sort type
@@ -3611,8 +3608,12 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
         }
-        else
+        else {
             _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
+            if (_currentView == 2 && !changingView) { 
+                _views[0].Filter(_tiles, filterItems, sort, stringFacets, false, "");
+            }
+        }
 
         // Maintain a list of items in the filter in sort order.
         var sortedFilter = [];
@@ -3849,7 +3850,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
 	    	currentViewerState += "&$selection$=" + _selectedItem.Id;
             // Handle bookmark params for specific views
             if (_currentView == 2)
-	    	currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
+                if (_views[_currentView].GetSelectedFacet())
+	    	  currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
