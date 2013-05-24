@@ -506,17 +506,10 @@
         _views[viewNumber].Activate();
         _views[viewNumber].init = init;
 
-        var previousView = _currentView;
-        var previousSelectedItem = _selectedItem.Id;
         _currentView = viewNumber;
-        //if (viewNumber == 0 && previousView != 1) 
-        //   _tileController.StopAnimation();
-        //_selectedItem = "";
+        if (viewNumber == 1)
+          _selectedItem = "";
         FilterCollection(true);
-        //if (viewNumber == 0 && previousView != 1) 
-        //   _tileController.BeginAnimation(true, previousSelectedItem);
-        //if (viewNumber != 0 && viewNumber != 1)
-        //   _tileController.StopAnimation();
     };
 
     ///Sorts the facet items based on a specific sort type
@@ -784,8 +777,12 @@
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
         }
-        else
+        else {
             _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
+            if (_currentView == 2 && !changingView) { 
+                _views[0].Filter(_tiles, filterItems, sort, stringFacets, false, "");
+            }
+        }
 
         // Maintain a list of items in the filter in sort order.
         var sortedFilter = [];
