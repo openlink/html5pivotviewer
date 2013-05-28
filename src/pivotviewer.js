@@ -144,7 +144,7 @@
         _initTableFacet = _viewerState.TableFacet;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
-        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (25 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (55 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
