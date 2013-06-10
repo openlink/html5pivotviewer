@@ -195,7 +195,7 @@
         $('.pv-mainpanel').append("<div class='pv-viewpanel'><canvas class='pv-viewarea-canvas' width='" + _self.width() + "' height='" + mainPanelHeight + "px'></canvas></div>");
         $('.pv-mainpanel').append("<div class='pv-infopanel'></div>");
  
-        //add grid for tableview to the mainpanl
+        //add grid for tableview to the mainpanel
         $('.pv-viewpanel').append("<div class='pv-tableview-table' id='pv-table'></div>");
 
         //filter panel

@@ -145,14 +145,13 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         $('.pv-tableview-table').css('width', this.width - 415 + 'px');
 
         var oddOrEven = 'odd-row';
-        var tableContent = "<table style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key'>Key</th><th id='pv-facet'>Facet</th><th id='pv-value'>Value</th></tr>";
+        var tableContent = "<table style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key' class='tooltipcustom' title='Sort on item name'>Item</th><th class='tooltipcustom' id='pv-facet' title='Sort on facet name'>Facet</th><th id='pv-value' class='tooltipcustom' title='Sort on facet value'>Value</th></tr>";
 
         for (var i = 0; i < currentFilter.length; i++) {
             for (var j = 0; j < this.tiles.length; j++) {
                 if (this.tiles[j].facetItem.Id == currentFilter[i]) {
                    var entity = this.tiles[j].facetItem.Name;
                    if ( showAllFacets || selectedFacet == 'Description') {
-                      //tableContent += "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>";
                       var sortKeyValue;
                       if (sortKey == 'pv-key')
                         sortKeyValue = entity;
@@ -161,7 +160,12 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
                       else if (sortKey == 'pv-value')
                         sortKeyValue = this.tiles[j].facetItem.Description;
 
-                      tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>"});
+                      // Interactive tooltip if item has href
+                      if (this.tiles[j].facetItem.Href) {
+                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>"});
+                      } else {
+                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltip' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>"});
+                      }
 
                       oddOrEven = 'even-row';
                    }
@@ -186,16 +190,40 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
                                 sortKeyValue = value;
 
                               // Colour blue if in the filter
-                              if (this.IsFilterVisible (attribute))
- 
-                                  //tableContent += "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>";
-                                  tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
-                              else
-                                  //tableContent += "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>";
-                                  tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
-                           if (oddOrEven == 'odd-row')
-                               oddOrEven = 'even-row';
-                           else
+                              if (this.IsFilterVisible (attribute)) {
+                                  // Interactive tooltip if item has href
+                                  if (this.tiles[j].facetItem.Href) {
+                                      // Value is uri
+                                      if (this.IsUri(value))
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom'  title='Show only this facet'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Click the cell to filter on this value<br>or <a href=\"" + value + "\">follow the link.</a>' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                      else
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom'  title='Show only this facet'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                  } else {
+                                      // Value is uri
+                                      if (this.IsUri(value))
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class='tooltipcustom'  title='Show only this facet'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Click the cell to filter on this value<br> or <a href=\"" + value + "\">follow the link.</a>' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                      else
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class='tooltipcustom'  title='Show only this facet'>" + attribute + "</td><td id='pv-value' class='tooltipinter'  title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                  }
+                             } else {
+                                  // Interactive tooltip if item has href
+                                  if (this.tiles[j].facetItem.Href) { 
+                                      // Value is uri
+                                      if (this.IsUri(value))
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'><a href=" + value + ">" + value + "</a></td></tr>"});
+                                       else
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                                  } else {
+                                      // Value is uri
+                                      if (this.IsUri(value))
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Select this value'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'><a href" + value + ">" + value + "</a></td></tr>"});
+                                       else
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Select this value'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                                 }
+                             } 
+                             if (oddOrEven == 'odd-row')
+                                 oddOrEven = 'even-row';
+                             else
                                oddOrEven = 'odd-row';
                            }
                        }
@@ -215,12 +243,19 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
                                     sortKeyValue = value;
 
                                   // Colour blue if in the filter
-                                  if (this.IsFilterVisible (attribute))
-                                      //tableContent += "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>";
-                                      tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
-                                  else
-                                      //tableContent += "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>";
-                                      tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key'>" + entity + "</td><td id='pv-facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                                  if (this.IsFilterVisible (attribute)) {
+                                      // Interactive tooltip if item has href
+                                      if (this.tiles[j].facetItem.Href) 
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                      else
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                               } else {
+                                      // Interactive tooltip if item has href
+                                      if (this.tiles[j].facetItem.Href) 
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to select this item<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                                      else
+                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                               } 
                                if (oddOrEven == 'odd-row')
                                    oddOrEven = 'even-row';
                                else
@@ -256,6 +291,18 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
          
             tableContent += "</table>";
             table.append(tableContent);
+
+            $('.tooltipinter').tooltipster({
+                interactive: true,
+                delay: 400,
+                offsetY: -15,
+                arrow: false
+            });
+            $('.tooltipcustom').tooltipster({
+                delay: 400,
+                offsetY: -15,
+                arrow: false
+            });
          
             // Table view events
             $('.pv-tableview-heading').on('click', function (e) {
@@ -263,6 +310,9 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
          
                 var filter = [];
          
+                $('.tooltipinter').tooltipster('hide');
+                $('.tooltipcustom').tooltipster('hide');
+
                 if (that.selectedId == "" || that.selectedId == null )
                     filter = that.currentFilter;
                 else
@@ -291,13 +341,16 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
          
                 that.sortKey = id;
                 that.CreateTable (filter, that.selectedFacet, id, sortReverse);
-                //that.SortTable(id);
             }); 
             $('.pv-tableview-odd-row').on('click', function (e) {
+                $('.tooltipinter').tooltipster('hide');
+                $('.tooltipcustom').tooltipster('hide');
                 var id = e.originalEvent.target.id;
                 that.CellClick(id, e.currentTarget.cells );
             }); 
             $('.pv-tableview-even-row').on('click', function (e) {
+                $('.tooltipinter').tooltipster('hide');
+                $('.tooltipcustom').tooltipster('hide');
                 var id = e.originalEvent.target.id;
                 that.CellClick(id, e.currentTarget.cells );
             }); 
@@ -329,6 +382,17 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
             return visible;
         else
             return false;
+    },
+    IsUri: function (facetValue) {
+      var stringVal = facetValue;
+      var retValue = false;
+      if (typeof(facetValue) == "string") {
+          if (stringVal.substring(0, 5) == 'http:')
+            retValue = true;
+          if (stringVal.substring(0, 6) == 'https:')
+            retValue = true;
+      }
+      return retValue;
     },
     SetSelectedFacet: function (facet) {
         this.selectedFacet = facet;
