@@ -245,16 +245,34 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
                                   // Colour blue if in the filter
                                   if (this.IsFilterVisible (attribute)) {
                                       // Interactive tooltip if item has href
-                                      if (this.tiles[j].facetItem.Href) 
-                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
-                                      else
-                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                      if (this.tiles[j].facetItem.Href) {
+                                          // Value is uri
+                                          if (this.IsUri(value))
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter 'title='Click the cell to filter on this value<br>or <a href=\"" + value + "\">follow the link.</a>' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                           else
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                      } else {
+                                          // Value is uri
+                                          if (this.IsUri(value))
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Click the cell to filter on this value<br> or <a href=\"" + value + "\">follow the link.</a>' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                           else
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value' class='tooltipinter' title='Filter on this value' style='color:#36A3D8;cursor:pointer'>" + value + "</td></tr>"});
+                                    }
                                } else {
                                       // Interactive tooltip if item has href
-                                      if (this.tiles[j].facetItem.Href) 
-                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to select this item<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
-                                      else
-                                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                                      if (this.tiles[j].facetItem.Href) { 
+                                          // Value is uri
+                                          if (this.IsUri(value))
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to select this item<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value'><a href=" + value + ">" + value + "</a></td></tr>"});
+                                          else
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipinter' title='Click the cell to select this item<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Clear facet selection'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                                      } else {
+                                          // Value is uri
+                                          if (this.IsUri(value))
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'><a href" + value + ">" + value + "</a></td></tr>"});
+                                          else
+                                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltipcustom' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class-'tooltipcustom' title='Show only this facet'>" + attribute + "</td><td id='pv-value'>" + value + "</td></tr>"});
+                                   }
                                } 
                                if (oddOrEven == 'odd-row')
                                    oddOrEven = 'even-row';
