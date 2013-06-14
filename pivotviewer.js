@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.93-48048bd";
+PivotViewer.Version="v0.9.95-9c22c00";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -3003,9 +3003,13 @@ PivotViewer.Views.TileLocation = Object.subClass({
                             var filter = { Facet: splitItem[0], Predicates: [] };
                             var filters = splitItem[1].split('_');
                             for (var j = 0, _jLen = filters.length; j < _jLen; j++) {
-                                var pred = filters[j].split('.');
-                                if (pred.length == 2)
-                                    filter.Predicates.push({ Operator: pred[0], Value: pred[1] });
+                                //var pred = filters[j].split('.');
+                                if (filters[j].indexOf('.') > 0) {
+                                    var pred = filters[j].substring(0, filters[j].indexOf('.'));
+                                    var value = filters[j].substring(filters[j].indexOf('.') + 1);
+                                    //if (pred.length == 2)
+                                    filter.Predicates.push({ Operator: pred, Value: value });
+                                }
                             }
                             _viewerState.Filters.push(filter);
                         }
