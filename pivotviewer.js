@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.95-9c22c00";
+PivotViewer.Version="v0.9.97-f868a0f";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -3472,8 +3472,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
     ApplyViewerState = function () {
         //Sort
         if (_viewerState.Facet != null) {
-            $('.pv-toolbarpanel-sort').val(_viewerState.Facet).attr('selected', 'selected');
-	    _currentSort = $('.pv-toolbarpanel-sort option:selected').text();
+            $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
+	    _currentSort = $('.pv-toolbarpanel-sort :selected').text();
 	}
 
         //Filters
