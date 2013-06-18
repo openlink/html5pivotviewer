@@ -559,8 +559,8 @@
     ApplyViewerState = function () {
         //Sort
         if (_viewerState.Facet != null) {
-            $('.pv-toolbarpanel-sort').val(_viewerState.Facet).attr('selected', 'selected');
-	    _currentSort = $('.pv-toolbarpanel-sort option:selected').text();
+            $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
+	    _currentSort = $('.pv-toolbarpanel-sort :selected').text();
 	}
 
         //Filters
