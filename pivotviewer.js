@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.97-f868a0f";
+PivotViewer.Version="v0.9.99-5ed2ef1";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -874,6 +874,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     },
     Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, changeViewSelectedItem) {
         var that = this;
+        var changingFromTableView = false;
         if (!Modernizr.canvas)
             return;
 
@@ -881,11 +882,15 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
 
         this.changingView = false;
         if (changingView) {
-            $('.pv-tableview-table').fadeOut();
-            this.selected = "";
-            $('.pv-viewarea-canvas').fadeIn(function(){
-                $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
-            });
+            if ($('.pv-tableview-table').is(':visible')){
+                changingFromTableView = true;
+                $('.pv-tableview-table').fadeOut();
+                //this.selected = changeViewSelectedItem;
+                this.selected = "";
+                $('.pv-viewarea-canvas').fadeIn(function(){
+                    $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+                });
+            }
         }
 
         this.tiles = dzTiles;
@@ -909,8 +914,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         }, stringFacets));
         this.currentFilter = currentFilter;
 
-        // Don't calculate positions if changing view with item already selected
-        if (!changingView || (changeViewSelectedItem == "")) {
+        // Don't calculate positions if changing from table view with item already selected
+        if (!changingFromTableView || (changeViewSelectedItem == "")) {
             var pt1Timeout = 0;
             //zoom out first
             Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
@@ -1065,7 +1070,6 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             selectedCol = Math.round((selectedTile._locations[0].x - that.currentOffsetX) / selectedTile.width);
             selectedRow = Math.round((selectedTile._locations[0].y - that.currentOffsetY) / selectedTile.height);
         }
- 
         //Reset slider to zero before zooming ( do this before sorting the tile selection
         //because zooming to zero unselects everything...)
         if (selectedItem != null && that.selected != selectedItem) {
@@ -1115,7 +1119,6 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             value = 0;
             $('.pv-toolbarpanel-zoomslider').slider('option', 'value', value);
         }
-
         $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem, bkt: 0}]);
     }
 });
@@ -1320,15 +1323,21 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         this.rowscols = null;
         this.bigCount = 0;
     },
-    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets) {
+    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, changeViewSelectedItem) {
         var that = this;
         if (!Modernizr.canvas)
             return;
 
         Debug.Log('Graph View Filtered: ' + currentFilter.length);
 
-        $('.pv-tableview-table').fadeOut();
-        $('.pv-viewarea-canvas').fadeIn();
+        this.changingView = false;
+        if (changingView) {
+Debug.Log("is changing views");
+            if ($('.pv-tableview-table').is(':visible')){
+                $('.pv-tableview-table').fadeOut();
+                $('.pv-viewarea-canvas').fadeIn();
+            }
+        }
 
         this.sortFacet = sortFacet;
         this.tiles = dzTiles;
@@ -1340,7 +1349,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         this.currentFilter = currentFilter;
 
         this.buckets = this.Bucketize(dzTiles, currentFilter, this.sortFacet, stringFacets);
-
+Debug.Log("number of buckets is " +  this.buckets.length);
         this.columnWidth = (this.width - this.offsetX) / this.buckets.length;
         this.canvasHeightUIAdjusted = this.height -this.offsetY - this.titleSpace;
 
@@ -1361,6 +1370,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             }
         }
 
+Debug.Log("big count is " + this.bigCount);
         //remove previous elements
         var graphViewOverlay = $('.pv-viewarea-graphview-overlay');
         graphViewOverlay.css('left', this.offsetX + 'px');
@@ -1813,6 +1823,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
             return;
 
         Debug.Log('Table View Filtered: ' + currentFilter.length);
+        Debug.Log('Table View Filtered selectedItem: ' + selectedItem.Id);
 
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
@@ -1913,7 +1924,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         $('.pv-tableview-table').css('width', this.width - 415 + 'px');
 
         var oddOrEven = 'odd-row';
-        var tableContent = "<table style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key' class='tooltipcustom' title='Sort on item name'>Item</th><th class='tooltipcustom' id='pv-facet' title='Sort on facet name'>Facet</th><th id='pv-value' class='tooltipcustom' title='Sort on facet value'>Value</th></tr>";
+        var tableContent = "<table style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key' class='tooltipcustom' title='Sort on item name'>Item</th><th class='tooltipcustom' id='pv-facet' title='Sort on relation name'>Relation</th><th id='pv-value' class='tooltipcustom' title='Sort on value'>Value</th></tr>";
 
         for (var i = 0; i < currentFilter.length; i++) {
             for (var j = 0; j < this.tiles.length; j++) {
@@ -2642,9 +2653,9 @@ PivotViewer.Views.TileController = Object.subClass({
                                 doInitialSelection = false;
                                 selectedId = 0;
                         }
-			else  if (!isNaN(now) && !isNaN(end)) {
-                       	    $.publish("/PivotViewer/Views/Animation/Finished", null);
-                        } 
+//			else  if (!isNaN(now) && !isNaN(end)) {
+//                       	    $.publish("/PivotViewer/Views/Animation/Finished", null);
+//                        } 
                      }
  
                      //check if the destination will be in the visible area
@@ -2946,7 +2957,6 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _initSelectedItem = "",
         _initTableFacet = "",
         _handledInitSettings = false,
-        _handleChangeToTileViewSelect = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
         _imageController,
@@ -3420,12 +3430,25 @@ PivotViewer.Views.TileLocation = Object.subClass({
             }
         }
         $('#pv-viewpanel-view-' + viewNumber + '-image').attr('src', _views[viewNumber].GetButtonImageSelected());
+        if (_currentView == 1 && viewNumber == 2) {
+            // Move tiles back to grid positions - helps with maintaining selected item 
+            // when changing views
+            _views[0].Activate();
+            _views[0].init = init;
+            _currentView = 0;
+            var rememberSelection = _selectedItem;
+            _selectedItem = "";
+            FilterCollection(true);
+            _selectedItem = rememberSelection;
+        }
         _views[viewNumber].Activate();
         _views[viewNumber].init = init;
 
         _currentView = viewNumber;
-        if (viewNumber == 1)
+        if (viewNumber == 1) {
+          $.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
           _selectedItem = "";
+        }
         FilterCollection(true);
     };
 
@@ -3686,17 +3709,23 @@ PivotViewer.Views.TileLocation = Object.subClass({
 
         //Filter view
         _tileController.SetCircularEasingBoth();
+Debug.Log("calling the filter function");
         if (!_handledInitSettings){
+Debug.Log("calling the filter function handling initial settings");
             if (_currentView == 2) { 
+Debug.Log("calling the filter function handling initial settings current view is 2, selectedItem is " + _initSelectedItem.Id);
                 _views[_currentView].SetSelectedFacet(_initTableFacet);
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
+Debug.Log("calling the filter function handling initial settings current view is not 2, selectedItem is " + _selectedItem.Id);
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
         }
         else {
+Debug.Log("calling the filter function not initial settings selectedItem is " + _selectedItem.Id);
             _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             if (_currentView == 2 && !changingView) { 
+Debug.Log("calling the filter function not initial settings current view is 2 and not changing views selectedItem is " + "");
                 _views[0].Filter(_tiles, filterItems, sort, stringFacets, false, "");
             }
         }
@@ -4005,6 +4034,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
 
     //Item selected - show the info panel
     $.subscribe("/PivotViewer/Views/Item/Selected", function (evt) {
+Debug.Log("Selected event " + evt.id);
+Debug.Log("selectedItem is " + _selectedItem.Id);
 
         if (evt.id === undefined || evt.id === null || evt.id === "") {
             DeselectInfoPanel();
@@ -4149,27 +4180,18 @@ PivotViewer.Views.TileLocation = Object.subClass({
  
     //Changing to grid view
     $.subscribe("/PivotViewer/Views/ChangeTo/Grid", function (evt) {
-        //Signal that when the animation has finished we need to select item
-        _changeToTileViewSelectedItem = evt.Item;
-        _handleChangeToTileViewSelect = true;
-    });
- 
-    //Tile animation finished
-    $.subscribe("/PivotViewer/Views/Animation/Finished", function () {
-        if (_handleChangeToTileViewSelect) {
-            var selectedTile = "";
-            for ( t = 0; t < _tiles.length; t ++ ) {
-                if (_tiles[t].facetItem == _changeToTileViewSelectedItem) {
-                   selectedTile = _tiles[t];
-                   break;
-                }
+        var selectedTile = "";
+        //$.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
+        for ( t = 0; t < _tiles.length; t ++ ) {
+            if (_tiles[t].facetItem == evt.Item) {
+               selectedTile = _tiles[t];
+               break;
             }
-            if (selectedTile)
-                 $.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].x, y: selectedTile._locations[selectedTile.selectedLoc].y}]);
-            _handleChangeToTileViewSelect = false;
         }
+        if (selectedTile)
+             $.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].destinationx + selectedTile.destinationwidth/2, y: selectedTile._locations[selectedTile.selectedLoc].destinationy + selectedTile.destinationheight/2}]);
     });
- 
+
     AttachEventHandlers = function () {
         //Event Handlers
         //View click
