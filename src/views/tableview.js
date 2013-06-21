@@ -145,7 +145,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         $('.pv-tableview-table').css('width', this.width - 415 + 'px');
 
         var oddOrEven = 'odd-row';
-        var tableContent = "<table style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key' class='tooltipcustom' title='Sort on item name'>Item</th><th class='tooltipcustom' id='pv-facet' title='Sort on facet name'>Facet</th><th id='pv-value' class='tooltipcustom' title='Sort on facet value'>Value</th></tr>";
+        var tableContent = "<table style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key' class='tooltipcustom' title='Sort on item name'>Item</th><th class='tooltipcustom' id='pv-facet' title='Sort on relation name'>Relation</th><th id='pv-value' class='tooltipcustom' title='Sort on value'>Value</th></tr>";
 
         for (var i = 0; i < currentFilter.length; i++) {
             for (var j = 0; j < this.tiles.length; j++) {

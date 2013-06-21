@@ -199,15 +199,20 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         this.rowscols = null;
         this.bigCount = 0;
     },
-    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets) {
+    Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, changeViewSelectedItem) {
         var that = this;
         if (!Modernizr.canvas)
             return;
 
         Debug.Log('Graph View Filtered: ' + currentFilter.length);
 
-        $('.pv-tableview-table').fadeOut();
-        $('.pv-viewarea-canvas').fadeIn();
+        this.changingView = false;
+        if (changingView) {
+            if ($('.pv-tableview-table').is(':visible')){
+                $('.pv-tableview-table').fadeOut();
+                $('.pv-viewarea-canvas').fadeIn();
+            }
+        }
 
         this.sortFacet = sortFacet;
         this.tiles = dzTiles;

@@ -179,6 +179,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     },
     Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, changeViewSelectedItem) {
         var that = this;
+        var changingFromTableView = false;
         if (!Modernizr.canvas)
             return;
 
@@ -186,11 +187,15 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
 
         this.changingView = false;
         if (changingView) {
-            $('.pv-tableview-table').fadeOut();
-            this.selected = "";
-            $('.pv-viewarea-canvas').fadeIn(function(){
-                $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
-            });
+            if ($('.pv-tableview-table').is(':visible')){
+                changingFromTableView = true;
+                $('.pv-tableview-table').fadeOut();
+                //this.selected = changeViewSelectedItem;
+                this.selected = "";
+                $('.pv-viewarea-canvas').fadeIn(function(){
+                    $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+                });
+            }
         }
 
         this.tiles = dzTiles;
@@ -214,8 +219,8 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         }, stringFacets));
         this.currentFilter = currentFilter;
 
-        // Don't calculate positions if changing view with item already selected
-        if (!changingView || (changeViewSelectedItem == "")) {
+        // Don't calculate positions if changing from table view with item already selected
+        if (!changingFromTableView || (changeViewSelectedItem == "")) {
             var pt1Timeout = 0;
             //zoom out first
             Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
@@ -370,7 +375,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             selectedCol = Math.round((selectedTile._locations[0].x - that.currentOffsetX) / selectedTile.width);
             selectedRow = Math.round((selectedTile._locations[0].y - that.currentOffsetY) / selectedTile.height);
         }
- 
+
         //Reset slider to zero before zooming ( do this before sorting the tile selection
         //because zooming to zero unselects everything...)
         if (selectedItem != null && that.selected != selectedItem) {

@@ -33,7 +33,6 @@
         _initSelectedItem = "",
         _initTableFacet = "",
         _handledInitSettings = false,
-        _handleChangeToTileViewSelect = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
         _imageController,
@@ -507,12 +506,22 @@
             }
         }
         $('#pv-viewpanel-view-' + viewNumber + '-image').attr('src', _views[viewNumber].GetButtonImageSelected());
+        if (_currentView == 1 && viewNumber == 2) {
+            // Move tiles back to grid positions - helps with maintaining selected item 
+            // when changing views
+            _views[0].Activate();
+            _views[0].init = init;
+            _currentView = 0;
+            FilterCollection(true);
+        }
         _views[viewNumber].Activate();
         _views[viewNumber].init = init;
 
         _currentView = viewNumber;
-        if (viewNumber == 1)
+        if (viewNumber == 1) {
+          $.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
           _selectedItem = "";
+        }
         FilterCollection(true);
     };
 
@@ -1236,27 +1245,18 @@
  
     //Changing to grid view
     $.subscribe("/PivotViewer/Views/ChangeTo/Grid", function (evt) {
-        //Signal that when the animation has finished we need to select item
-        _changeToTileViewSelectedItem = evt.Item;
-        _handleChangeToTileViewSelect = true;
-    });
- 
-    //Tile animation finished
-    $.subscribe("/PivotViewer/Views/Animation/Finished", function () {
-        if (_handleChangeToTileViewSelect) {
-            var selectedTile = "";
-            for ( t = 0; t < _tiles.length; t ++ ) {
-                if (_tiles[t].facetItem == _changeToTileViewSelectedItem) {
-                   selectedTile = _tiles[t];
-                   break;
-                }
+        var selectedTile = "";
+        //$.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
+        for ( t = 0; t < _tiles.length; t ++ ) {
+            if (_tiles[t].facetItem == evt.Item) {
+               selectedTile = _tiles[t];
+               break;
             }
-            if (selectedTile)
-                 $.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].x, y: selectedTile._locations[selectedTile.selectedLoc].y}]);
-            _handleChangeToTileViewSelect = false;
         }
+        if (selectedTile)
+             $.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].destinationx + selectedTile.destinationwidth/2, y: selectedTile._locations[selectedTile.selectedLoc].destinationy + selectedTile.destinationheight/2}]);
     });
- 
+
     AttachEventHandlers = function () {
         //Event Handlers
         //View click
