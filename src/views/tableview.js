@@ -160,14 +160,17 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
                       else if (sortKey == 'pv-value')
                         sortKeyValue = this.tiles[j].facetItem.Description;
 
-                      // Interactive tooltip if item has href
-                      if (this.tiles[j].facetItem.Href) {
-                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>"});
-                      } else {
-                          tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltip' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>"});
+                      // Only add a row for the Description if there is one
+                      if (this.tiles[j].facetItem.Description) {
+                          // Interactive tooltip if item has href
+                          if (this.tiles[j].facetItem.Href) {
+                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td class='tooltipinter' title='Click the cell to toggle item selection<br>or <a href=" + this.tiles[j].facetItem.Href + ">follow the link.</a>'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>"});
+                          } else {
+                              tableRows.push({key: sortKeyValue, value: "<tr class='pv-tableview-" + oddOrEven +"'><td id='pv-key' class='tooltip' title='Toggle item selection'>" + entity + "</td><td id='pv-facet' class='tooltipcustom' title='Show only this facet'>Description</td><td id='pv-value'>" + this.tiles[j].facetItem.Description + "</td></tr>"});
+                          }
+                   
+                          oddOrEven = 'even-row';
                       }
-
-                      oddOrEven = 'even-row';
                    }
 
                    if (oddOrEven == 'odd-row')
