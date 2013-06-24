@@ -101,11 +101,11 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
                 }
             }
 
-            if (selectedItemId > 0 && selectedItemId != this.selectedId) {
+            if (selectedItemId >= 0 && selectedItemId != this.selectedId) {
                 this.selectedId = selectedItemId;
                 $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItemId, bkt: 0}]);
             }
-            else if (selectedItemId > 0 && selectedItemId == this.selectedId) {
+            else if (selectedItemId >= 0 && selectedItemId == this.selectedId) {
                 this.selectedId = "";   
                 $.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
             }
