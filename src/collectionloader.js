@@ -127,7 +127,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                             );
                             var description = $(facetItem[i]).find("Description");
                             if (description.length == 1 && description[0].childNodes.length)
-                                item.Description = description[0].childNodes[0].nodeValue;
+                                item.Description = jQuery.htmlspecialchars(description[0].childNodes[0].nodeValue);
                             var facets = $(facetItem[i]).find("Facet");
                             for (var j = 0; j < facets.length; j++) {
                                 var f = new PivotViewer.Models.Facet(
@@ -148,7 +148,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                                 var fValue = new PivotViewer.Models.FacetValue(parseFloat(v));
                                                 f.AddFacetValue(fValue);
                                             } else {
-                                                var fValue = new PivotViewer.Models.FacetValue(v);
+                                                var fValue = new PivotViewer.Models.FacetValue(jQuery.htmlspecialchars(v));
                                                 f.AddFacetValue(fValue);
                                             }
                                         }
