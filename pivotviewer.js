@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.103-78db579";
+PivotViewer.Version="v0.9.106-2060147";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -490,7 +490,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                             );
                             var description = $(facetItem[i]).find("Description");
                             if (description.length == 1 && description[0].childNodes.length)
-                                item.Description = description[0].childNodes[0].nodeValue;
+                                item.Description = jQuery.htmlspecialchars(description[0].childNodes[0].nodeValue);
                             var facets = $(facetItem[i]).find("Facet");
                             for (var j = 0; j < facets.length; j++) {
                                 var f = new PivotViewer.Models.Facet(
@@ -511,7 +511,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                                 var fValue = new PivotViewer.Models.FacetValue(parseFloat(v));
                                                 f.AddFacetValue(fValue);
                                             } else {
-                                                var fValue = new PivotViewer.Models.FacetValue(v);
+                                                var fValue = new PivotViewer.Models.FacetValue(jQuery.htmlspecialchars(v));
                                                 f.AddFacetValue(fValue);
                                             }
                                         }
@@ -3070,7 +3070,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _initTableFacet = _viewerState.TableFacet;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
-        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (55 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + $('.pv-toolbarpanel-viewcontrols').outerWidth() + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+        //Hardcoding the value for the width of the viewcontrols images (93) as the webkit browsers 
+        //do not know the size of the images at this point.
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (55 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + 93 + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
