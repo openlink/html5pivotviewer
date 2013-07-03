@@ -57,6 +57,10 @@ PivotViewer.Utils.EscapeItemId = function (itemId) {
             .replace(/\./gi, "");
 };
 
+PivotViewer.Utils.HtmlSpecialChars = function (orig) {
+    return jQuery('<div />').text(orig).html();
+}
+
 PivotViewer.Utils.Now = function () {
     if (Date.now)
         return Date.now();
