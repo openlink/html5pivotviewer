@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.106-2060147";
+PivotViewer.Version="v0.9.108-6f26cf4";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -152,6 +152,10 @@ PivotViewer.Utils.EscapeItemId = function (itemId) {
             .replace(/\)/gi, "")
             .replace(/\./gi, "");
 };
+
+PivotViewer.Utils.HtmlSpecialChars = function (orig) {
+    return jQuery('<div />').text(orig).html();
+}
 
 PivotViewer.Utils.Now = function () {
     if (Date.now)
@@ -490,7 +494,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                             );
                             var description = $(facetItem[i]).find("Description");
                             if (description.length == 1 && description[0].childNodes.length)
-                                item.Description = jQuery.htmlspecialchars(description[0].childNodes[0].nodeValue);
+                                item.Description = PivotViewer.Utils.HtmlSpecialChars(description[0].childNodes[0].nodeValue);
                             var facets = $(facetItem[i]).find("Facet");
                             for (var j = 0; j < facets.length; j++) {
                                 var f = new PivotViewer.Models.Facet(
@@ -511,7 +515,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                                 var fValue = new PivotViewer.Models.FacetValue(parseFloat(v));
                                                 f.AddFacetValue(fValue);
                                             } else {
-                                                var fValue = new PivotViewer.Models.FacetValue(jQuery.htmlspecialchars(v));
+                                                var fValue = new PivotViewer.Models.FacetValue(PivotViewer.Utils.HtmlSpecialChars(v));
                                                 f.AddFacetValue(fValue);
                                             }
                                         }
