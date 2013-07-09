@@ -54,8 +54,18 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 that._collageMaxLevel = $(collection).attr('MaxLevel');
 
                 var items = $(xml).find("I");
-                if (items.length == 0)
+                if (items.length == 0) {
+                    $('.pv-loading').remove();
+
+                    //Throw an alert so the user knows something is wrong
+                    var msg = '';
+                    msg = msg + 'No items in the DeepZoom Collection<br><br>';
+                    msg = msg + 'URL        : ' + this.url + '<br>';
+                    msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                    $('.pv-wrapper').append("<div id=\"pv-dzloading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                    var t=setTimeout(function(){window.open("#pv-dzloading-error","_self")},1000)
                     return;
+                }
                 
                 //If collection itself contains size information, use first one for now
                 var dzcSize = $(items[0]).find('Size');
