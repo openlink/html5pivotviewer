@@ -1,0 +1,19 @@
+Jul 09 2013, V1.00.0:
+
+    * Images are displayed with the correct aspect ratio.
+    * All image zooming handled in one place in the code.
+    * Fixed loading and assembling multiple deepzoom image tiles for higher resolution images.
+    * Added support for permalinks
+    * Added new view to displays collection data as a table.
+    * Added new html example file to the project
+    * Fixed search 
+    * Improved error handling
+    * Added support for jquery 1.9.1 and jquery-ui 1.10.2
+    * Infopanel title now a link to the associated href
+    * Fixed infopanel navigation arrows 
+    * Copyright information embedded in the collection displayed in infopanel
+    * Items now appear in all matching columns in the graph view
+    * Graph view filtering now works for numeric data as well as strings
+    * Blue highlight box now matches image shape.
+    * Fixed filtering on the (no info) value.
+    * Changed filtering to include items matching any selected value not all selected values 
