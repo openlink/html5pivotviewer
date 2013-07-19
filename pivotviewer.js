@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.115-21673b0";
+PivotViewer.Version="v0.9.119-ef24bcb";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -1866,13 +1866,6 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
     GetViewName: function () {
         return 'Table View';
     },
-    SortTable: function (sortKey) {
-        Debug.Log('SortTable');
-        if (sortKey == 'pv-key') {
-        } else if (sortKey == 'pv-facet'){
-        } else if (sortKey == 'pv-value'){
-        }
-    },
     CellClick: function (columnId, cells) {
         Debug.Log('CellClick');
         if (columnId == 'pv-key') {
@@ -1926,14 +1919,39 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         var tableRows = new Array();
         var sortIndex = 0;
         table.empty();
+        var sortImage;
+        var offset;
+/*
+        if ($('#pv-table-data'))  {
+            $('#pv-table-data').colResizable({disable:true});
+            $('#pv-table-data').remove();
+        }
+*/
 
         if (selectedFacet == null || selectedFacet == "" || typeof (selectedFacet) == undefined)
           showAllFacets = true;  
         $('.pv-tableview-table').css('height', this.height - 12 + 'px');
         $('.pv-tableview-table').css('width', this.width - 415 + 'px');
 
+        if (sortReverse) {
+            sortImage = "Content/images/sort-up.png";
+            //offset = +40;
+        } else {
+            sortImage = "Content/images/sort-down.png";
+            //offset = -40;
+        }
+
         var oddOrEven = 'odd-row';
-        var tableContent = "<table style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key' class='tooltipcustom' title='Sort on item name'>Item</th><th class='tooltipcustom' id='pv-facet' title='Sort on relation name'>Relation</th><th id='pv-value' class='tooltipcustom' title='Sort on value'>Value</th></tr>";
+        var tableContent = "<table id='pv-table-data' style='color:#484848;'><tr class='pv-tableview-heading'><th id='pv-key' class='tooltipcustom' title='Sort on item name'>Item";
+        if (sortKey == 'pv-key')
+            tableContent += " <img style='position:relative;top:" + offset + "' src='" + sortImage + "'></img>";
+        tableContent += "</th><th class='tooltipcustom' id='pv-facet' title='Sort on relation name'>Relation";
+        if (sortKey == 'pv-facet')
+            tableContent += " <img style='position:relative;top:" + offset + "' src='" + sortImage + "'></img>";
+        tableContent += "</th><th id='pv-value' class='tooltipcustom' title='Sort on value'>Value";
+        if (sortKey == 'pv-value')
+            tableContent += " <img style='position:relative;top:" + offset + "' src='" + sortImage + "'></img>";
+        tableContent += "</th></tr>";
 
         for (var i = 0; i < currentFilter.length; i++) {
             for (var j = 0; j < this.tiles.length; j++) {
@@ -2100,6 +2118,9 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
          
             tableContent += "</table>";
             table.append(tableContent);
+            //$("#pv-table-data").colResizable();
+            $('#pv-table-data').colResizable({disable:true});
+            $('#pv-table-data').colResizable({disable:false});
 
 /*
             $('.tooltipinter').tooltipster({
