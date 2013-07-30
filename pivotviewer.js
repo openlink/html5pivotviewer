@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.119-ef24bcb";
+PivotViewer.Version="v0.9.121-b72b02f";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -1921,12 +1921,6 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         table.empty();
         var sortImage;
         var offset;
-/*
-        if ($('#pv-table-data'))  {
-            $('#pv-table-data').colResizable({disable:true});
-            $('#pv-table-data').remove();
-        }
-*/
 
         if (selectedFacet == null || selectedFacet == "" || typeof (selectedFacet) == undefined)
           showAllFacets = true;  
@@ -2118,7 +2112,6 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
          
             tableContent += "</table>";
             table.append(tableContent);
-            //$("#pv-table-data").colResizable();
             $('#pv-table-data').colResizable({disable:true});
             $('#pv-table-data').colResizable({disable:false});
 
@@ -3122,7 +3115,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         //Set the width for displaying breadcrumbs as we now know the control sizes 
         //Hardcoding the value for the width of the viewcontrols images (93) as the webkit browsers 
         //do not know the size of the images at this point.
-        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - (55 + $('.pv-toolbarpanel-name').outerWidth() + $('.pv-toolbarpanel-zoomcontrols').outerWidth() + 93 + $('.pv-toolbarpanel-sortcontrols').outerWidth());
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - ($('.pv-toolbarpanel-brandimage').outerWidth(true) +25 + $('.pv-toolbarpanel-name').outerWidth(true) + $('.pv-toolbarpanel-zoomcontrols').outerWidth(true) + 93 + $('.pv-toolbarpanel-sortcontrols').outerWidth(true));
 
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
