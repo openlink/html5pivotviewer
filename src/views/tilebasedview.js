@@ -85,14 +85,22 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
                                             // sort on values in the filter 
                                             else {                      
                                                 for (var j = 0; j < x.facetItem.Facets[i].FacetValues.length; j++) {
-                                                    for (var k = 0; k < filterValues.length; k++) {
-                                                        if (filterValues[k].facet == field)
-                                                             for (var l = 0; l < filterValues[k].facetValue.length; l++) {
-                                                                 if ( x.facetItem.Facets[i].FacetValues[j].Value == filterValues[k].facetValue[l])  
-					                             return primer(x.facetItem.Facets[i].FacetValues[j].Value);
-                                                             }
-                                                    }
+                                                    // Has a filter been set? If so, and it is the same facet as the sort
+                                                    // then sort on the items in the filter where possible (otherwise just 
+                                                    // use the first value.?
+                                                    if (filterValues.length > 0) {
+                                                        for (var k = 0; k < filterValues.length; k++) {
+                                                            if (filterValues[k].facet == field) {
+                                                                 for (var l = 0; l < filterValues[k].facetValue.length; l++) {
+                                                                     if ( x.facetItem.Facets[i].FacetValues[j].Value == filterValues[k].facetValue[l]) {  
+					                                 return primer(x.facetItem.Facets[i].FacetValues[j].Value);
+                                                                     }
+                                                                 }
+                                                             } 
+                                                        }
+                                                    } 
                                                 }
+                                                return primer(x.facetItem.Facets[i].FacetValues[0].Value);
                                             }
                                         }
 				}
