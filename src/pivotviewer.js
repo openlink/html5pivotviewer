@@ -572,7 +572,8 @@
         //Sort
         if (_viewerState.Facet != null) {
             $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
-	    _currentSort = $('.pv-toolbarpanel-sort :selected').text();
+	    _currentSort = $('.pv-toolbarpanel-sort :selected').att('label');
+            Debug.Log('current sort ' + _currentSort );
 	}
 
         //Filters
@@ -627,7 +628,8 @@
         var filterItems = [];
         var foundItemsCount = [];
         var selectedFacets = [];
-        var sort = $('.pv-toolbarpanel-sort option:selected').text();
+        var sort = $('.pv-toolbarpanel-sort option:selected').attr('label');
+        Debug.Log('sort ' + sort );
 
         //Filter String facet items
         var checked = $('.pv-facet-facetitem:checked');
@@ -1164,9 +1166,9 @@
                 }
 
                 if (IsMetaDataVisible) {
-                    detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title'>" + selectedItem.Facets[i].Name + "</div>";
+                    detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title' pv-detail-item-title='" + selectedItem.Facets[i].Name + "'>" + selectedItem.Facets[i].Name + "</div>";
                     for (var j = 0; j < selectedItem.Facets[i].FacetValues.length; j++) {
-                        detailDOM[detailDOMIndex] += "<div class='pv-infopanel-detail-item detail-item-value" + (IsFilterVisible ? " detail-item-value-filter" : "") + "'>";
+                        detailDOM[detailDOMIndex] += "<div pv-detail-item-value='" + selectedItem.Facets[i].FacetValues[j].Value + "' class='pv-infopanel-detail-item detail-item-value" + (IsFilterVisible ? " detail-item-value-filter" : "") + "'>";
                         if (selectedItem.Facets[i].FacetValues[j].Href != null)
                             detailDOM[detailDOMIndex] += "<a class='detail-item-link' href='" + selectedItem.Facets[i].FacetValues[j].Href + "'>" + selectedItem.Facets[i].FacetValues[j].Value + "</a>";
                         else
@@ -1270,7 +1272,8 @@
         });
         //Sort change
         $('.pv-toolbarpanel-sort').on('change', function (e) {
-	    _currentSort = $('.pv-toolbarpanel-sort option:selected').text();
+	    _currentSort = $('.pv-toolbarpanel-sort option:selected').attr('label');
+            Debug.Log('sort change _currentSort ' + _currentSort );
             FilterCollection(false);
         });
         //Facet sort
@@ -1367,7 +1370,7 @@
         });
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text(), Values: null, ClearFacetFilters: true }]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().attr('pv-detail-item-title'), Item: this.getAttribute('pv-detail-item-value'), Values: null, ClearFacetFilters: true }]);
             return false;
         });
         $('.pv-infopanel-details').on('click', '.pv-infopanel-detail-description-more', function (e) {
