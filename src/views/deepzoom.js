@@ -72,19 +72,9 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 if (dzcSize.length > 0) {
                     //calculate max level
                     that.MaxWidth = parseInt(dzcSize.attr("Width"));
-// Use height of first image for now...
+                    // Use height of first image for now...
                     that.Height = parseInt(dzcSize.attr("Height"));
                     that.MaxRatio = that.Height/that.MaxWidth;
-                   // for ( i = 0; i < items.length; i++ ) {
-                    //    itemSize = $(items[i]).find("Size");
-                     //   if (itemSize.length > 0) {
-                      //      itemWidth = parseInt(itemSize.attr("Width"));
-                       //     if (itemWidth > that.MaxWidth)
-                        //        that.MaxWidth = itemWidth;
-                         //}
-                    //}
-                    //var maxDim = that.MaxWidth > that.Height ? that.MaxWidth : that.Height;
-                    //that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
 
                     for ( i = 0; i < items.length; i++ ) {
                         itemSize = $(items[i]).find("Size");
@@ -98,16 +88,19 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         var itemId = $(items[i]).attr('Id');
                         var dzN = $(items[i]).attr('N');
                         var dzId = dziSource.substring(dziSource.lastIndexOf("/") + 1).replace(/\.xml/gi, "").replace(/\.dzi/gi, "");
-                         var basePath = dziSource.substring(0, dziSource.lastIndexOf("/"));
-                         if (basePath.length > 0)
+                        var basePath = dziSource.substring(0, dziSource.lastIndexOf("/"));
+                        if (basePath.length > 0)
                              basePath = basePath + '/';
-                        that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel));
                         if (width > that.MaxWidth)
                             that.MaxWidth = width;
                         if (that._ratio < that.MaxRatio)  // i.e. biggest width cf height upside down....
                             that.MaxRatio = that._ratio;
+
+                        that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel, that._baseUrl, dziSource));
                     }
                 }
+
+                
                  //Loaded DeepZoom collection
                  $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
              },
@@ -259,6 +252,13 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
             }
         }
     },
+    GetOverlap: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Overlap;
+            }
+        }
+    },
     GetRatio: function( id ) {
         for (var i = 0; i < this._items.length; i++) {
             if (this._items[i].ItemId == id) {
@@ -268,7 +268,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
     }
 });
 
-PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZId, DZn, BasePath, Ratio, Width, Height, MaxLevel) {
+PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZId, DZn, BasePath, Ratio, Width, Height, MaxLevel, baseUrl, dziSource) {
         this.ItemId = ItemId,
         this.DZId = DZId,
         this.DZN = parseInt(DZn),
@@ -278,5 +278,28 @@ PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZ
         this.Width = Width;
         this.Height = Height;
         this.MaxLevel = MaxLevel;
+        var that = this;
+        //this.Overlap = Overlap;
+        // get overlap info from dzi
+        $.ajax({
+            type: "GET",
+            url: baseUrl + "/" + dziSource,
+            dataType: "xml",
+            success: function (dzixml) {
+                //In case we find a dzi, recalculate sizes
+                var image = $(dzixml).find("Image");
+                if (image.length == 0)
+                    return;
+        
+                var jImage = $(image[0]);
+                that.Overlap = jImage.attr('Overlap');
+            },
+            complete: function(jqXHR, textStatus) {
+                //that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel, that._overlap));
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                that.Overlap = 0;
+            }
+        });
     }
 });

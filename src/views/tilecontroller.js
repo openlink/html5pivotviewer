@@ -299,9 +299,12 @@ PivotViewer.Views.Tile = Object.subClass({
                     //Image will need to be scaled to get the displayHeight
                     var scale = displayHeight / levelHeight;
                
-                    var offsetx = (Math.floor(blankWidth/2)) + 4 + xPosition * Math.floor(tileSize * scale);
-                    var offsety = 4 + Math.floor((yPosition * tileSize * scale));
-               
+                    // handle overlap 
+                    overlap = this._controller.GetOverlap(this.facetItem.Img);
+
+                    var offsetx = (Math.floor(blankWidth/2)) + 4 + xPosition * Math.floor((tileSize - overlap)  * scale);
+                    var offsety = 4 + Math.floor((yPosition * (tileSize - overlap)  * scale));
+
                     var imageTileHeight = Math.ceil(this._images[i].height * scale);
                     var imageTileWidth = Math.ceil(this._images[i].width * scale);
 
