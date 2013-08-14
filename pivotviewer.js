@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.121-b72b02f";
+PivotViewer.Version="v0.9.126-18b2b63";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -676,14 +676,22 @@ PivotViewer.Views.TileBasedView = PivotViewer.Views.IPivotViewerView.subClass({
                                             // sort on values in the filter 
                                             else {                      
                                                 for (var j = 0; j < x.facetItem.Facets[i].FacetValues.length; j++) {
-                                                    for (var k = 0; k < filterValues.length; k++) {
-                                                        if (filterValues[k].facet == field)
-                                                             for (var l = 0; l < filterValues[k].facetValue.length; l++) {
-                                                                 if ( x.facetItem.Facets[i].FacetValues[j].Value == filterValues[k].facetValue[l])  
-					                             return primer(x.facetItem.Facets[i].FacetValues[j].Value);
-                                                             }
-                                                    }
+                                                    // Has a filter been set? If so, and it is the same facet as the sort
+                                                    // then sort on the items in the filter where possible (otherwise just 
+                                                    // use the first value.?
+                                                    if (filterValues.length > 0) {
+                                                        for (var k = 0; k < filterValues.length; k++) {
+                                                            if (filterValues[k].facet == field) {
+                                                                 for (var l = 0; l < filterValues[k].facetValue.length; l++) {
+                                                                     if ( x.facetItem.Facets[i].FacetValues[j].Value == filterValues[k].facetValue[l]) {  
+					                                 return primer(x.facetItem.Facets[i].FacetValues[j].Value);
+                                                                     }
+                                                                 }
+                                                             } 
+                                                        }
+                                                    } 
                                                 }
+                                                return primer(x.facetItem.Facets[i].FacetValues[0].Value);
                                             }
                                         }
 				}
@@ -2368,19 +2376,9 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 if (dzcSize.length > 0) {
                     //calculate max level
                     that.MaxWidth = parseInt(dzcSize.attr("Width"));
-// Use height of first image for now...
+                    // Use height of first image for now...
                     that.Height = parseInt(dzcSize.attr("Height"));
                     that.MaxRatio = that.Height/that.MaxWidth;
-                   // for ( i = 0; i < items.length; i++ ) {
-                    //    itemSize = $(items[i]).find("Size");
-                     //   if (itemSize.length > 0) {
-                      //      itemWidth = parseInt(itemSize.attr("Width"));
-                       //     if (itemWidth > that.MaxWidth)
-                        //        that.MaxWidth = itemWidth;
-                         //}
-                    //}
-                    //var maxDim = that.MaxWidth > that.Height ? that.MaxWidth : that.Height;
-                    //that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
 
                     for ( i = 0; i < items.length; i++ ) {
                         itemSize = $(items[i]).find("Size");
@@ -2394,16 +2392,19 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                         var itemId = $(items[i]).attr('Id');
                         var dzN = $(items[i]).attr('N');
                         var dzId = dziSource.substring(dziSource.lastIndexOf("/") + 1).replace(/\.xml/gi, "").replace(/\.dzi/gi, "");
-                         var basePath = dziSource.substring(0, dziSource.lastIndexOf("/"));
-                         if (basePath.length > 0)
+                        var basePath = dziSource.substring(0, dziSource.lastIndexOf("/"));
+                        if (basePath.length > 0)
                              basePath = basePath + '/';
-                        that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel));
                         if (width > that.MaxWidth)
                             that.MaxWidth = width;
                         if (that._ratio < that.MaxRatio)  // i.e. biggest width cf height upside down....
                             that.MaxRatio = that._ratio;
+
+                        that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel, that._baseUrl, dziSource));
                     }
                 }
+
+                
                  //Loaded DeepZoom collection
                  $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
              },
@@ -2555,6 +2556,13 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
             }
         }
     },
+    GetOverlap: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Overlap;
+            }
+        }
+    },
     GetRatio: function( id ) {
         for (var i = 0; i < this._items.length; i++) {
             if (this._items[i].ItemId == id) {
@@ -2564,7 +2572,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
     }
 });
 
-PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZId, DZn, BasePath, Ratio, Width, Height, MaxLevel) {
+PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZId, DZn, BasePath, Ratio, Width, Height, MaxLevel, baseUrl, dziSource) {
         this.ItemId = ItemId,
         this.DZId = DZId,
         this.DZN = parseInt(DZn),
@@ -2574,6 +2582,29 @@ PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZ
         this.Width = Width;
         this.Height = Height;
         this.MaxLevel = MaxLevel;
+        var that = this;
+        //this.Overlap = Overlap;
+        // get overlap info from dzi
+        $.ajax({
+            type: "GET",
+            url: baseUrl + "/" + dziSource,
+            dataType: "xml",
+            success: function (dzixml) {
+                //In case we find a dzi, recalculate sizes
+                var image = $(dzixml).find("Image");
+                if (image.length == 0)
+                    return;
+        
+                var jImage = $(image[0]);
+                that.Overlap = jImage.attr('Overlap');
+            },
+            complete: function(jqXHR, textStatus) {
+                //that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel, that._overlap));
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                that.Overlap = 0;
+            }
+        });
     }
 });
 //
@@ -2877,9 +2908,12 @@ PivotViewer.Views.Tile = Object.subClass({
                     //Image will need to be scaled to get the displayHeight
                     var scale = displayHeight / levelHeight;
                
-                    var offsetx = (Math.floor(blankWidth/2)) + 4 + xPosition * Math.floor(tileSize * scale);
-                    var offsety = 4 + Math.floor((yPosition * tileSize * scale));
-               
+                    // handle overlap 
+                    overlap = this._controller.GetOverlap(this.facetItem.Img);
+
+                    var offsetx = (Math.floor(blankWidth/2)) + 4 + xPosition * Math.floor((tileSize - overlap)  * scale);
+                    var offsety = 4 + Math.floor((yPosition * (tileSize - overlap)  * scale));
+
                     var imageTileHeight = Math.ceil(this._images[i].height * scale);
                     var imageTileWidth = Math.ceil(this._images[i].width * scale);
 
@@ -3538,7 +3572,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
         //Sort
         if (_viewerState.Facet != null) {
             $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
-	    _currentSort = $('.pv-toolbarpanel-sort :selected').text();
+	    _currentSort = $('.pv-toolbarpanel-sort :selected').att('label');
+            Debug.Log('current sort ' + _currentSort );
 	}
 
         //Filters
@@ -3593,7 +3628,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
         var filterItems = [];
         var foundItemsCount = [];
         var selectedFacets = [];
-        var sort = $('.pv-toolbarpanel-sort option:selected').text();
+        var sort = $('.pv-toolbarpanel-sort option:selected').attr('label');
+        Debug.Log('sort ' + sort );
 
         //Filter String facet items
         var checked = $('.pv-facet-facetitem:checked');
@@ -4130,9 +4166,9 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 }
 
                 if (IsMetaDataVisible) {
-                    detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title'>" + selectedItem.Facets[i].Name + "</div>";
+                    detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title' pv-detail-item-title='" + selectedItem.Facets[i].Name + "'>" + selectedItem.Facets[i].Name + "</div>";
                     for (var j = 0; j < selectedItem.Facets[i].FacetValues.length; j++) {
-                        detailDOM[detailDOMIndex] += "<div class='pv-infopanel-detail-item detail-item-value" + (IsFilterVisible ? " detail-item-value-filter" : "") + "'>";
+                        detailDOM[detailDOMIndex] += "<div pv-detail-item-value='" + selectedItem.Facets[i].FacetValues[j].Value + "' class='pv-infopanel-detail-item detail-item-value" + (IsFilterVisible ? " detail-item-value-filter" : "") + "'>";
                         if (selectedItem.Facets[i].FacetValues[j].Href != null)
                             detailDOM[detailDOMIndex] += "<a class='detail-item-link' href='" + selectedItem.Facets[i].FacetValues[j].Href + "'>" + selectedItem.Facets[i].FacetValues[j].Value + "</a>";
                         else
@@ -4236,7 +4272,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
         });
         //Sort change
         $('.pv-toolbarpanel-sort').on('change', function (e) {
-	    _currentSort = $('.pv-toolbarpanel-sort option:selected').text();
+	    _currentSort = $('.pv-toolbarpanel-sort option:selected').attr('label');
+            Debug.Log('sort change _currentSort ' + _currentSort );
             FilterCollection(false);
         });
         //Facet sort
@@ -4333,7 +4370,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         });
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
-            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().first().text(), Item: $(this).text(), Values: null, ClearFacetFilters: true }]);
+            $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: $(this).parent().children().attr('pv-detail-item-title'), Item: this.getAttribute('pv-detail-item-value'), Values: null, ClearFacetFilters: true }]);
             return false;
         });
         $('.pv-infopanel-details').on('click', '.pv-infopanel-detail-description-more', function (e) {
