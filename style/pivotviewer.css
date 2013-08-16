@@ -95,6 +95,7 @@
 .pv-infopanel-detail-description-more { background-color: #DCECF4; color: #4F7192; cursor:default; padding:5px 3px 5px 3px; margin-bottom:5px; width:28px; }
 .pv-infopanel-detail-description-more:hover { background-color: #BDDFEE; }
 .pv-infopanel-detail { padding: 4px 3px 4px 3px;}
+.pv-infopanel-related { color:#E2E2E2; font-size: 8pt; float:left; clear:both; position:relative; bottom:0;}
 .pv-infopanel-copyright { color:#E2E2E2; font-size: 8pt; float:left; clear:both; position:absolute; bottom:0;}
 .detail-dark { background-color: #E0E1E2; }
 .detail-light { background-color: #EEEFF0; }

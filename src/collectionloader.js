@@ -45,6 +45,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
             success: function (xml) {
                 Debug.Log('CXML loaded');
                 var collectionRoot = $(xml).find("Collection")[0];
+                var maxRelatedLinksLength = 0;
                 //get namespace local name
                 var namespacePrefix = "P";
 
@@ -156,17 +157,36 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                 }
                                 item.Facets.push(f);
                             }
+                            var itemExtension = $(facetItem[i]).find("Extension");
+                            if (itemExtension.length == 1) {
+                                var itemRelated = $(itemExtension[0]).find('d1p1\\:Related, Related');
+                                if (itemRelated.length == 1) {
+                                    var links = $(itemRelated[0]).find('d1p1\\:Link, Link');
+                                    for (var l = 0; l < links.length; l++) {
+                                        var linkName = $(links[l]).attr("Name"); 
+                                        var linkHref = $(links[l]).attr("Href"); 
+                                        var link = new PivotViewer.Models.ItemLink(linkName, linkHref);
+                                        item.Links.push(link);
+                                    }
+                                    if (links.length > maxRelatedLinksLength)
+                                       maxRelatedLinksLength = links.length;
+                                }
+                            }
                             collection.Items.push(item);
                         }
                     }
                 }
+                collection.MaxRelatedLinks = maxRelatedLinksLength;
                 //Extensions
                 var extension = $(xml).find("Extension");
-                if (extension.length == 1) {
-                    var collectionCopyright = $(extension[0]).find('d1p1\\:Copyright, Copyright');
-                    if (collectionCopyright != undefined) { 
-                        collection.CopyrightName = $(collectionCopyright[0]).attr("Name");
-                        collection.CopyrightHref = $(collectionCopyright[0]).attr("Href");
+                if (extension.length > 1) {
+                    for (x = 0; x < extension.length; x++) {
+                        var collectionCopyright = $(extension[x]).find('d1p1\\:Copyright, Copyright');
+                        if (collectionCopyright.length > 0) { 
+                            collection.CopyrightName = $(collectionCopyright[0]).attr("Name");
+                            collection.CopyrightHref = $(collectionCopyright[0]).attr("Href");
+                            break;
+                        }
                     }
                 }
 
