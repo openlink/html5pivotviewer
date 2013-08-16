@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.126-18b2b63";
+PivotViewer.Version="v0.9.127-cd61e50";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -292,6 +292,7 @@ PivotViewer.Models.Collection = Object.subClass({
 		this.ImageBase = "";
                 this.CopyrightName = "";
                 this.CopyrightHref = "";
+                this.MaxRelatedLinks = 0;
 	},
 	GetItemById: function (Id) {
 		for (var i = 0; i < this.Items.length; i++) {
@@ -338,6 +339,14 @@ PivotViewer.Models.Item = Object.subClass({
 		this.Name = Name,
 		this.Description,
 		this.Facets = [];
+                this.Links = [];
+	}
+});
+
+PivotViewer.Models.ItemLink = Object.subClass({
+	init: function (Name, Href) {
+                 this.Name = Name;
+                 this.Href = Href;
 	}
 });
 
@@ -412,6 +421,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
             success: function (xml) {
                 Debug.Log('CXML loaded');
                 var collectionRoot = $(xml).find("Collection")[0];
+                var maxRelatedLinksLength = 0;
                 //get namespace local name
                 var namespacePrefix = "P";
 
@@ -523,17 +533,36 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                 }
                                 item.Facets.push(f);
                             }
+                            var itemExtension = $(facetItem[i]).find("Extension");
+                            if (itemExtension.length == 1) {
+                                var itemRelated = $(itemExtension[0]).find('d1p1\\:Related, Related');
+                                if (itemRelated.length == 1) {
+                                    var links = $(itemRelated[0]).find('d1p1\\:Link, Link');
+                                    for (var l = 0; l < links.length; l++) {
+                                        var linkName = $(links[l]).attr("Name"); 
+                                        var linkHref = $(links[l]).attr("Href"); 
+                                        var link = new PivotViewer.Models.ItemLink(linkName, linkHref);
+                                        item.Links.push(link);
+                                    }
+                                    if (links.length > maxRelatedLinksLength)
+                                       maxRelatedLinksLength = links.length;
+                                }
+                            }
                             collection.Items.push(item);
                         }
                     }
                 }
+                collection.MaxRelatedLinks = maxRelatedLinksLength;
                 //Extensions
                 var extension = $(xml).find("Extension");
-                if (extension.length == 1) {
-                    var collectionCopyright = $(extension[0]).find('d1p1\\:Copyright, Copyright');
-                    if (collectionCopyright != undefined) { 
-                        collection.CopyrightName = $(collectionCopyright[0]).attr("Name");
-                        collection.CopyrightHref = $(collectionCopyright[0]).attr("Href");
+                if (extension.length > 1) {
+                    for (x = 0; x < extension.length; x++) {
+                        var collectionCopyright = $(extension[x]).find('d1p1\\:Copyright, Copyright');
+                        if (collectionCopyright.length > 0) { 
+                            collection.CopyrightName = $(collectionCopyright[0]).attr("Name");
+                            collection.CopyrightHref = $(collectionCopyright[0]).attr("Href");
+                            break;
+                        }
                     }
                 }
 
@@ -3228,6 +3257,9 @@ PivotViewer.Views.TileLocation = Object.subClass({
         $('.pv-infopanel-controls-navrightdisabled').hide();
         infoPanel.append("<div class='pv-infopanel-heading'></div>");
         infoPanel.append("<div class='pv-infopanel-details'></div>");
+        if (PivotCollection.MaxRelatedLinks > 0) {
+            infoPanel.append("<div class='pv-infopanel-related'></div>");
+        }
         if (PivotCollection.CopyrightName != "") {
             infoPanel.append("<div class='pv-infopanel-copyright'><a href=\"" + PivotCollection.CopyrightHref + "\" target=\"_blank\">" + PivotCollection.CopyrightName + "</a></div>");
         }
@@ -4180,9 +4212,15 @@ PivotViewer.Views.TileLocation = Object.subClass({
                     alternate = !alternate;
                 }
             }
+            if (selectedItem.Links.length > 0) {
+                $('.pv-infopanel-related').empty();
+                for (var k = 0; k < selectedItem.Links.length; k++) {
+                    $('.pv-infopanel-related').append("<a href='" + selectedItem.Links[k].Href + "'>" + selectedItem.Links[k].Name + "</a><br>");
+                }
+            }
             infopanelDetails.append(detailDOM.join(''));
             $('.pv-infopanel').fadeIn();
-            infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height()) - 20) + 'px');
+            infopanelDetails.css('height', ($('.pv-infopanel').height() - ($('.pv-infopanel-controls').height() + $('.pv-infopanel-heading').height() + $('.pv-infopanel-copyright').height() + $('.pv-infopanel-related').height()) - 20) + 'px');
             _selectedItem = selectedItem;
             _selectedItemBkt = evt.bkt;
 
