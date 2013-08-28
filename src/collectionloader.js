@@ -165,6 +165,11 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                     for (var l = 0; l < links.length; l++) {
                                         var linkName = $(links[l]).attr("Name"); 
                                         var linkHref = $(links[l]).attr("Href"); 
+                                        if (linkHref.indexOf(".cxml") == -1 && 
+                                            linkHref.indexOf("pivot.vsp") >= 0) {
+                                                var url = $.url(this.url);
+                                                linkHref = url.attr('protocol') + "://" + url.attr('authority') + url.attr('directory') + linkHref;
+                                        }
                                         var link = new PivotViewer.Models.ItemLink(linkName, linkHref);
                                         item.Links.push(link);
                                     }
