@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.127-cd61e50";
+PivotViewer.Version="v0.9.131-54cc3d1";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -516,9 +516,24 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                     if (facetChildren[k].nodeType == 1) {
                                         var v = $.trim($(facetChildren[k]).attr("Value"));
                                         if (v == null || v == "") {
-                                            var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
-                                            fValue.Href = $(facetChildren[k]).attr("Href");
-                                            f.AddFacetValue(fValue);
+                                            if (facetChildren[k].nodeName == "Link") {
+                                                if ($(facetChildren[k]).attr("Href") == "" || $(facetChildren[k]).attr("Href") == null) {
+                                                   var fValue = new PivotViewer.Models.FacetValue(PivotViewer.Utils.HtmlSpecialChars("(empty Link)"));
+                                                   f.AddFacetValue(fValue);
+                                              
+                                                } else if ($(facetChildren[k]).attr("Name") == "" || $(facetChildren[k]).attr("Name") == null) {
+                                                    var fValue = new PivotViewer.Models.FacetValue("(unnamed Link)");
+                                                    fValue.Href = $(facetChildren[k]).attr("Href");
+                                                    f.AddFacetValue(fValue);
+                                                } else { 
+                                                    var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
+                                                    fValue.Href = $(facetChildren[k]).attr("Href");
+                                                    f.AddFacetValue(fValue);
+                                                } 
+                                            } else { 
+                                                var fValue = new PivotViewer.Models.FacetValue(PivotViewer.Utils.HtmlSpecialChars("(empty " + facetChildren[k].nodeName + ")"));
+                                                f.AddFacetValue(fValue);
+                                            }
                                         } else {
                                             //convert strings to numbers so histogram can work
                                             if (facetChildren[k].nodeName == "Number") {
@@ -541,6 +556,11 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                     for (var l = 0; l < links.length; l++) {
                                         var linkName = $(links[l]).attr("Name"); 
                                         var linkHref = $(links[l]).attr("Href"); 
+                                        if (linkHref.indexOf(".cxml") == -1 && 
+                                            linkHref.indexOf("pivot.vsp") >= 0) {
+                                                var url = $.url(this.url);
+                                                linkHref = url.attr('protocol') + "://" + url.attr('authority') + url.attr('directory') + linkHref;
+                                        }
                                         var link = new PivotViewer.Models.ItemLink(linkName, linkHref);
                                         item.Links.push(link);
                                     }
@@ -3287,7 +3307,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
                         //If the facet is found then add it's values to the list
                         if (currentItemFacet.Name == currentFacetCategory.Name) {
                             for (var k = 0; k < currentItemFacet.FacetValues.length; k++) {
-                                if (currentFacetCategory.Type == PivotViewer.Models.FacetType.String) {
+                                if (currentFacetCategory.Type == PivotViewer.Models.FacetType.String ||
+                                    currentFacetCategory.Type == PivotViewer.Models.FacetType.Link) {
                                     var found = false;
                                     var itemId = "pv-facet-item-" + CleanName(currentItemFacet.Name) + "__" + CleanName(currentItemFacet.FacetValues[k].Value);
                                     for (var n = _facetItemTotals.length - 1; n > -1; n -= 1) {
@@ -3380,7 +3401,8 @@ PivotViewer.Views.TileLocation = Object.subClass({
                 if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime ) {
                     facets[i + 1] += CreateDateTimeFacet(PivotCollection.FacetCategories[i].Name);
 		}
-                if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ) {
+                else if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
+                         PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Link) {
                     //Sort
                     if (PivotCollection.FacetCategories[i].CustomSort != undefined || PivotCollection.FacetCategories[i].CustomSort != null)
                         facets[i + 1] += "<span class='pv-filterpanel-accordion-facet-sort' customSort='" + PivotCollection.FacetCategories[i].CustomSort.Name + "'>Sort: " + PivotCollection.FacetCategories[i].CustomSort.Name + "</span>";
