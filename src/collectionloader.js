@@ -140,9 +140,24 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                     if (facetChildren[k].nodeType == 1) {
                                         var v = $.trim($(facetChildren[k]).attr("Value"));
                                         if (v == null || v == "") {
-                                            var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
-                                            fValue.Href = $(facetChildren[k]).attr("Href");
-                                            f.AddFacetValue(fValue);
+                                            if (facetChildren[k].nodeName == "Link") {
+                                                if ($(facetChildren[k]).attr("Href") == "" || $(facetChildren[k]).attr("Href") == null) {
+                                                   var fValue = new PivotViewer.Models.FacetValue(PivotViewer.Utils.HtmlSpecialChars("(empty Link)"));
+                                                   f.AddFacetValue(fValue);
+                                              
+                                                } else if ($(facetChildren[k]).attr("Name") == "" || $(facetChildren[k]).attr("Name") == null) {
+                                                    var fValue = new PivotViewer.Models.FacetValue("(unnamed Link)");
+                                                    fValue.Href = $(facetChildren[k]).attr("Href");
+                                                    f.AddFacetValue(fValue);
+                                                } else { 
+                                                    var fValue = new PivotViewer.Models.FacetValue($(facetChildren[k]).attr("Name"));
+                                                    fValue.Href = $(facetChildren[k]).attr("Href");
+                                                    f.AddFacetValue(fValue);
+                                                } 
+                                            } else { 
+                                                var fValue = new PivotViewer.Models.FacetValue(PivotViewer.Utils.HtmlSpecialChars("(empty " + facetChildren[k].nodeName + ")"));
+                                                f.AddFacetValue(fValue);
+                                            }
                                         } else {
                                             //convert strings to numbers so histogram can work
                                             if (facetChildren[k].nodeName == "Number") {

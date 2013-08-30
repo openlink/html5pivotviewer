@@ -258,7 +258,8 @@
                         //If the facet is found then add it's values to the list
                         if (currentItemFacet.Name == currentFacetCategory.Name) {
                             for (var k = 0; k < currentItemFacet.FacetValues.length; k++) {
-                                if (currentFacetCategory.Type == PivotViewer.Models.FacetType.String) {
+                                if (currentFacetCategory.Type == PivotViewer.Models.FacetType.String ||
+                                    currentFacetCategory.Type == PivotViewer.Models.FacetType.Link) {
                                     var found = false;
                                     var itemId = "pv-facet-item-" + CleanName(currentItemFacet.Name) + "__" + CleanName(currentItemFacet.FacetValues[k].Value);
                                     for (var n = _facetItemTotals.length - 1; n > -1; n -= 1) {
@@ -351,7 +352,8 @@
                 if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime ) {
                     facets[i + 1] += CreateDateTimeFacet(PivotCollection.FacetCategories[i].Name);
 		}
-                if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ) {
+                else if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
+                         PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Link) {
                     //Sort
                     if (PivotCollection.FacetCategories[i].CustomSort != undefined || PivotCollection.FacetCategories[i].CustomSort != null)
                         facets[i + 1] += "<span class='pv-filterpanel-accordion-facet-sort' customSort='" + PivotCollection.FacetCategories[i].CustomSort.Name + "'>Sort: " + PivotCollection.FacetCategories[i].CustomSort.Name + "</span>";
