@@ -21,6 +21,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     init: function () {
         this.Scale = 1;
         this._super();
+        this.dontZoom = false;
         var that = this;
         //Event Handlers
 
@@ -59,6 +60,11 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             if (!that.isActive)
                 return;
 
+            if (that.dontZoom) {
+                that.dontZoom = false;
+                return;
+            }
+
             var oldScale = that.Scale;
             var preWidth = that.currentWidth;
             var preHeight = that.currentHeight;
@@ -91,6 +97,9 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 that.currentWidth = that.width;
                 that.currentHeight = that.height;
                 that.Scale = 1;
+                // Reset the slider to zero 
+                that.dontZoom = true;
+                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 0);
             } else {
                 //adjust position to base scale - then scale out to new scale
                 var scaledPositionX = ((evt.x - that.currentOffsetX) / oldScale) * that.Scale;
