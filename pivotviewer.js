@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.131-54cc3d1";
+PivotViewer.Version="v0.9.133-8107bdb";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -777,6 +777,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     init: function () {
         this.Scale = 1;
         this._super();
+        this.dontZoom = false;
         var that = this;
         //Event Handlers
 
@@ -815,6 +816,11 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             if (!that.isActive)
                 return;
 
+            if (that.dontZoom) {
+                that.dontZoom = false;
+                return;
+            }
+
             var oldScale = that.Scale;
             var preWidth = that.currentWidth;
             var preHeight = that.currentHeight;
@@ -847,6 +853,9 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 that.currentWidth = that.width;
                 that.currentHeight = that.height;
                 that.Scale = 1;
+                // Reset the slider to zero 
+                that.dontZoom = true;
+                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 0);
             } else {
                 //adjust position to base scale - then scale out to new scale
                 var scaledPositionX = ((evt.x - that.currentOffsetX) / oldScale) * that.Scale;
@@ -1212,6 +1221,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         this.Scale = 1;
         this.canvasHeightUIAdjusted = 0;
         this.titleSpace = 62;
+        this.dontZoom = false;
 
         //Event Handlers
         $.subscribe("/PivotViewer/Views/Canvas/Click", function (evt) {
@@ -1258,6 +1268,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             if (!that.isActive)
                 return;
 
+            if (that.dontZoom) {
+                that.dontZoom = false;
+                return;
+            }
             var oldScale = that.Scale;
             var preWidth = that.currentWidth;
             var preHeight = that.currentHeight;
@@ -1291,6 +1305,9 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 that.columnWidth = (that.width - that.offsetX) / that.buckets.length;
                 that.Scale = 1;
                 $('.pv-viewarea-graphview-overlay div').fadeIn('slow');
+                // Reset the slider to zero 
+                that.dontZoom = true;
+                $('.pv-toolbarpanel-zoomslider').slider('option', 'value', 0);
             } else {
                 //adjust position to base scale - then scale out to new scale
                 //Move the scaled position to the mouse location
