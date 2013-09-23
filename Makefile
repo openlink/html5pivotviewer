@@ -25,6 +25,7 @@ pivotviewer.js: \
 	src/views/gridview.js \
 	src/views/graphview.js \
 	src/views/tableview.js \
+	src/views/mapview.js \
 	src/views/iimagecontroller.js \
 	src/views/LoadImageSetHelper.js \
 	src/views/deepzoom.js \

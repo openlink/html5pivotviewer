@@ -218,6 +218,14 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         if (changingView) {
             if ($('.pv-tableview-table').is(':visible')){
                 $('.pv-tableview-table').fadeOut();
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('.pv-viewarea-canvas').fadeIn();
+            }
+            if ($('.pv-mapview-canvas').is(':visible')){
+                $('.pv-mapview-canvas').fadeOut();
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
                 $('.pv-viewarea-canvas').fadeIn();
             }
         }

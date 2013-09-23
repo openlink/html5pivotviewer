@@ -188,7 +188,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
     },
     Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, changeViewSelectedItem) {
         var that = this;
-        var changingFromTableView = false;
+        var changingFromNonTileView = false;
         if (!Modernizr.canvas)
             return;
 
@@ -197,10 +197,23 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this.changingView = false;
         if (changingView) {
             if ($('.pv-tableview-table').is(':visible')){
-                changingFromTableView = true;
+                changingFromNonTileView = true;
                 $('.pv-tableview-table').fadeOut();
                 //this.selected = changeViewSelectedItem;
                 this.selected = "";
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('.pv-viewarea-canvas').fadeIn(function(){
+                    $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+                });
+            }
+            if ($('.pv-mapview-canvas').is(':visible')){
+                changingFromNonTileView = true;
+                $('.pv-mapview-canvas').fadeOut();
+                //this.selected = changeViewSelectedItem;
+                this.selected = "";
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
                 $('.pv-viewarea-canvas').fadeIn(function(){
                     $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
                 });
@@ -229,7 +242,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         this.currentFilter = currentFilter;
 
         // Don't calculate positions if changing from table view with item already selected
-        if (!changingFromTableView || (changeViewSelectedItem == "")) {
+        if (!changingFromNonTileView || (changeViewSelectedItem == "")) {
             var pt1Timeout = 0;
             //zoom out first
             Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
