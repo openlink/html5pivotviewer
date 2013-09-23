@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.133-8107bdb";
+PivotViewer.Version="v0.9.135-576402c";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -3643,7 +3643,7 @@ PivotViewer.Views.TileLocation = Object.subClass({
         //Sort
         if (_viewerState.Facet != null) {
             $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
-	    _currentSort = $('.pv-toolbarpanel-sort :selected').att('label');
+	    _currentSort = $('.pv-toolbarpanel-sort :selected').attr('label');
             Debug.Log('current sort ' + _currentSort );
 	}
 

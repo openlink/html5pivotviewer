@@ -577,7 +577,7 @@
         //Sort
         if (_viewerState.Facet != null) {
             $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
-	    _currentSort = $('.pv-toolbarpanel-sort :selected').att('label');
+	    _currentSort = $('.pv-toolbarpanel-sort :selected').attr('label');
             Debug.Log('current sort ' + _currentSort );
 	}
 
