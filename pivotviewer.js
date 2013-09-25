@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.135-576402c";
+PivotViewer.Version="v0.9.142-24a1c34";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -2361,6 +2361,15 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.itemsToGeocode = Array();
         this.startGeocode;
         this.geocodeZero;
+        this.mapInitZoom = "";
+        this.mapInitType = "";
+        this.mapInitCentreX = "";
+        this.mapInitCentreY = "";
+        this.mapZoom = "";
+        this.mapType = "";
+        this.mapCentreX = "";
+        this.mapCentreY = "";
+        this.applyBookmark = false;
         var that = this;
     },
     Setup: function (width, height, offsetX, offsetY, tileMaxRatio) { 
@@ -2372,7 +2381,11 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.currentHeight = this.height;
         this.currentOffsetX = this.offsetX;
         this.currentOffsetY = this.offsetY;
-
+        // Check for local storage support
+        if (Modernizr.localstorage)
+            this.localStorage = true;
+        else
+            this.localStorage = false;
     },
     Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, selectedItem) { 
         var that = this;
@@ -2545,20 +2558,23 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                               }
 
                                               if (!gotLocation) {
-/* tbd                            
                                                   // Now try the users persistent cache
-                                                  for (var p = 0; p < this.persistentCache.length; p++) {
-                                                      if (persistentCache[p].locName == geoLoc) {
+                                                  if (this.localStorage) {
+                                                      var newLatLng;
+                                                      var newLoc = JSON.parse(localStorage.getItem(geoLoc));
+                                                      var lat = parseFloat(newLoc.lat);
+                                                      var lng = parseFloat(newLoc.lng);
+                                                      if (!NaN(lat) && !NaN(lng)) {
+                                                          newLatLng = new google.maps.LatLng(lat, lng);
                                                           // Add it to local cache
-                                                          this.locCache.push({locName = geoLoc, loc: this.persistenCache[p].loc});
-                                                          this.locList.push({id: itemId, loc: this.persistent[p].loc, title: itemName});
-                                                          this.inScopeLocList.push({id: itemId, loc: this.persistentCache[p].loc, title: itemName});
+                                                          this.locCache.push({locName: geoLoc, loc: newLatLng});
+                                                          this.locList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                          this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
                                                           gotLocation = true;
                                                       }
                                                   }
                                                   if (!gotLocation) {
-                                                      // Not in persistent cache so will have to use geocode service
-*/                                
+                                                      // Not in local or persistent cache so will have to use geocode service
                                                       // Add location to list for geocoding (will need to keep itemId name with it)
                                                       if (g < 1000) {//limiting the number of items to geocode at once to 1000 for now
                                                           var foundIt = false;
@@ -2576,7 +2592,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                                           gotLocation = true;
                                                           break;
                                                       }
-                                                  //} // Not in persistent geocode cache
+                                                  } // Not in persistent geocode cache
                                               } // Not in in-memory geocode cache
                                           } //Location name longr than 1
                                        } //Not invalid co-ordinates 
@@ -2602,7 +2618,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         } //else {
             $('.pv-mapview-canvas').css('height', this.height - 12 + 'px');
             $('.pv-mapview-canvas').css('width', this.width - 415 + 'px');
-            this.CreateMap(selectedItem.Id, true);
+            this.CreateMap(selectedItem.Id);
         //}
     },
     GetUI: function () { return ''; },
@@ -2627,13 +2643,14 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
             // Add to local cache
             that.locCache.push ({locName: locName, loc: loc});
 
-/*
             // Add to persistent cache
-            if (that.persistentLocCache.Add(locName, loc) != true) {
-                that.persistentLocCache.Clear();
-                that.persistentLocCache.Write(locCache);
+            if (this.localStorage) {
+                var newLoc = {
+                    lat: loc.lat(),
+                    lng: loc.lng()
+                };
+                localStorage.setItem(locName, JSON.stringify(newLoc));
             }
-*/
 
             // Find items that have that location
             for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
@@ -2662,7 +2679,6 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                    break;
                }
             }
-//tbd bookmark...
             // If geocoding has taken more than 20 secs then try to set
             // the bookmark.  Otherwise, if the time taken is more than 
             // 2 secs make the pins we have so far
@@ -2684,8 +2700,13 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                if (that.inScopeLocList.Count == 0) {
                    this.ShowMapError();
                    return;
-               } else
-                   that.CreateMap(that.selectedItemId, true);
+               } else {
+                   that.CreateMap(that.selectedItemId);
+                   if (that.applyBookmark) {
+                       that.SetBookmark();
+                       that.applyBookmark = false;
+                   }
+               }
            }
         }
         return geocodeCallBack;
@@ -2702,41 +2723,55 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.startGeocode.setSeconds(this.startGeocode.getSeconds() + 2);
         this.geocodeZero = new Date();
     },
-    CreateMap: function (selectedItemId, setBookmark) {
-        // tbd - center on selected...
-        if (this.locList.length > 0) {
-            var mapOptions = {
-                zoom: 8,
-                center: this.locList[0].loc,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            };
-        } else {
-            var mapOptions = {
-                zoom: 8,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            };
-        }
+    CreateMap: function (selectedItemId) {
+        var that = this;
+        var centreLoc;
+        var zoom = 8;
+        var type = google.maps.MapTypeId.ROADMAP;
+        var gotLoc = false;
 
-        if (selectedItemId) {
-            for (j = 0; j <  this.locList.length; j++) {
-                if (this.locList[j].id ==  selectedItemId)
-                    mapOptions.centre = this.locList[j].loc;
-            }
+        centreLat = parseFloat(this.mapCentreX);
+        centreLng = parseFloat(this.mapCentreY);
+        if (!isNaN(centreLat) && !isNaN(centreLng)) {
+            centreLoc = new google.maps.LatLng(centreLat, centreLng);
+            gotLoc = true;
         }
+        bookmarkZoom = parseInt(this.mapZoom);
+        if (!isNaN(bookmarkZoom)) 
+            zoom = bookmarkZoom;
 
-        this.map = new google.maps.Map(document.getElementById('pv-map-canvas'), mapOptions);
+        if (this.mapType && this.mapType != "")
+            type = this.mapType;
+
+        //this.map = new google.maps.Map(document.getElementById('pv-map-canvas'), mapOptions);
+        this.map = new google.maps.Map(document.getElementById('pv-map-canvas'));
+
+        if (gotLoc)
+            this.map.panTo(centreLoc);
+        else if (this.selectedItemId) 
+            this.CentreOnSelected (this.selectedItemId);
+
+        this.map.setMapTypeId(type);
+        this.map.setZoom(zoom);
+
+        // add map event listeners
+        google.maps.event.addListener( this.map, 'maptypeid_changed', function() { 
+            that.SetMapType(that.map.getMapTypeId());
+            $.publish("/PivotViewer/Views/Item/Updated", null);
+        } );
+        google.maps.event.addListener( this.map, 'zoom_changed', function() { 
+            that.SetMapZoom(that.map.getZoom());
+            $.publish("/PivotViewer/Views/Item/Updated", null);
+        } );
+        google.maps.event.addListener( this.map, 'center_changed', function() { 
+            var centre = that.map.getCenter();
+            that.SetMapCentreX(centre.lat());
+            that.SetMapCentreY(centre.lng());
+            $.publish("/PivotViewer/Views/Item/Updated", null);
+        } );
 
         this.CreateMarkers();
         this.RefitBounds();
-
-/*
-        //(optional) restore the zoom level after the map is done scaling
-        var listener = google.maps.event.addListener(map, "idle", function () {
-            map.setZoom(3);
-            google.maps.event.removeListener(listener);
-        }); 
-*/
-        
     },
     SetFacetCategories: function (collection) {
         this.categories = collection.FacetCategories;
@@ -2814,6 +2849,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.markers = [];
 
         this.CreateMarkers();
+        this.CentreOnSelected (selectedItemId);
     },
     ShowMapError: function () {
         var msg = '';
@@ -2822,6 +2858,79 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         $('.pv-wrapper').append("<div id=\"pv-dzlocation-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
         var t=setTimeout(function(){window.open("#pv-dzlocation-error","_self")},1000)
         return;
+    },
+    GetMapCentreX: function () {
+        return this.mapCentreX;
+    },
+    SetMapCentreX: function (centrex) {
+        this.mapCentreX = centrex;
+    },
+    SetMapInitCentreX: function (centrex) {
+        this.mapCentreX = centrex;
+        this.mapInitCentreX = centrex;
+    },
+    GetMapCentreY: function () {
+        return this.mapCentreY;
+    },
+    SetMapCentreY: function (centrey) {
+        this.mapCentreY = centrey;
+    },
+    SetMapInitCentreY: function (centrey) {
+        this.mapCentreY = centrey;
+        this.mapInitCentreY = centrey;
+    },
+    GetMapType: function () {
+        return this.mapType;
+    },
+    SetMapType: function (type) {
+        this.mapType = type;
+    },
+    SetMapInitType: function (type) {
+        this.mapType = type;
+        this.mapInitType = type;
+    },
+    GetMapZoom: function () {
+        return this.mapZoom;
+    },
+    SetMapZoom: function (zoom) {
+        this.mapZoom = zoom;
+    },
+    SetMapInitZoom: function (zoom) {
+        this.mapZoom = zoom;
+        this.mapInitZoom = zoom;
+    },
+    CentreOnSelected: function (selectedItemId) {
+        for (j = 0; j <  this.locList.length; j++) {
+            if (this.locList[j].id == selectedItemId) {
+                if (this.locList[j].loc.lat() != 0 && this.locList[j].loc.lng() != 0)
+                    this.map.panTo(this.locList[j].loc);
+            }
+        }
+    },
+    SetBookmark: function() {
+        var centreLoc;
+        var zoom = 8;
+        var type = google.maps.MapTypeId.ROADMAP;
+        var gotLoc = false;
+
+        centreLat = parseFloat(this.mapInitCentreX);
+        centreLng = parseFloat(this.mapInitCentreY);
+        if ((!isNaN(centreLat) && !isNaN(centreLng)) 
+           && (centreLat != 0 && centreLng != 0)) {
+            centreLoc = new google.maps.LatLng(centreLat, centreLng);
+            gotLoc = true;
+        }
+        bookmarkZoom = parseInt(this.mapInitZoom);
+        if (!isNaN(bookmarkZoom)) 
+            zoom = bookmarkZoom;
+
+        if (this.mapInitType && this.mapInitType != "")
+            type = this.mapInitType;
+
+        if (gotLoc)
+            this.map.panTo(centreLoc);
+        this.map.setMapTypeId(type);
+        this.map.setZoom(zoom);
     },
 });
 //
@@ -3615,6 +3724,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
         _selectedItemBkt = 0,
         _initSelectedItem = "",
         _initTableFacet = "",
+        _initMapCentreX = "",
+        _initMapCentreY = "",
+        _initMapType = "",
+        _initMapZoom = "",
         _handledInitSettings = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
@@ -3667,6 +3780,18 @@ PivotViewer.Views.TileLocation = Object.subClass({
                         //Table Selected Facet
                         else if (splitItem[0] == '$tableFacet$')
                             _viewerState.TableFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Map Centre X
+                        else if (splitItem[0] == '$mapCentreX$')
+                            _viewerState.MapCentreX = splitItem[1];
+                        //Map Centre Y
+                        else if (splitItem[0] == '$mapCentreY$')
+                            _viewerState.MapCentreY = splitItem[1];
+                        //Map Type
+                        else if (splitItem[0] == '$mapType$')
+                            _viewerState.MapType = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Map Zoom
+                        else if (splitItem[0] == '$mapZoom$')
+                            _viewerState.MapZoom = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
                             var filter = { Facet: splitItem[0], Predicates: [] };
@@ -3728,6 +3853,10 @@ PivotViewer.Views.TileLocation = Object.subClass({
         ApplyViewerState();
         _initSelectedItem = GetItem(_viewerState.Selection);
         _initTableFacet = _viewerState.TableFacet;
+        _initMapCentreX = _viewerState.MapCentreX;
+        _initMapCentreY = _viewerState.MapCentreY;
+        _initMapType = _viewerState.MapType;
+        _initMapZoom = _viewerState.MapZoom;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
         //Hardcoding the value for the width of the viewcontrols images (124=21*4) as the webkit browsers 
@@ -3737,14 +3866,27 @@ PivotViewer.Views.TileLocation = Object.subClass({
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
-        if (_viewerState.View != null)
+        if (_viewerState.View != null) {
+            if (_viewerState.View != 0 || _viewerState.View  != 1) {
+                // Always have to initialize tiles one way or another
+                SelectView(0, true);
+                // Set handled init back to false
+                _handledInitSettings = false;
+            }
             SelectView(_viewerState.View, true);
-        else
+        } else
             SelectView(0, true);
 
         //Begin tile animation
         var id = (_initSelectedItem && _initSelectedItem.Id) ? _initSelectedItem.Id : "";
         _tileController.BeginAnimation(true, id);
+
+        // If Map view apply initial selection here
+        if (_currentView == 3) {  
+            $.publish("/PivotViewer/Views/Item/Selected", [{id: _initSelectedItem.Id, bkt: 0}]);
+            _views[3].RedrawMarkers(_initSelectedItem.Id);
+        }
+
     };
 
     InitUI = function () {
@@ -4224,6 +4366,9 @@ PivotViewer.Views.TileLocation = Object.subClass({
         var sort = $('.pv-toolbarpanel-sort option:selected').attr('label');
         Debug.Log('sort ' + sort );
 
+        if (!changingView)
+            _selectedItem = "";
+
         //Filter String facet items
         var checked = $('.pv-facet-facetitem:checked');
 
@@ -4383,6 +4528,13 @@ PivotViewer.Views.TileLocation = Object.subClass({
         if (!_handledInitSettings){
             if (_currentView == 2) { 
                 _views[_currentView].SetSelectedFacet(_initTableFacet);
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            } else if (_currentView == 3) {
+                _views[_currentView].SetMapInitCentreX(_initMapCentreX);
+                _views[_currentView].SetMapInitCentreY(_initMapCentreY);
+                _views[_currentView].SetMapInitType(_initMapType);
+                _views[_currentView].SetMapInitZoom(_initMapZoom);
+                _views[_currentView].applyBookmark = true;
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
@@ -4632,6 +4784,16 @@ PivotViewer.Views.TileLocation = Object.subClass({
             if (_currentView == 2)
                 if (_views[_currentView].GetSelectedFacet())
 	    	  currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
+            if (_currentView == 3) {
+                if (_views[_currentView].GetMapCentreX())
+	    	  currentViewerState += "&$mapCentreX$=" + _views[_currentView].GetMapCentreX();
+                if (_views[_currentView].GetMapCentreY())
+	    	  currentViewerState += "&$mapCentreY$=" + _views[_currentView].GetMapCentreY();
+                if (_views[_currentView].GetMapType())
+	    	  currentViewerState += "&$mapType$=" + _views[_currentView].GetMapType();
+                if (_views[_currentView].GetMapZoom())
+	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
+            }
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
