@@ -48,7 +48,11 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.currentHeight = this.height;
         this.currentOffsetX = this.offsetX;
         this.currentOffsetY = this.offsetY;
-
+        // Check for local storage support
+        if (Modernizr.localstorage)
+            this.localStorage = true;
+        else
+            this.localStorage = false;
     },
     Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, selectedItem) { 
         var that = this;
@@ -221,20 +225,23 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                               }
 
                                               if (!gotLocation) {
-/* tbd                            
                                                   // Now try the users persistent cache
-                                                  for (var p = 0; p < this.persistentCache.length; p++) {
-                                                      if (persistentCache[p].locName == geoLoc) {
+                                                  if (this.localStorage) {
+                                                      var newLatLng;
+                                                      var newLoc = JSON.parse(localStorage.getItem(geoLoc));
+                                                      var lat = parseFloat(newLoc.lat);
+                                                      var lng = parseFloat(newLoc.lng);
+                                                      if (!NaN(lat) && !NaN(lng)) {
+                                                          newLatLng = new google.maps.LatLng(lat, lng);
                                                           // Add it to local cache
-                                                          this.locCache.push({locName = geoLoc, loc: this.persistenCache[p].loc});
-                                                          this.locList.push({id: itemId, loc: this.persistent[p].loc, title: itemName});
-                                                          this.inScopeLocList.push({id: itemId, loc: this.persistentCache[p].loc, title: itemName});
+                                                          this.locCache.push({locName: geoLoc, loc: newLatLng});
+                                                          this.locList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                          this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
                                                           gotLocation = true;
                                                       }
                                                   }
                                                   if (!gotLocation) {
-                                                      // Not in persistent cache so will have to use geocode service
-*/                                
+                                                      // Not in local or persistent cache so will have to use geocode service
                                                       // Add location to list for geocoding (will need to keep itemId name with it)
                                                       if (g < 1000) {//limiting the number of items to geocode at once to 1000 for now
                                                           var foundIt = false;
@@ -252,7 +259,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                                           gotLocation = true;
                                                           break;
                                                       }
-                                                  //} // Not in persistent geocode cache
+                                                  } // Not in persistent geocode cache
                                               } // Not in in-memory geocode cache
                                           } //Location name longr than 1
                                        } //Not invalid co-ordinates 
@@ -303,13 +310,14 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
             // Add to local cache
             that.locCache.push ({locName: locName, loc: loc});
 
-/*
             // Add to persistent cache
-            if (that.persistentLocCache.Add(locName, loc) != true) {
-                that.persistentLocCache.Clear();
-                that.persistentLocCache.Write(locCache);
+            if (this.localStorage) {
+                var newLoc = {
+                    lat: loc.lat(),
+                    lng: loc.lng()
+                };
+                localStorage.setItem(locName, JSON.stringify(newLoc));
             }
-*/
 
             // Find items that have that location
             for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
