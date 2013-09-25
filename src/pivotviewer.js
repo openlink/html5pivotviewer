@@ -32,6 +32,10 @@
         _selectedItemBkt = 0,
         _initSelectedItem = "",
         _initTableFacet = "",
+        _initMapCentreX = "",
+        _initMapCentreY = "",
+        _initMapType = "",
+        _initMapZoom = "",
         _handledInitSettings = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
@@ -84,6 +88,18 @@
                         //Table Selected Facet
                         else if (splitItem[0] == '$tableFacet$')
                             _viewerState.TableFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Map Centre X
+                        else if (splitItem[0] == '$mapCentreX$')
+                            _viewerState.MapCentreX = splitItem[1];
+                        //Map Centre Y
+                        else if (splitItem[0] == '$mapCentreY$')
+                            _viewerState.MapCentreY = splitItem[1];
+                        //Map Type
+                        else if (splitItem[0] == '$mapType$')
+                            _viewerState.MapType = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Map Zoom
+                        else if (splitItem[0] == '$mapZoom$')
+                            _viewerState.MapZoom = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
                             var filter = { Facet: splitItem[0], Predicates: [] };
@@ -145,6 +161,10 @@
         ApplyViewerState();
         _initSelectedItem = GetItem(_viewerState.Selection);
         _initTableFacet = _viewerState.TableFacet;
+        _initMapCentreX = _viewerState.MapCentreX;
+        _initMapCentreY = _viewerState.MapCentreY;
+        _initMapType = _viewerState.MapType;
+        _initMapZoom = _viewerState.MapZoom;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
         //Hardcoding the value for the width of the viewcontrols images (124=21*4) as the webkit browsers 
@@ -154,14 +174,27 @@
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
-        if (_viewerState.View != null)
+        if (_viewerState.View != null) {
+            if (_viewerState.View != 0 || _viewerState.View  != 1) {
+                // Always have to initialize tiles one way or another
+                SelectView(0, true);
+                // Set handled init back to false
+                _handledInitSettings = false;
+            }
             SelectView(_viewerState.View, true);
-        else
+        } else
             SelectView(0, true);
 
         //Begin tile animation
         var id = (_initSelectedItem && _initSelectedItem.Id) ? _initSelectedItem.Id : "";
         _tileController.BeginAnimation(true, id);
+
+        // If Map view apply initial selection here
+        if (_currentView == 3) {  
+            $.publish("/PivotViewer/Views/Item/Selected", [{id: _initSelectedItem.Id, bkt: 0}]);
+            _views[3].RedrawMarkers(_initSelectedItem.Id);
+        }
+
     };
 
     InitUI = function () {
@@ -641,6 +674,9 @@
         var sort = $('.pv-toolbarpanel-sort option:selected').attr('label');
         Debug.Log('sort ' + sort );
 
+        if (!changingView)
+            _selectedItem = "";
+
         //Filter String facet items
         var checked = $('.pv-facet-facetitem:checked');
 
@@ -800,6 +836,13 @@
         if (!_handledInitSettings){
             if (_currentView == 2) { 
                 _views[_currentView].SetSelectedFacet(_initTableFacet);
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            } else if (_currentView == 3) {
+                _views[_currentView].SetMapInitCentreX(_initMapCentreX);
+                _views[_currentView].SetMapInitCentreY(_initMapCentreY);
+                _views[_currentView].SetMapInitType(_initMapType);
+                _views[_currentView].SetMapInitZoom(_initMapZoom);
+                _views[_currentView].applyBookmark = true;
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
@@ -1049,6 +1092,16 @@
             if (_currentView == 2)
                 if (_views[_currentView].GetSelectedFacet())
 	    	  currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
+            if (_currentView == 3) {
+                if (_views[_currentView].GetMapCentreX())
+	    	  currentViewerState += "&$mapCentreX$=" + _views[_currentView].GetMapCentreX();
+                if (_views[_currentView].GetMapCentreY())
+	    	  currentViewerState += "&$mapCentreY$=" + _views[_currentView].GetMapCentreY();
+                if (_views[_currentView].GetMapType())
+	    	  currentViewerState += "&$mapType$=" + _views[_currentView].GetMapType();
+                if (_views[_currentView].GetMapZoom())
+	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
+            }
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)

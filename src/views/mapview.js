@@ -28,6 +28,15 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.itemsToGeocode = Array();
         this.startGeocode;
         this.geocodeZero;
+        this.mapInitZoom = "";
+        this.mapInitType = "";
+        this.mapInitCentreX = "";
+        this.mapInitCentreY = "";
+        this.mapZoom = "";
+        this.mapType = "";
+        this.mapCentreX = "";
+        this.mapCentreY = "";
+        this.applyBookmark = false;
         var that = this;
     },
     Setup: function (width, height, offsetX, offsetY, tileMaxRatio) { 
@@ -269,7 +278,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         } //else {
             $('.pv-mapview-canvas').css('height', this.height - 12 + 'px');
             $('.pv-mapview-canvas').css('width', this.width - 415 + 'px');
-            this.CreateMap(selectedItem.Id, true);
+            this.CreateMap(selectedItem.Id);
         //}
     },
     GetUI: function () { return ''; },
@@ -329,7 +338,6 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                    break;
                }
             }
-//tbd bookmark...
             // If geocoding has taken more than 20 secs then try to set
             // the bookmark.  Otherwise, if the time taken is more than 
             // 2 secs make the pins we have so far
@@ -351,8 +359,13 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                if (that.inScopeLocList.Count == 0) {
                    this.ShowMapError();
                    return;
-               } else
-                   that.CreateMap(that.selectedItemId, true);
+               } else {
+                   that.CreateMap(that.selectedItemId);
+                   if (that.applyBookmark) {
+                       that.SetBookmark();
+                       that.applyBookmark = false;
+                   }
+               }
            }
         }
         return geocodeCallBack;
@@ -369,41 +382,55 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.startGeocode.setSeconds(this.startGeocode.getSeconds() + 2);
         this.geocodeZero = new Date();
     },
-    CreateMap: function (selectedItemId, setBookmark) {
-        // tbd - center on selected...
-        if (this.locList.length > 0) {
-            var mapOptions = {
-                zoom: 8,
-                center: this.locList[0].loc,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            };
-        } else {
-            var mapOptions = {
-                zoom: 8,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            };
-        }
+    CreateMap: function (selectedItemId) {
+        var that = this;
+        var centreLoc;
+        var zoom = 8;
+        var type = google.maps.MapTypeId.ROADMAP;
+        var gotLoc = false;
 
-        if (selectedItemId) {
-            for (j = 0; j <  this.locList.length; j++) {
-                if (this.locList[j].id ==  selectedItemId)
-                    mapOptions.centre = this.locList[j].loc;
-            }
+        centreLat = parseFloat(this.mapCentreX);
+        centreLng = parseFloat(this.mapCentreY);
+        if (!isNaN(centreLat) && !isNaN(centreLng)) {
+            centreLoc = new google.maps.LatLng(centreLat, centreLng);
+            gotLoc = true;
         }
+        bookmarkZoom = parseInt(this.mapZoom);
+        if (!isNaN(bookmarkZoom)) 
+            zoom = bookmarkZoom;
 
-        this.map = new google.maps.Map(document.getElementById('pv-map-canvas'), mapOptions);
+        if (this.mapType && this.mapType != "")
+            type = this.mapType;
+
+        //this.map = new google.maps.Map(document.getElementById('pv-map-canvas'), mapOptions);
+        this.map = new google.maps.Map(document.getElementById('pv-map-canvas'));
+
+        if (gotLoc)
+            this.map.panTo(centreLoc);
+        else if (this.selectedItemId) 
+            this.CentreOnSelected (this.selectedItemId);
+
+        this.map.setMapTypeId(type);
+        this.map.setZoom(zoom);
+
+        // add map event listeners
+        google.maps.event.addListener( this.map, 'maptypeid_changed', function() { 
+            that.SetMapType(that.map.getMapTypeId());
+            $.publish("/PivotViewer/Views/Item/Updated", null);
+        } );
+        google.maps.event.addListener( this.map, 'zoom_changed', function() { 
+            that.SetMapZoom(that.map.getZoom());
+            $.publish("/PivotViewer/Views/Item/Updated", null);
+        } );
+        google.maps.event.addListener( this.map, 'center_changed', function() { 
+            var centre = that.map.getCenter();
+            that.SetMapCentreX(centre.lat());
+            that.SetMapCentreY(centre.lng());
+            $.publish("/PivotViewer/Views/Item/Updated", null);
+        } );
 
         this.CreateMarkers();
         this.RefitBounds();
-
-/*
-        //(optional) restore the zoom level after the map is done scaling
-        var listener = google.maps.event.addListener(map, "idle", function () {
-            map.setZoom(3);
-            google.maps.event.removeListener(listener);
-        }); 
-*/
-        
     },
     SetFacetCategories: function (collection) {
         this.categories = collection.FacetCategories;
@@ -481,6 +508,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.markers = [];
 
         this.CreateMarkers();
+        this.CentreOnSelected (selectedItemId);
     },
     ShowMapError: function () {
         var msg = '';
@@ -489,5 +517,78 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         $('.pv-wrapper').append("<div id=\"pv-dzlocation-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
         var t=setTimeout(function(){window.open("#pv-dzlocation-error","_self")},1000)
         return;
+    },
+    GetMapCentreX: function () {
+        return this.mapCentreX;
+    },
+    SetMapCentreX: function (centrex) {
+        this.mapCentreX = centrex;
+    },
+    SetMapInitCentreX: function (centrex) {
+        this.mapCentreX = centrex;
+        this.mapInitCentreX = centrex;
+    },
+    GetMapCentreY: function () {
+        return this.mapCentreY;
+    },
+    SetMapCentreY: function (centrey) {
+        this.mapCentreY = centrey;
+    },
+    SetMapInitCentreY: function (centrey) {
+        this.mapCentreY = centrey;
+        this.mapInitCentreY = centrey;
+    },
+    GetMapType: function () {
+        return this.mapType;
+    },
+    SetMapType: function (type) {
+        this.mapType = type;
+    },
+    SetMapInitType: function (type) {
+        this.mapType = type;
+        this.mapInitType = type;
+    },
+    GetMapZoom: function () {
+        return this.mapZoom;
+    },
+    SetMapZoom: function (zoom) {
+        this.mapZoom = zoom;
+    },
+    SetMapInitZoom: function (zoom) {
+        this.mapZoom = zoom;
+        this.mapInitZoom = zoom;
+    },
+    CentreOnSelected: function (selectedItemId) {
+        for (j = 0; j <  this.locList.length; j++) {
+            if (this.locList[j].id == selectedItemId) {
+                if (this.locList[j].loc.lat() != 0 && this.locList[j].loc.lng() != 0)
+                    this.map.panTo(this.locList[j].loc);
+            }
+        }
+    },
+    SetBookmark: function() {
+        var centreLoc;
+        var zoom = 8;
+        var type = google.maps.MapTypeId.ROADMAP;
+        var gotLoc = false;
+
+        centreLat = parseFloat(this.mapInitCentreX);
+        centreLng = parseFloat(this.mapInitCentreY);
+        if ((!isNaN(centreLat) && !isNaN(centreLng)) 
+           && (centreLat != 0 && centreLng != 0)) {
+            centreLoc = new google.maps.LatLng(centreLat, centreLng);
+            gotLoc = true;
+        }
+        bookmarkZoom = parseInt(this.mapInitZoom);
+        if (!isNaN(bookmarkZoom)) 
+            zoom = bookmarkZoom;
+
+        if (this.mapInitType && this.mapInitType != "")
+            type = this.mapInitType;
+
+        if (gotLoc)
+            this.map.panTo(centreLoc);
+        this.map.setMapTypeId(type);
+        this.map.setZoom(zoom);
     },
 });
