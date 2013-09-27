@@ -52,6 +52,9 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
 
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
+            $('.pv-mapview-canvas').fadeOut();
+            $('.pv-toolbarpanel-zoomslider').fadeOut();
+            $('.pv-toolbarpanel-zoomcontrols').css('border-width', '0');
             $('.pv-tableview-table').fadeIn(function(){
                 if (selectedItem)
                     $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);

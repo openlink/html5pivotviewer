@@ -32,6 +32,10 @@
         _selectedItemBkt = 0,
         _initSelectedItem = "",
         _initTableFacet = "",
+        _initMapCentreX = "",
+        _initMapCentreY = "",
+        _initMapType = "",
+        _initMapZoom = "",
         _handledInitSettings = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
@@ -84,6 +88,18 @@
                         //Table Selected Facet
                         else if (splitItem[0] == '$tableFacet$')
                             _viewerState.TableFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Map Centre X
+                        else if (splitItem[0] == '$mapCentreX$')
+                            _viewerState.MapCentreX = splitItem[1];
+                        //Map Centre Y
+                        else if (splitItem[0] == '$mapCentreY$')
+                            _viewerState.MapCentreY = splitItem[1];
+                        //Map Type
+                        else if (splitItem[0] == '$mapType$')
+                            _viewerState.MapType = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Map Zoom
+                        else if (splitItem[0] == '$mapZoom$')
+                            _viewerState.MapZoom = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
                             var filter = { Facet: splitItem[0], Predicates: [] };
@@ -145,23 +161,45 @@
         ApplyViewerState();
         _initSelectedItem = GetItem(_viewerState.Selection);
         _initTableFacet = _viewerState.TableFacet;
+        _initMapCentreX = _viewerState.MapCentreX;
+        _initMapCentreY = _viewerState.MapCentreY;
+        _initMapType = _viewerState.MapType;
+        _initMapZoom = _viewerState.MapZoom;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
-        //Hardcoding the value for the width of the viewcontrols images (93) as the webkit browsers 
+        //Hardcoding the value for the width of the viewcontrols images (124=21*4) as the webkit browsers 
         //do not know the size of the images at this point.
-        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - ($('.pv-toolbarpanel-brandimage').outerWidth(true) +25 + $('.pv-toolbarpanel-name').outerWidth(true) + $('.pv-toolbarpanel-zoomcontrols').outerWidth(true) + 93 + $('.pv-toolbarpanel-sortcontrols').outerWidth(true));
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - ($('.pv-toolbarpanel-brandimage').outerWidth(true) +25 + $('.pv-toolbarpanel-name').outerWidth(true) + $('.pv-toolbarpanel-zoomcontrols').outerWidth(true) + 124 + $('.pv-toolbarpanel-sortcontrols').outerWidth(true));
 
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
         //select first view
-        if (_viewerState.View != null)
+        if (_viewerState.View != null) {
+            if (_viewerState.View != 0 || _viewerState.View  != 1) {
+                // Always have to initialize tiles one way or another
+                SelectView(0, true);
+                // Set handled init back to false
+                _handledInitSettings = false;
+            }
             SelectView(_viewerState.View, true);
-        else
+        } else
             SelectView(0, true);
 
         //Begin tile animation
         var id = (_initSelectedItem && _initSelectedItem.Id) ? _initSelectedItem.Id : "";
         _tileController.BeginAnimation(true, id);
+
+        // If Map view apply initial selection here
+        if (_currentView == 3) {  
+            if (_initSelectedItem) {
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: _initSelectedItem.Id, bkt: 0}]);
+                _views[3].RedrawMarkers(_initSelectedItem.Id);
+            } else {
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
+                _views[3].RedrawMarkers("");
+            }
+        }
+
     };
 
     InitUI = function () {
@@ -203,6 +241,9 @@
  
         //add grid for tableview to the mainpanel
         $('.pv-viewpanel').append("<div class='pv-tableview-table' id='pv-table'></div>");
+
+        //add canvas for map to the mainpanel
+        $('.pv-viewpanel').append("<div class='pv-mapview-canvas' id='pv-map-canvas'></div>");
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
@@ -481,6 +522,7 @@
         _views.push(new PivotViewer.Views.GridView());
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
+        _views.push(new PivotViewer.Views.MapView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -498,8 +540,9 @@
             } catch (ex) { alert(ex.Message); }
         }
 
-       // The table view needs to know about the facet categories
+       // The table and the map view needs to know about the facet categories
        _views[2].SetFacetCategories(PivotCollection);
+       _views[3].SetFacetCategories(PivotCollection);
 
     };
 
@@ -514,7 +557,7 @@
             }
         }
         $('#pv-viewpanel-view-' + viewNumber + '-image').attr('src', _views[viewNumber].GetButtonImageSelected());
-        if (_currentView == 1 && viewNumber == 2) {
+        if (_currentView == 1 && (viewNumber == 2 || viewNumber == 3)) {
             // Move tiles back to grid positions - helps with maintaining selected item 
             // when changing views
             _views[0].Activate();
@@ -577,7 +620,7 @@
         //Sort
         if (_viewerState.Facet != null) {
             $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
-	    _currentSort = $('.pv-toolbarpanel-sort :selected').att('label');
+	    _currentSort = $('.pv-toolbarpanel-sort :selected').attr('label');
             Debug.Log('current sort ' + _currentSort );
 	}
 
@@ -635,6 +678,9 @@
         var selectedFacets = [];
         var sort = $('.pv-toolbarpanel-sort option:selected').attr('label');
         Debug.Log('sort ' + sort );
+
+        if (!changingView)
+            _selectedItem = "";
 
         //Filter String facet items
         var checked = $('.pv-facet-facetitem:checked');
@@ -796,13 +842,20 @@
             if (_currentView == 2) { 
                 _views[_currentView].SetSelectedFacet(_initTableFacet);
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            } else if (_currentView == 3) {
+                _views[_currentView].SetMapInitCentreX(_initMapCentreX);
+                _views[_currentView].SetMapInitCentreY(_initMapCentreY);
+                _views[_currentView].SetMapInitType(_initMapType);
+                _views[_currentView].SetMapInitZoom(_initMapZoom);
+                _views[_currentView].applyBookmark = true;
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
         }
         else {
             _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
-            if (_currentView == 2 && !changingView) { 
+            if ((_currentView == 2 || _currentView == 3) && !changingView) { 
                 _views[0].Filter(_tiles, filterItems, sort, stringFacets, false, "");
             }
         }
@@ -1044,6 +1097,16 @@
             if (_currentView == 2)
                 if (_views[_currentView].GetSelectedFacet())
 	    	  currentViewerState += "&$tableFacet$=" + _views[_currentView].GetSelectedFacet();
+            if (_currentView == 3) {
+                if (_views[_currentView].GetMapCentreX())
+	    	  currentViewerState += "&$mapCentreX$=" + _views[_currentView].GetMapCentreX();
+                if (_views[_currentView].GetMapCentreY())
+	    	  currentViewerState += "&$mapCentreY$=" + _views[_currentView].GetMapCentreY();
+                if (_views[_currentView].GetMapType())
+	    	  currentViewerState += "&$mapType$=" + _views[_currentView].GetMapType();
+                if (_views[_currentView].GetMapZoom())
+	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
+            }
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
@@ -1199,6 +1262,8 @@
 
             if (_currentView == 2)
                 _views[_currentView].Selected(_selectedItem.Id); 
+            if (_currentView == 3) 
+                _views[_currentView].RedrawMarkers(_selectedItem.Id); 
 
 	    // Update the bookmark
             UpdateBookmark ();
@@ -1262,7 +1327,6 @@
     //Changing to grid view
     $.subscribe("/PivotViewer/Views/ChangeTo/Grid", function (evt) {
         var selectedTile = "";
-        //$.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
         for ( t = 0; t < _tiles.length; t ++ ) {
             if (_tiles[t].facetItem == evt.Item) {
                selectedTile = _tiles[t];
@@ -1271,6 +1335,10 @@
         }
         if (selectedTile)
              $.publish("/PivotViewer/Views/Canvas/Click", [{ x: selectedTile._locations[selectedTile.selectedLoc].destinationx + selectedTile.destinationwidth/2, y: selectedTile._locations[selectedTile.selectedLoc].destinationy + selectedTile.destinationheight/2}]);
+    });
+
+    $.subscribe("/PivotViewer/Views/Update/GridSelection", function (evt) {
+        _views[0].handleSelection(evt.selectedItem, evt.selectedTile); 
     });
 
     AttachEventHandlers = function () {
@@ -1401,14 +1469,16 @@
                   if (i >= 0)
                       $.publish("/PivotViewer/Views/Item/Selected", [{id: _filterItems[i - 1].Id, bkt: _filterItems[i - 1].Bucket}]);
                       //jch need to move the images
-                      for (var j = 0; j < _tiles.length; j++) {
-                          if (_tiles[j].facetItem.Id == _filterItems[i - 1].Id) {
-                                _tiles[j].Selected(true);
-                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i - 1].Bucket);
-                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i - 1].Bucket);
-                                _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
-                          } else {
-                                _tiles[j].Selected(false);
+                      if (_currentView == 0 || _currentView == 1) { 
+                          for (var j = 0; j < _tiles.length; j++) {
+                              if (_tiles[j].facetItem.Id == _filterItems[i - 1].Id) {
+                                    _tiles[j].Selected(true);
+                                    selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i - 1].Bucket);
+                                    selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i - 1].Bucket);
+                                    _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
+                              } else {
+                                    _tiles[j].Selected(false);
+                              }
                           }
                       }
                   break;
@@ -1421,14 +1491,16 @@
                   if (i < _filterItems.length) {
                       $.publish("/PivotViewer/Views/Item/Selected", [{id: _filterItems[i + 1].Id, bkt: _filterItems[i + 1].Bucket}]);
                       //jch need to move the images
-                      for (var j = 0; j < _tiles.length; j++) {
-                          if (_tiles[j].facetItem.Id == _filterItems[i + 1].Id) {
-                                _tiles[j].Selected(true);
-                                selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i + 1].Bucket);
-                                selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i + 1].Bucket);
-                                _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
-                          } else {
-                                _tiles[j].Selected(false);
+                      if (_currentView == 0 || _currentView == 1) { 
+                          for (var j = 0; j < _tiles.length; j++) {
+                              if (_tiles[j].facetItem.Id == _filterItems[i + 1].Id) {
+                                    _tiles[j].Selected(true);
+                                    selectedCol = _views[_currentView].GetSelectedCol(_tiles[j], _filterItems[i + 1].Bucket);
+                                    selectedRow = _views[_currentView].GetSelectedRow(_tiles[j], _filterItems[i + 1].Bucket);
+                                    _views[_currentView].CentreOnSelectedTile(selectedCol, selectedRow);
+                              } else {
+                                    _tiles[j].Selected(false);
+                              }
                           }
                       }
                   }
