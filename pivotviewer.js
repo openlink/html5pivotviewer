@@ -16,7 +16,7 @@
 
 ///PivotViewer
 var PivotViewer = PivotViewer || {};
-PivotViewer.Version="v0.9.142-24a1c34";
+PivotViewer.Version="v0.9.144-77757ef";
 PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
@@ -2618,7 +2618,10 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         } //else {
             $('.pv-mapview-canvas').css('height', this.height - 12 + 'px');
             $('.pv-mapview-canvas').css('width', this.width - 415 + 'px');
-            this.CreateMap(selectedItem.Id);
+            if (selectedItem)
+                this.CreateMap(selectedItem.Id);
+            else
+                this.CreateMap("");
         //}
     },
     GetUI: function () { return ''; },
@@ -3883,8 +3886,13 @@ PivotViewer.Views.TileLocation = Object.subClass({
 
         // If Map view apply initial selection here
         if (_currentView == 3) {  
-            $.publish("/PivotViewer/Views/Item/Selected", [{id: _initSelectedItem.Id, bkt: 0}]);
-            _views[3].RedrawMarkers(_initSelectedItem.Id);
+            if (_initSelectedItem) {
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: _initSelectedItem.Id, bkt: 0}]);
+                _views[3].RedrawMarkers(_initSelectedItem.Id);
+            } else {
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
+                _views[3].RedrawMarkers("");
+            }
         }
 
     };
