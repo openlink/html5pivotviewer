@@ -191,8 +191,13 @@
 
         // If Map view apply initial selection here
         if (_currentView == 3) {  
-            $.publish("/PivotViewer/Views/Item/Selected", [{id: _initSelectedItem.Id, bkt: 0}]);
-            _views[3].RedrawMarkers(_initSelectedItem.Id);
+            if (_initSelectedItem) {
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: _initSelectedItem.Id, bkt: 0}]);
+                _views[3].RedrawMarkers(_initSelectedItem.Id);
+            } else {
+                $.publish("/PivotViewer/Views/Item/Selected", [{id: "", bkt: 0}]);
+                _views[3].RedrawMarkers("");
+            }
         }
 
     };

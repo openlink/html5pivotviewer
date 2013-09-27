@@ -285,7 +285,10 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         } //else {
             $('.pv-mapview-canvas').css('height', this.height - 12 + 'px');
             $('.pv-mapview-canvas').css('width', this.width - 415 + 'px');
-            this.CreateMap(selectedItem.Id);
+            if (selectedItem)
+                this.CreateMap(selectedItem.Id);
+            else
+                this.CreateMap("");
         //}
     },
     GetUI: function () { return ''; },
