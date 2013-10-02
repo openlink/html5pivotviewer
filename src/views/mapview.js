@@ -508,6 +508,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 
         //now fit the map to the newly inclusive bounds
         this.map.fitBounds(bounds);
+        if (this.currentFilter.length == 1 && this.map.getZoom() > 15)
+            this.map.setZoom(15);
     },
     RedrawMarkers: function (selectedItemId) {
         this.selectedItemId = selectedItemId;
