@@ -53,6 +53,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-mapview-canvas').fadeOut();
+            $('.pv-mapview2-canvas').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
             $('.pv-toolbarpanel-zoomcontrols').css('border-width', '0');
             $('.pv-tableview-table').fadeIn(function(){

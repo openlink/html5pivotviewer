@@ -15,7 +15,7 @@
 //
 
 ///Map View
-PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
+PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
     init: function () {
         this._super();
         this.locCache = Array();
@@ -53,6 +53,12 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
             this.localStorage = true;
         else
             this.localStorage = false;
+        this.map = new L.Map(document.getElementById('pv-map2-canvas'));
+
+	// create the tile layer with correct attribution
+	var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+	var osmAttrib='Map data © OpenStreetMap contributors';
+	this.osm = new L.TileLayer(osmUrl, {attribution: osmAttrib});		
     },
     Filter: function (dzTiles, currentFilter, sortFacet, stringFacets, changingView, selectedItem) { 
         var that = this;
@@ -65,10 +71,10 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-tableview-table').fadeOut();
-            $('.pv-mapview2-canvas').fadeOut();
+            $('.pv-mapview-canvas').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
             $('.pv-toolbarpanel-zoomcontrols').css('border-width', '0');
-            $('.pv-mapview-canvas').fadeIn(function(){
+            $('.pv-mapview2-canvas').fadeIn(function(){
                 if (selectedItem)
                     $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);
             });
@@ -100,7 +106,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                     //Have we cached the item location?
                     for (var c = 0; c < this.locList.length; c ++) {
                         if (this.locList[c].id == itemId) {
-                            if (this.locList[c].loc.lat() != 0 || this.locList[c].loc.lng() != 0) 
+                            if (this.locList[c].loc.lat != 0 || this.locList[c].loc.lng != 0) 
                                 this.inScopeLocList.push(this.locList[c]);
                             inCache = true;
                             break;
@@ -121,7 +127,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                   break;
                                 gotLatitude = true;
                                 if (gotLongitude) {
-                                    var newLoc = new google.maps.LatLng(latitude, longitude);
+                                    var newLoc = new L.LatLng(latitude, longitude);
                                     this.locList.push({id: itemId, loc: newLoc, title: itemName});
                                     this.inScopeLocList.push({id: itemId, loc: newLoc, title: itemName});
                                     gotLocation = true;
@@ -138,7 +144,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                   break;
                                 gotLongitude = true;
                                 if (gotLatitude) {
-                                    var newLoc = new google.maps.LatLng(latitude, longitude);
+                                    var newLoc = new L.LatLng(latitude, longitude);
                                     this.locList.push({id: itemId, loc: newLoc, title: itemName});
                                     this.inScopeLocList.push({id: itemId, loc: newLoc, title: itemName});
                                     gotLocation = true;
@@ -162,7 +168,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                                var lat = parseFloat(latitude);
                                                var lon = parseFloat(logitude);
                                                if (!isNaN(lat) && ! isNaN(lon)) {
-                                                   var newLoc = new google.maps.LatLng(lat, lon);
+                                                   var newLoc = new L.LatLng(lat, lon);
                                                    locList.push({id: itemId, loc: newLoc, title: itemName});
                                                    inScopeList.push({id: itemId, loc: newLoc, title: itemName});
                                                    gotLocation = true;
@@ -177,7 +183,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                            var lon = parseFloat(value.substring(value.indexOf(',')));
                                            if (!isNaN(lat) && !isNaN(lon)) {
                                                //ok, have co-ordinate pair
-                                               var newLoc = new google.maps.LatLng(lat, lon);
+                                               var newLoc = new L.LatLng(lat, lon);
                                                locList.push({id: itemId, loc: newLoc, title: itemName});
                                                inScopeList.push({id: itemId, loc: newLoc, title: itemName});
                                                gotLocation = true;
@@ -233,7 +239,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                                       var lat = parseFloat(newLoc.lat);
                                                       var lng = parseFloat(newLoc.lng);
                                                       if (!NaN(lat) && !NaN(lng)) {
-                                                          newLatLng = new google.maps.LatLng(lat, lng);
+                                                          newLatLng = new L.LatLng(lat, lng);
                                                           // Add it to local cache
                                                           this.locCache.push({locName: geoLoc, loc: newLatLng});
                                                           this.locList.push({id: itemId, loc: newLatLng, title: itemName});
@@ -284,8 +290,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
             //Now do the geocoding
             this.GetLocationsFromNames();
         } //else {
-            $('.pv-mapview-canvas').css('height', this.height - 12 + 'px');
-            $('.pv-mapview-canvas').css('width', this.width - 415 + 'px');
+            $('.pv-mapview2-canvas').css('height', this.height - 12 + 'px');
+            $('.pv-mapview2-canvas').css('width', this.width - 415 + 'px');
             if (selectedItem)
                 this.CreateMap(selectedItem.Id);
             else
@@ -294,16 +300,16 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
     },
     GetUI: function () { return ''; },
     GetButtonImage: function () {
-        return 'Content/images/MapView.png';
+        return 'Content/images/MapView2.png';
     },
     GetButtonImageSelected: function () {
-        return 'Content/images/MapViewSelected.png';
+        return 'Content/images/MapViewSelected2.png';
     },
-    GetViewName: function () { return 'Map View'; },
+    GetViewName: function () { return 'Map View 2'; },
     MakeGeocodeCallBack: function(locName) {
         var that = this;
         var geocodeCallBack = function(results, status) {
-            var dummy = new google.maps.LatLng(0, 0);
+            var dummy = new L.LatLng(0, 0);
             var loc = dummy;
             
             if (status == google.maps.GeocoderStatus.OK) 
@@ -317,8 +323,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
             // Add to persistent cache
             if (this.localStorage) {
                 var newLoc = {
-                    lat: loc.lat(),
-                    lng: loc.lng()
+                    lat: loc.lat,
+                    lng: loc.lng
                 };
                 localStorage.setItem(locName, JSON.stringify(newLoc));
             }
@@ -330,7 +336,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                 var title = that.itemsToGeocode[i].title;
                 if (value == locName) {
                     that.locList.push({id: itemId, loc:loc, title: title});
-                    if (loc.lat() != 0 || loc.lng() != 0)
+                    if (loc.lat != 0 || loc.lng != 0)
                          that.inScopeLocList.push({id:itemId, loc:loc, title: title});
                 }
             }
@@ -398,46 +404,62 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         var that = this;
         var centreLoc;
         var zoom = 8;
-        var type = google.maps.MapTypeId.ROADMAP;
+        //var type = google.maps.MapTypeId.ROADMAP;
         var gotLoc = false;
 
         centreLat = parseFloat(this.mapCentreX);
         centreLng = parseFloat(this.mapCentreY);
         if (!isNaN(centreLat) && !isNaN(centreLng)) {
-            centreLoc = new google.maps.LatLng(centreLat, centreLng);
+            centreLoc = new L.LatLng(centreLat, centreLng);
             gotLoc = true;
         }
         bookmarkZoom = parseInt(this.mapZoom);
         if (!isNaN(bookmarkZoom)) 
             zoom = bookmarkZoom;
 
-        if (this.mapType && this.mapType != "")
-            type = this.mapType;
+        //if (this.mapType && this.mapType != "")
+        //    type = this.mapType;
 
         //this.map = new google.maps.Map(document.getElementById('pv-map-canvas'), mapOptions);
-        this.map = new google.maps.Map(document.getElementById('pv-map-canvas'));
+        //this.map = new L.Map(document.getElementById('pv-map2-canvas'), { center: [0,0], zoom: 5 });
+/*
+        this.map = new L.Map(document.getElementById('pv-map2-canvas'));
+
+	// create the tile layer with correct attribution
+	var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+	var osmAttrib='Map data © OpenStreetMap contributors';
+	var osm = new L.TileLayer(osmUrl, {attribution: osmAttrib});		
+*/
 
         if (gotLoc)
-            this.map.panTo(centreLoc);
-        else if (this.selectedItemId) 
+	    this.map.setView(centreLoc,zoom);
+            //this.map.panTo(centreLoc);
+        else
+	    this.map.setView(new L.LatLng(0,0),zoom);
+
+        if (this.selectedItemId) 
             this.CentreOnSelected (this.selectedItemId);
 
-        this.map.setMapTypeId(type);
-        this.map.setZoom(zoom);
+        //this.map.setMapTypeId(type);
+//        this.map.setZoom(zoom);
+
+	this.map.addLayer(this.osm);
 
         // add map event listeners
-        google.maps.event.addListener( this.map, 'maptypeid_changed', function() { 
-            that.SetMapType(that.map.getMapTypeId());
-            $.publish("/PivotViewer/Views/Item/Updated", null);
-        } );
-        google.maps.event.addListener( this.map, 'zoom_changed', function() { 
+        //google.maps.event.addListener( this.map, 'maptypeid_changed', function() { 
+         //   that.SetMapType(that.map.getMapTypeId());
+          //  $.publish("/PivotViewer/Views/Item/Updated", null);
+        //} );
+        //google.maps.event.addListener( this.map, 'zoom_changed', function() { 
+        this.map.on('zoomend', function(e) {
             that.SetMapZoom(that.map.getZoom());
             $.publish("/PivotViewer/Views/Item/Updated", null);
         } );
-        google.maps.event.addListener( this.map, 'center_changed', function() { 
+        //google.maps.event.addListener( this.map, 'center_changed', function() { 
+        this.map.on('moveend', function(e) {
             var centre = that.map.getCenter();
-            that.SetMapCentreX(centre.lat());
-            that.SetMapCentreY(centre.lng());
+            that.SetMapCentreX(centre.lat);
+            that.SetMapCentreY(centre.lng);
             $.publish("/PivotViewer/Views/Item/Updated", null);
         } );
 
@@ -460,27 +482,35 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 
         // First clear all markers
         for (var i = 0; i < this.markers.length; i++) {
-            this.markers[i].setMap(null);
+            this.map.removeLayer(this.markers[i]);
+            //this.markers[i].setMap(null);
         }
         this.markers = [];
+        var GreenIcon = L.Icon.Default.extend({
+            options: {
+            	    iconUrl: 'Scripts/images/green-icon.png' 
+            }
+         });
+        //var blueIcon = new L.Icon();
+        var greenIcon = new GreenIcon();
 
+                //icon: blueIcon,
         for (i = 0; i < this.inScopeLocList.length; i++) {  
-            marker = new google.maps.Marker({
-                position: this.inScopeLocList[i].loc,
-                map: this.map,
-                icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            marker = new L.Marker(this.inScopeLocList[i].loc, {
                 title: this.inScopeLocList[i].title,
-            });
+            })
+            this.map.addLayer(marker);
 
             if (this.inScopeLocList[i].id ==  this.selectedItemId) {
-                marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
-                marker.setZIndex(1000000000);
+                marker.setIcon(greenIcon);
+                marker.setZIndexOffset(1000000000);
             }
 
-            google.maps.event.addListener(marker, 'click', (function(marker, i) {
+            //google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                        //marker.setIcon(blueIcon);
+            marker.on('click', (function(marker, i) {
                 return function() {
                     if (that.selectedItemId == that.inScopeLocList[i].id) {
-                        marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
                         that.selectedItemId = "";
                         $.publish("/PivotViewer/Views/Update/GridSelection", [{selectedItem: that.selectedItemId,  selectedTile: selectedTile}]);
                     } else {
@@ -500,12 +530,16 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         }
     },
     RefitBounds: function () {
-        var bounds = new google.maps.LatLngBounds();
+        //var bounds = new L.LatLngBounds();
+        var bounds;
+        var markerPos = [];
 
         for (i = 0; i < this.markers.length; i++) {  
             //extend the bounds to include each marker's position
-            bounds.extend(this.markers[i].position);
+            //bounds.extend(this.markers[i].position);
+            markerPos.push (this.markers[i].getLatLng());
         }
+        bounds = new L.LatLngBounds(markerPos);
 
         //now fit the map to the newly inclusive bounds
         this.map.fitBounds(bounds);
@@ -515,7 +549,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 
         // First clear all markers
         for (var i = 0; i < this.markers.length; i++) {
-            this.markers[i].setMap(null);
+            this.map.removeLayer(this.markers[i]);
+            //this.markers[i].setMap(null);
         }
         this.markers = [];
 
@@ -573,7 +608,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
     CentreOnSelected: function (selectedItemId) {
         for (j = 0; j <  this.locList.length; j++) {
             if (this.locList[j].id == selectedItemId) {
-                if (this.locList[j].loc.lat() != 0 && this.locList[j].loc.lng() != 0)
+                if (this.locList[j].loc.lat != 0 && this.locList[j].loc.lng != 0)
                     this.map.panTo(this.locList[j].loc);
             }
         }
@@ -581,22 +616,22 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
     SetBookmark: function() {
         var centreLoc;
         var zoom = 8;
-        var type = google.maps.MapTypeId.ROADMAP;
+        //var type = google.maps.MapTypeId.ROADMAP;
         var gotLoc = false;
 
         centreLat = parseFloat(this.mapInitCentreX);
         centreLng = parseFloat(this.mapInitCentreY);
         if ((!isNaN(centreLat) && !isNaN(centreLng)) 
            && (centreLat != 0 && centreLng != 0)) {
-            centreLoc = new google.maps.LatLng(centreLat, centreLng);
+            centreLoc = new L.LatLng(centreLat, centreLng);
             gotLoc = true;
         }
         bookmarkZoom = parseInt(this.mapInitZoom);
         if (!isNaN(bookmarkZoom)) 
             zoom = bookmarkZoom;
 
-        if (this.mapInitType && this.mapInitType != "")
-            type = this.mapInitType;
+        //if (this.mapInitType && this.mapInitType != "")
+        //    type = this.mapInitType;
 
         if (gotLoc)
             this.map.panTo(centreLoc);

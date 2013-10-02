@@ -245,6 +245,9 @@
         //add canvas for map to the mainpanel
         $('.pv-viewpanel').append("<div class='pv-mapview-canvas' id='pv-map-canvas'></div>");
 
+        //add canvas for map to the mainpanel
+        $('.pv-viewpanel').append("<div class='pv-mapview2-canvas' id='pv-map2-canvas'></div>");
+
         //filter panel
         var filterPanel = $('.pv-filterpanel');
         filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
@@ -523,6 +526,7 @@
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
         _views.push(new PivotViewer.Views.MapView());
+        _views.push(new PivotViewer.Views.MapView2());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -543,6 +547,7 @@
        // The table and the map view needs to know about the facet categories
        _views[2].SetFacetCategories(PivotCollection);
        _views[3].SetFacetCategories(PivotCollection);
+       _views[4].SetFacetCategories(PivotCollection);
 
     };
 
@@ -557,7 +562,7 @@
             }
         }
         $('#pv-viewpanel-view-' + viewNumber + '-image').attr('src', _views[viewNumber].GetButtonImageSelected());
-        if (_currentView == 1 && (viewNumber == 2 || viewNumber == 3)) {
+        if (_currentView == 1 && (viewNumber == 2 || viewNumber == 3 || viewNumber == 4)) {
             // Move tiles back to grid positions - helps with maintaining selected item 
             // when changing views
             _views[0].Activate();
@@ -849,13 +854,19 @@
                 _views[_currentView].SetMapInitZoom(_initMapZoom);
                 _views[_currentView].applyBookmark = true;
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            } else if (_currentView == 4) {
+                _views[_currentView].SetMapInitCentreX(_initMapCentreX);
+                _views[_currentView].SetMapInitCentreY(_initMapCentreY);
+                _views[_currentView].SetMapInitZoom(_initMapZoom);
+                _views[_currentView].applyBookmark = true;
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
         }
         else {
             _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
-            if ((_currentView == 2 || _currentView == 3) && !changingView) { 
+            if ((_currentView == 2 || _currentView == 3 || _currentView == 4) && !changingView) { 
                 _views[0].Filter(_tiles, filterItems, sort, stringFacets, false, "");
             }
         }
@@ -1107,6 +1118,14 @@
                 if (_views[_currentView].GetMapZoom())
 	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
             }
+            if (_currentView == 4) {
+                if (_views[_currentView].GetMapCentreX())
+	    	  currentViewerState += "&$mapCentreX$=" + _views[_currentView].GetMapCentreX();
+                if (_views[_currentView].GetMapCentreY())
+	    	  currentViewerState += "&$mapCentreY$=" + _views[_currentView].GetMapCentreY();
+                if (_views[_currentView].GetMapZoom())
+	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
+            }
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
@@ -1263,6 +1282,8 @@
             if (_currentView == 2)
                 _views[_currentView].Selected(_selectedItem.Id); 
             if (_currentView == 3) 
+                _views[_currentView].RedrawMarkers(_selectedItem.Id); 
+            if (_currentView == 4) 
                 _views[_currentView].RedrawMarkers(_selectedItem.Id); 
 
 	    // Update the bookmark

@@ -228,6 +228,12 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
                 $('.pv-viewarea-canvas').fadeIn();
             }
+            if ($('.pv-mapview2-canvas').is(':visible')){
+                $('.pv-mapview2-canvas').fadeOut();
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('.pv-viewarea-canvas').fadeIn();
+            }
         }
 
         this.sortFacet = sortFacet;
