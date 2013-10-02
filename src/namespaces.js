@@ -15,6 +15,7 @@
 //
 
 ///PivotViewer
+var global = {};
 var PivotViewer = PivotViewer || {};
 PivotViewer.Version="@VERSION@";
 PivotViewer.Models = {};

@@ -45,6 +45,8 @@
         _viewerState = { View: null, Facet: null, Filters: [] },
         _self = null,
         _nameMapping = {},
+        _googleAPILoaded = false,
+        _googleAPIKey,
         PivotCollection = new PivotViewer.Models.Collection();
 
     var methods = {
@@ -68,6 +70,10 @@
                 throw "Image Controller does not inherit from PivotViewer.Views.IImageController.";
             else
                 _imageController = options.ImageController;
+
+            //Google map key
+            if (options.GoogleAPIKey != undefined)
+               _googleAPIKey = options.GoogleAPIKey;
 
             //ViewerState
             //http://i2.silverlight.net/content/pivotviewer/developer-info/api/html/P_System_Windows_Pivot_PivotViewer_ViewerState.htm
@@ -546,8 +552,34 @@
 
     };
 
+    /// Google API has loaded
+    global.setMapReady = function () {
+        _googleAPILoaded = true;
+        SelectView(3, true);
+    };
+
     /// Set the current view
     SelectView = function (viewNumber, init) {
+
+        // If changing to map view and the Google API has not yet loaded,
+        // load it now.
+        if (viewNumber == 3 && !_googleAPILoaded && _googleAPIKey) {
+            // Load the google maps api
+            var script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = "https://maps.googleapis.com/maps/api/js?key=" + _googleAPIKey + "&sensor=false&callback=global.setMapReady";
+            document.body.appendChild(script);
+            return;
+        }
+        
+        if (viewNumber == 3 && !_googleAPIKey) {
+            var msg = '';
+            msg = msg + 'Viewing the data on Google maps requires an API key. This can be obtained from <a href=\"https://code.google.com/apis/console/?noredirect\" target=\"_blank\">here</a>';
+            $('.pv-wrapper').append("<div id=\"pv-nomapkey-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+            var t=setTimeout(function(){window.open("#pv-nomapkey-error","_self")},1000)
+            return;
+        }
+
         //Deselect all views
         for (var i = 0; i < _views.length; i++) {
             if (viewNumber != i) {
