@@ -1,0 +1,474 @@
+/*
+ *   This file is part of the html5 pivotviewer project
+ *
+ *   Copyright (C) 2012-2013 OpenLink Software
+ *
+ *   This project is free software; you can redistribute it and/or modify it
+ *   under the terms of the GNU General Public License as published by the
+ *   Free Software Foundation; only version 2 of the License, dated June 1991.
+ *
+ *   This program is distributed in the hope that it will be useful, but
+ *   WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *   General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License along
+ *   with this program; if not, write to the Free Software Foundation, Inc.,
+ *   51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ */
+
+html { }
+body {
+    font-family:Gill Sans,Verdana,Helvetica,sans-serif;
+    font-size:9pt;
+    margin:0;
+    padding:0;
+    text-align:center;
+    height: 100%;
+    overflow: auto;
+}
+
+//a, a:visited {
+ //   color:#224422;
+//}
+
+#PG {
+    background-color:#FFFFFF;
+    text-align:left;
+    width:100%;
+}
+
+#HD {
+    background-image:url("../i/bg_header.png");
+    border-bottom:1px solid #222266;
+    float:left;
+    height:60px;
+    width:100%;
+}
+
+#HD img {
+    border:0 none;
+    margin:2px 0 0 5px;
+    padding:0;
+    vertical-align:middle;
+    float:left;
+}
+
+img.masthead_logo { }
+
+#HD_L {
+    width:150px;
+    clear:left;
+    float:left}
+
+#HD_M {
+    width: 50%;
+    float: left;
+    margin-left: 10px;}
+
+#HD_M h1 {
+    color:#FFFFFF;
+    float:left;
+    clear:left;
+    font-size:14pt;
+    margin:13px 0 0 0px;
+    padding:0;
+    vertical-align:top;
+}
+
+#HD h1 a {
+    color:#FFFFFF;
+}
+
+#HD_M p {
+    float: left;
+    clear: left;
+    font-size: 9pt;
+    color: #fff;
+    margin: 0;
+    padding: 0
+}
+
+#HD_R {
+    width:300px;
+    clear:right;
+    float:right;
+    margin-top: 5px;
+    margin-right: 5px;
+    text-align: right;
+}
+
+#MENU {
+    float: right;
+    clear: right;
+    text-align: right;
+    color: #fff;
+    font-size: 10pt}
+
+#MENU a {
+    text-decoration: none;
+    color: inherit
+}
+
+#MENU a:hover {
+    text-decoration:underline;
+    color:inherit
+}
+
+#sharelink {
+    float: right;
+    clear: right;
+    text-align: right;
+    margin-top: 8px;
+    white-space: nowrap
+}
+
+a.sharetxt {
+    color: #dde;
+    font-size: 10pt
+}
+
+a.logo {
+    float:left;
+    margin-left:10px;
+}
+
+#opl_logo {
+    border:0 none;
+    float:left;
+}
+
+#MD {
+    background-color:#E9F2F7;
+    float:left;
+    margin-left:auto;
+    margin-right:auto;
+    margin-top:0;
+    width: 100%;
+}
+
+#FT {
+    border-top:1px solid #333355;
+    float:left;
+    padding-top:10px;
+    text-align:center;
+    width:100%;
+}
+
+#ft_b {
+    padding-top:10px;
+}
+
+div#copyright {
+    color:#888888;
+    font-size:8pt;
+}
+
+div.page_resource_info {
+    clear:left;
+    float:left;
+    margin:15px;
+    text-align:left;
+}
+
+div.page_resource_info h2 {
+    display:inline;
+    padding:0;
+}
+
+td.rnk {
+    margin:0;
+    padding:0;
+}
+
+img.rnk {
+    clear:left;
+    float:left;
+    margin-top:1px;
+}
+
+div.expln {
+    margin:0 100px 5px;
+}
+
+div.doc_ctr {
+    margin:10px;
+}
+
+div.main_actions {
+    clear:left;
+    float:left;
+    text-align:left;
+    width:100%;
+}
+
+div.main_expln {
+    clear:left;
+    float:left;
+    text-align:center;
+    width:100%;
+}
+
+#res {
+    clear:left;
+    float:left;
+    margin:5px 0 0;
+    width:80%;
+}
+
+#res h3 {
+    margin-left:5px;
+    margin-top:0;
+}
+
+#FT img {
+    border:0 none;
+}
+
+input.num {
+    text-align:right;
+}
+
+.dlg {
+    background-color:#FFFFFF;
+    border:1px outset;
+    margin:10px auto;
+    width:90%;
+}
+
+.dlg .title {
+    background-image:url("../i/dlg_title_bkg.png");
+    border-bottom:1px inset;
+    margin:0;
+    padding:2px 0;
+    text-align:center;
+}
+.dlg .title h2 {
+    color:#333333;
+}
+
+.dlg form {
+    margin:0;
+    width:100%;
+}
+
+.dlg .btn_bar {
+    background-color:#DDDDDD;
+    border-top:1px solid #333333;
+    height:6ex;
+    margin:0;
+    padding-top:2ex;
+    text-align:right;
+    width:100%;
+}
+
+.dlg .btn_bar button {
+    margin-right:4px;
+}
+
+.dlg .btn_bar input[type="submit"] {
+    margin-right:6px;
+}
+
+.dlg .title h2 {
+    color:#333333;
+    font-size:10pt;
+    margin:0;
+}
+
+.dlg .expln {
+    margin-left:120px;
+}
+
+.dlg .fm_sect {
+    border-top:1px solid #333333;
+    margin:0 10px 15px;
+}
+
+.dlg .fm_sect:first-child {
+    border:0 none;
+    margin-top:20px;
+}
+
+.dlg .fm_sect h3 {
+    font-size:9pt;
+    margin:0;
+}
+
+.dlg label.left_txt {
+    clear:left;
+    float:left;
+    width:120px;
+}
+
+.dlg .ctl_expln {
+    font-size:8pt;
+    font-style:oblique;
+    margin-left:120px;
+}
+
+#opts_ctr {
+    background-color:white;
+    text-align:center;
+    width:100%;
+}
+
+#opts {
+    border:1pt solid #555555;
+    font-size:9pt;
+    margin:auto;
+    text-align:left;
+    width:650px;
+}
+
+#opts input[type="checkbox"] {
+    margin-left:120px;
+}
+
+#res .btn_bar {
+    border-top:1px solid #333333;
+    margin-top:15px;
+    padding-top:8px;
+    text-align:right;
+}
+
+#res .btn_bar_top {
+    border-top:medium none;
+    margin-bottom:10px;
+    margin-top:0;
+    padding-top:0;
+}
+
+#res .pager .stats {
+    font-style:italic;
+}
+
+div.empty_result {
+    font-size:12pt;
+    font-weight:bold;
+    margin:20px;
+}
+
+div.dbg {
+    display:none;
+}
+
+div.error_msg {
+    margin:5px;
+}
+
+div.error_msg h2 {
+}
+
+div.error_msg div.body {
+    margin:10px;
+}
+
+div.error_msg div.nav {
+    margin-top:10px;
+}
+
+div.error_msg div.diag {
+    font-size:8pt;
+    margin:10px;
+}
+
+div#dbg_output {
+    clear:left;
+    float:left;
+    font-size:8pt;
+}
+
+#form1 {
+    text-align: center;
+    margin-top: 25px;
+}
+
+#form1 label
+{
+	display: inline-block;
+	vertical-align: center;
+	font-weight:bold;
+}
+
+#form2 {
+    text-align: center;
+    margin-top: 5px;
+}
+
+
+#silverlightControlHost {
+    height: 100%;
+    text-align:center;
+}
+
+#socialbar {
+    background-color:#E9F2F7;
+    clear:right;
+    float:right;
+    width: 100%;
+}
+
+/* Form styles */
+#editform
+{
+	margin: 20px auto;
+	width: 80%;
+}
+#editform fieldset
+{
+	margin: 0 0 20px;
+	padding: 20px;
+	border: 2px solid #6A7B6A;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
+#editform legend
+{
+	font-size: 12pt;
+}
+#editform ol
+{
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+#editform li
+{
+	margin: 0 0 12px;
+	position: relative;
+}
+#editform label
+{
+	width: 200px;
+	display: inline-block;
+	vertical-align: top;
+	font-weight:bold;
+}
+#editform fieldset input,
+#editform fieldset textarea,
+#editform fieldset select
+{
+	background: #fff;
+	display: inline-block;
+	width: 90%;
+	border: 1px solid #fff;
+	padding: 3px 26px 3px 3px;
+
+	-moz-transition: background-color 1s ease;
+	-webkit-transition: background-color 1s ease;
+	-o-transition: background-color 1s ease;
+	transition: background-color 1s ease;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
+#editform fieldset select	{ width: 501px; padding: 3px; }
+#editform fieldset #postcode	{ padding: 3px; width: 400px; }
+
+
+#editform input::-webkit-input-placeholder,
+#editform input:-moz-placeholder {
+color: #A6A6A6;
+}
