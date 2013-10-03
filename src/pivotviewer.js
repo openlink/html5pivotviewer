@@ -135,7 +135,7 @@
 
     InitPreloader = function () {
         //http://gifmake.com/
-        _self.append("<div class='pv-loading'><img src='Content/images/loading.gif' alt='Loading' /><span>Loading...</span></div>");
+        _self.append("<div class='pv-loading'><img src='images/loading.gif' alt='Loading' /><span>Loading...</span></div>");
         $('.pv-loading').css('top', ($('.pv-wrapper').height() / 2) - 33 + 'px');
         $('.pv-loading').css('left', ($('.pv-wrapper').width() / 2) - 43 + 'px');
     };
