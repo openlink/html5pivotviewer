@@ -26,6 +26,7 @@ config.log
 config.nice
 config.status
 configure
+ChangeLog
 
 #
 # Binaries
