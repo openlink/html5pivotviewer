@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ASCII"?>
+<!DOCTYPE sticker SYSTEM "vad_sticker.dtd">
+<sticker version="1.0" xml:lang="en-UK">
+<caption>
+  <name package="html5pivotviewer">
+    <prop name="Title" value="HTML5 Pivotviewer"/>
+    <prop name="Developer" value="OpenLink Software"/>
+    <prop name="Copyright" value="(C) 2013 OpenLink Software"/>
+    <prop name="Download" value="http://www.openlinksw.com/virtuoso"/>
+  </name>
+  <version package="$VERSION$">
+    <prop name="Release Date" value="$PACKDATE$"/>
+    <prop name="Build" value="Release, optimized"/>
+  </version>
+</caption>
+<dependencies/>
+<procedures uninstallation="supported">
+  <sql purpose="pre-install"></sql>
+  <sql purpose="post-install">
+    <![CDATA[
+    DB.DBA.VAD_LOAD_SQL_FILE('/DAV/VAD/html5pivotviewer/mkpivot.sql', 1, 'report', 1);
+    ]]>
+  </sql>
+</procedures>
+<ddls>
+  <sql purpose="pre-install"></sql>
+  <sql purpose="post-install"></sql>
+  <sql purpose="pre-uninstall"></sql>
+</ddls>
+<resources>
+  <file source_uri="images/*.png" target_uri="html5pivotviewer/" />
+  <file source_uri="images/*.gif" target_uri="html5pivotviewer/" />
+  <file source_uri="vsp/skin/i/*.png" target_uri="html5pivotviewer/skin/i/$f$" />
+  <file source_uri="vsp/skin/ss/*.css" target_uri="html5pivotviewer/skin/ss/$f$" />
+  <file source_uri="vsp/scripts/*.js" target_uri="html5pivotviewer/scripts/$f$" />
+  <file source_uri="vsp/*.vsp" target_uri="html5pivotviewer/$f$" />
+  <file source_uri="vsp/*.sql" target_uri="html5pivotviewer/$f$" />
+  <file source_uri="pivotviewer.min.js" target_uri="html5pivotviewer/scripts/$f$" />
+  <file source_uri="style/*.css" target_uri="html5pivotviewer/" />
+  <file source_uri="lib/**/*.js" target_uri="html5pivotviewer/scripts/$f$" />
+  <file source_uri="lib/**/*.css" target_uri="html5pivotviewer/style/$f$" />
+</resources>
+<registry>
+</registry>
+</sticker>
