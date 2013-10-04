@@ -21,7 +21,7 @@
 #AC_PREREQ(2.60)
 AC_INIT(
 	[HTML5 PivotViewer], 
-	[0.9],
+	[1.0],
 	[opensource@openlinksw.com],
 	[html5pivotviewer]
 )
