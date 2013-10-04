@@ -1,3 +1,19 @@
+//
+//  HTML5 PivotViewer
+//
+//  Collection loader interface - used so that different types of data sources can be used
+//
+//  Original Code:
+//    Copyright (C) 2011 LobsterPot Solutions - http://www.lobsterpot.com.au/
+//    enquiries@lobsterpot.com.au
+//
+//  Enhancements:
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//
+//  This software is licensed under the terms of the
+//  GNU General Public License v2 (see COPYING)
+//
+
 ///
 /// Deep Zoom Image Getter
 /// Retrieves and caches images
@@ -9,7 +25,9 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         this._baseUrl = "";
         this._collageMaxLevel = 0;
         this._tileSize = 256;
-        this._maxLevel = 0;
+        this._format = "";
+        this._ratio = 1;
+        this.MaxRatio = 1;
 
         this._zooming = false;
         var that = this;
@@ -30,81 +48,75 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
             url: deepzoomCollection,
             dataType: "xml",
             success: function (xml) {
+                var collection = $(xml).find("Collection");
+                that._tileSize = $(collection).attr("TileSize");
+                that._format = $(collection).attr('Format');
+                that._collageMaxLevel = $(collection).attr('MaxLevel');
+
                 var items = $(xml).find("I");
-                if (items.length == 0)
+                if (items.length == 0) {
+                    $('.pv-loading').remove();
+
+                    //Throw an alert so the user knows something is wrong
+                    var msg = '';
+                    msg = msg + 'No items in the DeepZoom Collection<br><br>';
+                    msg = msg + 'URL        : ' + this.url + '<br>';
+                    msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                    $('.pv-wrapper').append("<div id=\"pv-dzloading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                    var t=setTimeout(function(){window.open("#pv-dzloading-error","_self")},1000)
                     return;
+                }
                 
                 //If collection itself contains size information, use first one for now
                 var dzcSize = $(items[0]).find('Size');
                 if (dzcSize.length > 0) {
                     //calculate max level
-                    that.Width = parseInt(dzcSize.attr("Width"));
+                    that.MaxWidth = parseInt(dzcSize.attr("Width"));
+                    // Use height of first image for now...
                     that.Height = parseInt(dzcSize.attr("Height"));
-                    var maxDim = that.Width > that.Height ? that.Width : that.Height;
-                    that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
+                    that.MaxRatio = that.Height/that.MaxWidth;
+
+                    for ( i = 0; i < items.length; i++ ) {
+                        itemSize = $(items[i]).find("Size");
+                        var width = parseInt(itemSize.attr("Width"));
+                        var height = parseInt(itemSize.attr("Height"));
+                        var maxDim = width > height ? width : height;
+                        var maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
+
+                        that._ratio = height / width;
+                        var dziSource = $(items[i]).attr('Source');
+                        var itemId = $(items[i]).attr('Id');
+                        var dzN = $(items[i]).attr('N');
+                        var dzId = dziSource.substring(dziSource.lastIndexOf("/") + 1).replace(/\.xml/gi, "").replace(/\.dzi/gi, "");
+                        var basePath = dziSource.substring(0, dziSource.lastIndexOf("/"));
+                        if (basePath.length > 0)
+                             basePath = basePath + '/';
+                        if (width > that.MaxWidth)
+                            that.MaxWidth = width;
+                        if (that._ratio < that.MaxRatio)  // i.e. biggest width cf height upside down....
+                            that.MaxRatio = that._ratio;
+
+                        that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel, that._baseUrl, dziSource));
+                    }
                 }
 
-                //lets assume that each of the items have the same dzi properties, so just get the first one
-                var dziSource = $(items[0]).attr('Source');
-                $.ajax({
-                    type: "GET",
-                    url: that._baseUrl + "/" + dziSource,
-                    dataType: "xml",
-                    success: function (dzixml) {
-                        //In case we find a dzi, recalculate sizes
-                        var image = $(dzixml).find("Image");
-                        if (image.length == 0)
-                            return;
-
-                        var jImage = $(image[0]);
-                        that._tileSize = jImage.attr('TileSize');
-                        that._tileFormat = jImage.attr('Format');
-                        that._collageMaxLevel = jImage.attr('MaxLevel');
-
-                        //calculate max level
-                        var size = jImage.children().first();
-                        that.Width = parseInt(size.attr("Width"));
-                        that.Height = parseInt(size.attr("Height"));
-                        var maxDim = that.Width > that.Height ? that.Width : that.Height;
-                        that._maxLevel = Math.ceil(Math.log(maxDim) / Math.log(2));
-
-                    },
-                    complete: function (jqXHR, textStatus) {
-                        //At this point we either have size info from collection or first dzi, so continue
-                        for (var i = 0; i < items.length; i++) {
-                            //Create an item image collection
-                            var source = $(items[i]).attr('Source');
-                            var itemId = $(items[i]).attr('Id');
-                            var dzN = $(items[i]).attr('N');
-                            var dzId = source.substring(source.lastIndexOf("/") + 1).replace(/\.xml/gi, "").replace(/\.dzi/gi, "");
-                            var basePath = source.substring(0, source.lastIndexOf("/"));
-                            if (basePath.length > 0)
-                                basePath = basePath + '/';
-                            that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath));
-                        }
-
-                        //Loaded DeepZoom collection
-                        $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        //Make sure throbber is removed else everyone thinks the app is still running
-                        $('.pv-loading').remove();
-                        //No need to throw alert
-                    }
-                });
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
+                
+                 //Loaded DeepZoom collection
+                 $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
+             },
+             error: function(jqXHR, textStatus, errorThrown) {
                 //Make sure throbber is removed else everyone thinks the app is still running
                 $('.pv-loading').remove();
 
                 //Throw an alert so the user knows something is wrong
                 var msg = '';
-                msg = msg + 'Error loading from DeepZoom Cache\r\n\r\n';
-                msg = msg + 'URL        : ' + this.url + '\r\n';
-                msg = msg + 'Statuscode : ' + jqXHR.status + '\r\n';
-                msg = msg + 'Details    : ' + errorThrown + '\r\n';
-                msg = msg + '\r\nPivot Viewer cannot continue until this problem is resolved\r\r';
-                window.alert (msg);
+                msg = msg + 'Error loading from DeepZoom Cache<br><br>';
+                msg = msg + 'URL        : ' + this.url + '<br>';
+                msg = msg + 'Status : ' + jqXHR.status + ' ' + errorThrown + '<br>';
+                msg = msg + 'Details    : ' + jqXHR.responseText + '<br>';
+                msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                $('.pv-wrapper').append("<div id=\"pv-dzloading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                var t=setTimeout(function(){window.open("#pv-dzloading-error","_self")},1000)
             }
         });
     },
@@ -114,12 +126,13 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         //level = (level > _maxLevel ? _maxLevel : level);
 
         //For PoC max level is 8
-        level = (level > 7 ? 7 : level);
+        //level = (level > 8 ? 8 : level);
         level = (level <= 0 ? 6 : level);
 
         //find imageId
         for (var i = 0; i < this._items.length; i++) {
             if (this._items[i].ItemId == id) {
+                level = (level > this._items[i].MaxLevel ? this._items[i].MaxLevel : level);
 
                 //to work out collage image
                 //convert image n to base 2
@@ -139,7 +152,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
 
                 if ((this._items[i].Levels == undefined || this._items[i].Levels.length == 0) && !this._zooming) {
                     //create 0 level
-                    var imageList = this.GetImageList(this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/6/", 6); ;
+                    var imageList = this.GetImageList(i, this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/6/", 6); ;
                     var newLevel = new PivotViewer.Views.LoadImageSetHelper();
                     newLevel.LoadImages(imageList);
                     this._items[i].Levels.push(newLevel);
@@ -147,7 +160,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 }
                 else if (this._items[i].Levels.length < level && !this._zooming) {
                     //requested level does not exist, and the Levels list is smaller than the requested level
-                    var imageList = this.GetImageList(this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/" + level + "/", level);
+                    var imageList = this.GetImageList(i, this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/" + level + "/", level);
                     var newLevel = new PivotViewer.Views.LoadImageSetHelper();
                     newLevel.LoadImages(imageList);
                     this._items[i].Levels.splice(level, 0, newLevel);
@@ -161,7 +174,7 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                     //if request level has not been requested yet
                     if (j == level && this._items[i].Levels[j] == undefined && !this._zooming) {
                         //create array of images to getagePath.replace('.dzi', '').replace('\/\/', '\/');
-                        var imageList = this.GetImageList(this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/" + j + "/", j);
+                        var imageList = this.GetImageList(i, this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + "_files/" + j + "/", j);
                         //create level
                         var newLevel = new PivotViewer.Views.LoadImageSetHelper();
                         newLevel.LoadImages(imageList);
@@ -175,31 +188,118 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         return null;
     },
 
-    GetImageList: function (basePath, level) {
+    GetImageList: function (itemIndex, basePath, level) {
         var fileNames = [];
 
-        var levelWidth = Math.ceil(this.Width / Math.pow(2, this._maxLevel - level));
-        var levelHeight = Math.ceil(this.Height / Math.pow(2, this._maxLevel - level));
+        var tileSize = this._tileSize;
+        var tileFormat = this._format;
+        var ratio = this._items[itemIndex].Ratio;
+        var height = this._items[itemIndex].Height;
+        var maxLevel = this._items[itemIndex].MaxLevel;
+
+        var levelWidth = Math.ceil( (height/ratio) / Math.pow(2, maxLevel - level));
+        var levelHeight = Math.ceil(height / Math.pow(2, maxLevel - level));
         //based on the width for this level, get the slices based on the DZ Tile Size
-        var hslices = Math.ceil(levelWidth / this._tileSize);
-        var vslices = Math.ceil(levelHeight / this._tileSize);
+        var hslices = Math.ceil(levelWidth / tileSize);
+        var vslices = Math.ceil(levelHeight / tileSize);
 
         //Construct list of file names based on number of vertical and horizontal images
         for (var i = 0; i < hslices; i++) {
             for (var j = 0; j < vslices; j++) {
-                fileNames.push(basePath + i + "_" + j + "." + this._tileFormat);
+                fileNames.push(basePath + i + "_" + j + "." + tileFormat);
             }
         }
         return fileNames;
+    },
+
+    GetWidthForImage: function( id, height ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return Math.floor(height / this._items[i].Ratio);
+            }
+        }
+    },
+
+    GetDzi: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               dziName = this._baseUrl + "/" + this._items[i].BasePath + this._items[i].DZId + ".dzi";
+               return dziName;
+            }
+        }
+    },
+
+    GetMaxLevel: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].MaxLevel;
+            }
+        }
+    },
+
+    GetWidth: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Width;
+            }
+        }
+    },
+
+    GetHeight: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Height;
+            }
+        }
+    },
+    GetOverlap: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Overlap;
+            }
+        }
+    },
+    GetRatio: function( id ) {
+        for (var i = 0; i < this._items.length; i++) {
+            if (this._items[i].ItemId == id) {
+               return this._items[i].Ratio;
+            }
+        }
     }
 });
 
-PivotViewer.Views.DeepZoomItem = Object.subClass({
-    init: function (ItemId, DZId, DZn, BasePath) {
+PivotViewer.Views.DeepZoomItem = Object.subClass({    init: function (ItemId, DZId, DZn, BasePath, Ratio, Width, Height, MaxLevel, baseUrl, dziSource) {
         this.ItemId = ItemId,
         this.DZId = DZId,
         this.DZN = parseInt(DZn),
         this.BasePath = BasePath,
-        this.Levels = [];
+        this.Levels = [];    //jch                    
+        this.Ratio = Ratio;  
+        this.Width = Width;
+        this.Height = Height;
+        this.MaxLevel = MaxLevel;
+        var that = this;
+        //this.Overlap = Overlap;
+        // get overlap info from dzi
+        $.ajax({
+            type: "GET",
+            url: baseUrl + "/" + dziSource,
+            dataType: "xml",
+            success: function (dzixml) {
+                //In case we find a dzi, recalculate sizes
+                var image = $(dzixml).find("Image");
+                if (image.length == 0)
+                    return;
+        
+                var jImage = $(image[0]);
+                that.Overlap = jImage.attr('Overlap');
+            },
+            complete: function(jqXHR, textStatus) {
+                //that._items.push(new PivotViewer.Views.DeepZoomItem(itemId, dzId, dzN, basePath, that._ratio, width, height, maxLevel, that._overlap));
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                that.Overlap = 0;
+            }
+        });
     }
 });

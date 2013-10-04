@@ -1,3 +1,19 @@
+//
+//  HTML5 PivotViewer
+//
+//  Collection loader interface - used so that different types of data sources can be used
+//
+//  Original Code:
+//    Copyright (C) 2011 LobsterPot Solutions - http://www.lobsterpot.com.au/
+//    enquiries@lobsterpot.com.au
+//
+//  Enhancements:
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//
+//  This software is licensed under the terms of the
+//  GNU General Public License v2 (see COPYING)
+//
+
 Debug.Log = function (message) {
     if (window.console && window.console.log && typeof debug != "undefined" && debug == true) {
         window.console.log(message);
@@ -40,6 +56,10 @@ PivotViewer.Utils.EscapeItemId = function (itemId) {
             .replace(/\)/gi, "")
             .replace(/\./gi, "");
 };
+
+PivotViewer.Utils.HtmlSpecialChars = function (orig) {
+    return jQuery('<div />').text(orig).html();
+}
 
 PivotViewer.Utils.Now = function () {
     if (Date.now)

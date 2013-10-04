@@ -1,0 +1,88 @@
+#
+#  HTML5 PivotViewer
+#
+#  Credits
+#
+
+jQuery
+<http://jquery.com/>
+
+    jQuery is a fast, small, and feature-rich JavaScript library. It makes 
+    things like HTML document traversal and manipulation, event handling, 
+    animation, and Ajax much simpler with an easy-to-use API that works across
+    a multitude of browsers.
+
+    jQuery is provided under the MIT license.
+    <http://jquery.org/license/>
+
+
+jQuery UI
+<http://jqueryui.com/>
+
+    jQuery UI is a curated set of user interface interactions, effects, widgets,
+    and themes built on top of the jQuery JavaScript Library. 
+
+    jQuery UI is provided under the MIT license.
+    <https://github.com/jquery/jqueryui.com/blob/master/LICENSE-MIT.txt>
+
+
+Modernizr
+<http://modernizr.com/>
+
+    Modernizr is a JavaScript library that detects HTML5 and CSS3 features 
+    in the user’s browser.
+
+    Modernizr is available under the MIT license.
+    <http://modernizr.com/license/>
+
+
+jQuery Mouse Wheel Plugin
+<https://github.com/brandonaaron/jquery-mousewheel>
+
+    A jQuery plugin that adds cross-browser mouse wheel support.
+
+    This plugin is licensed under the MIT License.
+    <https://github.com/brandonaaron/jquery-mousewheel/blob/master/LICENSE.txt>
+
+
+jquery.tooltipster
+<http://calebjacob.com/tooltipster/>
+
+    A powerful, flexible jQuery plugin enabling you to easily create semantic,
+    modern tooltips enhanced with the power of CSS.
+
+    Developed and maintained by Caleb Jacob under the MIT License
+    <http://opensource.org/licenses/MIT>
+
+
+EasingJS
+<http://pablotron.org/software/easing-js/>
+
+    EasingJS is a port of Robert Penner's ActionScript easing library. This 
+    library allows you to easily animate motion and color transitions in a 
+    smooth and stylish manner. 
+
+    Licensed under an MIT-style license.
+
+
+colResizable 1.3
+<https://github.com/alvaro-prieto/colResizable>
+
+    This  includes colResizable jQuery plugin designed to enhance HTML tables
+    adding column resizing features.
+
+    Licensed under a GPL-style or MIT-style license.
+    https://github.com/alvaro-prieto/colResizable/blob/master/GPL-LICENSE.txt
+    https://github.com/alvaro-prieto/colResizable/blob/master/MIT-LICENSE.txt
+
+
+Purl (A JavaScript URL parser) v2.3.1
+<https://github.com/allmarkedup/purl>
+
+    A utility to parse urls and provide easy access to their attributes 
+    (such as the protocol, host, port etc), path segments, query string 
+    parameters, fragment parameters and more.
+
+    Licensed under an MIT-style license.
+    https://github.com/allmarkedup/purl/blob/master/LICENSE
+

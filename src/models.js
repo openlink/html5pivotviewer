@@ -1,3 +1,17 @@
+//
+//  HTML5 PivotViewer
+//
+//  Original Code:
+//    Copyright (C) 2011 LobsterPot Solutions - http://www.lobsterpot.com.au/
+//    enquiries@lobsterpot.com.au
+//
+//  Enhancements:
+//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//
+//  This software is licensed under the terms of the
+//  GNU General Public License v2 (see COPYING)
+//
+
 PivotViewer.Models.Collection = Object.subClass({
 	init: function () {
 		var xmlns = "http://schemas.microsoft.com/collection/metadata/2009",
@@ -8,6 +22,9 @@ PivotViewer.Models.Collection = Object.subClass({
 		this.Items = [];
 		this.CXMLBase = "";
 		this.ImageBase = "";
+                this.CopyrightName = "";
+                this.CopyrightHref = "";
+                this.MaxRelatedLinks = 0;
 	},
 	GetItemById: function (Id) {
 		for (var i = 0; i < this.Items.length; i++) {
@@ -54,6 +71,14 @@ PivotViewer.Models.Item = Object.subClass({
 		this.Name = Name,
 		this.Description,
 		this.Facets = [];
+                this.Links = [];
+	}
+});
+
+PivotViewer.Models.ItemLink = Object.subClass({
+	init: function (Name, Href) {
+                 this.Name = Name;
+                 this.Href = Href;
 	}
 });
 
