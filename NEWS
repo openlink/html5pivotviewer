@@ -1,11 +1,14 @@
 Oct 04 2013, V1.00.0:
 
-    * Added new view to display collection data as a table.
-    * Added new view to display collection data on a map.
-      NOTE: Requires Google Maps API key.
-    * Improved image display - higher resolution images are assembled from multiple deepzoom tiles and all images are now displayed with the correct aspect ratio.
-    * Added support for creating permalinks that include itema and view selection.
-    * Added new html example file to the project
-    * Improved error handling
-    * Added support for jquery 1.9.1 and jquery-ui 1.10.2
-    * Graph view filtering now works for numeric data as well as strings
+ * Added new view to display collection data as a table.
+ * Added new view to display collection data on a map.
+   NOTE: Requires Google Maps API key.
+ * Improved image display - higher resolution images are assembled
+   from multiple deepzoom tiles and all images are now displayed with
+   the correct aspect ratio.
+ * Added support for creating permalinks that include item and view
+   selection.
+ * Added new html example file to the project
+ * Improved error handling
+ * Added support for jquery 1.9.1 and jquery-ui 1.10.2
+ * Graph view filtering now works for numeric data as well as strings
