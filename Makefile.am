@@ -19,22 +19,22 @@ BUILT_SOURCES	= $(GENERATED)
 GEN		= $(SHELL) $(top_srcdir)/admin/generate
 
 SOURCES		= \
-	$(srcdir)/src/collectionloader.js \
-	$(srcdir)/src/models.js \
 	$(srcdir)/src/namespaces.js \
 	$(srcdir)/src/pubsub.js \
 	$(srcdir)/src/utils.js \
+	$(srcdir)/src/models.js \
+	$(srcdir)/src/collectionloader.js \
+	$(srcdir)/src/views/ipivotviewerview.js \
+	$(srcdir)/src/views/tilebasedview.js \
 	$(srcdir)/src/views/dataview.js \
-	$(srcdir)/src/views/deepzoom.js \
 	$(srcdir)/src/views/graphview.js \
 	$(srcdir)/src/views/gridview.js \
 	$(srcdir)/src/views/iimagecontroller.js \
-	$(srcdir)/src/views/ipivotviewerview.js \
 	$(srcdir)/src/views/LoadImageSetHelper.js \
 	$(srcdir)/src/views/mapview.js \
 	$(srcdir)/src/views/tableview.js \
-	$(srcdir)/src/views/tilebasedview.js \
 	$(srcdir)/src/views/tilecontroller.js \
+	$(srcdir)/src/views/deepzoom.js \
 	$(srcdir)/src/pivotviewer.js
 
 vad_DATA = html5pivotviewer_dav.vad
