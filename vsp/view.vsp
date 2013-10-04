@@ -34,6 +34,7 @@
     declare _addthis_key varchar;
     declare _urchin_key varchar;
     declare _bingmaps_key varchar;
+    declare _googlemaps_key varchar;
     declare _desc_qr, _desc_res_uri varchar;
     declare _enable_translation varchar;
     declare _translation_source_lang varchar;
@@ -55,6 +56,9 @@
 
     _bingmaps_key := registry_get ('_pivot_BingMapsKey');
     if (0 = _bingmaps_key) _bingmaps_Key := '';
+
+    _googlemaps_key := registry_get ('_pivot_GoogleMapsKey');
+    if (0 = _googlemaps_key) _googlemaps_Key := '';
 
     _enable_translation := registry_get ('_pivot_enableTranslation');
     if ('false' = _enable_translation) _enable_translation := 0;
@@ -317,6 +321,8 @@
 	  http (_proxy);
 	  http ('"), ViewerState: "');
 	  http (_bookmark);
+          http ('", GoogleAPIKey: "');
+          http (_googlemaps_key);
           http ('"});\n });\n ');
 	  http ('</script>');
         }
