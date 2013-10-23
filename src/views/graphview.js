@@ -407,6 +407,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
     },
     GetDatetimeBuckets: function (bktArray, filterList, name) {
         var newBkts = [];
+        var handled = [];
         for (var i = 0; i < bktArray.length; i++) {
             var datetimeitem = $('#pv-facet-item' + CleanName(name) + "__" + CleanName(bktArray[i].Name.toString()));
             for (var j = 0; j < filterList.length; j++) {
@@ -424,9 +425,19 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                         else
                             newBkts.push({startRange: bktArray[i].Name, endRange: bktArray[i].Name, Ids:[filterList[j]], Values:[bktArray[i].Name]});
                     }
+                    handled.push(filterList[j]);
                 }
             }
         }
+        // Anything in the filter list that isn't now in a bucket needs to go in the '(no info)' bucket
+        newBkts.push({startRange: '(no info)', endRange: '(no info)', Ids:[], Values:['(no info)']});
+        for (var k = 0; k < filterList.length; k++) {
+            if (handled.indexOf(filterList[k]) == -1)
+                newBkts[newBkts.length - 1].Ids.push(filterList[k]);
+        }
+        if (newBkts[newBkts.length - 1].Ids.length == 0)
+            newBkts.pop();
+
         return newBkts;
     },
     //Groups into buckets based on first n chars
