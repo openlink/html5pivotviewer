@@ -186,7 +186,7 @@
 
         //select first view
         if (_viewerState.View != null) {
-            if (_viewerState.View != 0 || _viewerState.View  != 1) {
+            if (_viewerState.View != 0 && _viewerState.View  != 1) {
                 // Always have to initialize tiles one way or another
                 SelectView(0, true);
                 // Set handled init back to false
