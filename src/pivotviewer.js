@@ -23,6 +23,7 @@
         _wordWheelItems = [], //used for quick access to search values
 	_stringFacets = [],
 	_numericFacets = [],
+	_datetimeFacets = [],
         _currentView = 0,
         _loadingInterval,
         _tileController,
