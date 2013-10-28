@@ -1362,6 +1362,7 @@
         //Find the datetime buckets that we are displaying and set relevant
         //visibility and counts
         for (var i = 0; i < PivotCollection.FacetCategories.length; i++) {
+if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
             if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime ) {
                 var category = PivotCollection.FacetCategories[i];
 
@@ -1381,6 +1382,7 @@
                     BucketCounts(category.secondBuckets, category.Name, filterItems);
             }
         }
+}
     };
 
     UpdateBreadcrumbNavigation = function (stringFacets, numericFacets, datetimeFacets) {
