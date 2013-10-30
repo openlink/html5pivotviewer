@@ -451,6 +451,7 @@
                         facets[i + 1] += CreateHiddenBucketizedDateTimeFacets(PivotCollection.FacetCategories[i].Name, PivotCollection.FacetCategories[i].minuteBuckets);
                     }
                     facets[i + 1] += CreateDatetimeNoInfoFacet(PivotCollection.FacetCategories[i].Name);
+                    facets[i + 1] += CreateCustomRange(PivotCollection.FacetCategories[i].Name);
 		}
                 else if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.String ||
                          PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Link) {
@@ -538,6 +539,25 @@
             facetControls[facetControls.length] = "</ul>";
         }
 
+        return facetControls.join('');
+    };
+
+    CreateCustomRange = function (facetName) {
+        var facetControls = ["<ul class='pv-filterpanel-accordion-facet-list'>"];
+        facetControls[1] = "<li class='pv-filterpanel-accordion-facet-list-item'  id='pv-facet-item-" + CleanName(facetName) + "__" + "_CustomRange'>";
+        facetControls[1] += "<input itemvalue='CustomRange' itemfacet='" + CleanName(facetName) + "' class='pv-facet-facetitem' type='checkbox' />"
+        facetControls[1] += "<span class='pv-facet-facetitem-label' title='Custom Range'>Custom Range</span>";
+        facetControls[1] += "</li>";
+    facetControls[1] += "<ul class='pv-filterpanel-accordion-facet-list'>"
+    facetControls[1] += "<li class='pv-filterpanel-accordion-facet-list-item' id='pv-custom-range-" + CleanName(facetName) + "__Start' style='visibility:hidden;float:right'>"
+    facetControls[1] += "<span class='pv-facet-customrange-label' title='Start Date' >Start:</span>"
+    facetControls[1] += "<input itemvalue='CustomRangeStart' itemfacet='" + CleanName(facetName) + "' id='pv-custom-range-" + CleanName(facetName) + "__StartDate' class='pv-facet-customrange' type='text'/>"
+    facetControls[1] += "</li>";
+    facetControls[1] += "<li class='pv-filterpanel-accordion-facet-list-item' id='pv-custom-range-" + CleanName(facetName) + "__Finish' style='visibility:hidden;float:right'>"
+    facetControls[1] += "<span class='pv-facet-customrange-label' title='End Date'>End:</span>"
+    facetControls[1] += "<input itemvalue='CustomRangeFinish' itemfacet='" + CleanName(facetName) + "' id='pv-custom-range-" + CleanName(facetName) + "__FinishDate' class='pv-facet-customrange' type='text'/>"
+    facetControls[1] += "</li>";
+        facetControls[facetControls.length] = "</ul>";
         return facetControls.join('');
     };
 
@@ -853,15 +873,22 @@
                 if ($.inArray(facet, selectedFacets) < 0)
                     selectedFacets.push(facet);
             } else if (category.Type == PivotViewer.Models.FacetType.DateTime) {
+                
+                var start = $('#pv-custom-range-' + CleanName(facet) + '__StartDate')[0].value;
+                var end = $('#pv-custom-range-' + CleanName(facet) + '__FinishDate')[0].value;
+                if (start && end) {
+                    datetimeFacets.push({ facet: facet, facetValue: [facetValue], minDate: new Date(start), maxDate: new Date(end) });
+                } else {
                 var found = false;
-                for (var j = 0; j < datetimeFacets.length; j++) {
-                    if (datetimeFacets[j].facet == facet) {
-                        datetimeFacets[j].facetValue.push(facetValue);
-                        found = true;
+                    for (var j = 0; j < datetimeFacets.length; j++) {
+                        if (datetimeFacets[j].facet == facet) {
+                            datetimeFacets[j].facetValue.push(facetValue);
+                            found = true;
+                        }
                     }
+                    if (!found)
+                        datetimeFacets.push({ facet: facet, facetValue: [facetValue] });
                 }
-                if (!found)
-                    datetimeFacets.push({ facet: facet, facetValue: [facetValue] });
         
                 //Add to selected facets list - this is then used to filter the facet list counts
                 if ($.inArray(facet, selectedFacets) < 0)
@@ -1001,78 +1028,86 @@
                     var valueFoundForFacet = 0;
 
                     if (PivotCollection.Items[i].Facets[j].Name == datetimeFacets[k].facet) {
-                        var category = PivotCollection.GetFacetCategoryByName(datetimeFacets[k].facet);
-                        // So I have the itemId PivotCollection.Items[i].Id
-                        // I have the selected bucket
-                        // I need to find the selected bucket in one of the bucket arrays but I don't know which one
-                        // First search the decade buckets
-                        for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
-                            for (l = 0; l < category.decadeBuckets.length; l++) {
-                                if (category.decadeBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
-                                    for (var m = 0; m < category.decadeBuckets[l].Items.length; m++) {
-                                        if (category.decadeBuckets[l].Items[m] == PivotCollection.Items[i].Id)
-                                            valueFoundForFacet++;
-                                    }
+                        if (datetimeFacets[k].minDate && datetimeFacets[k].maxDate) {
+                            var itemDate = new Date (PivotCollection.Items[i].Facets[j].FacetValues[0].Value);
+                            if ( itemDate <= datetimeFacets[k].maxDate &&
+                                 itemDate >= datetimeFacets[k].minDate) {
+                                valueFoundForFacet++;
                             }
-                        }
-                        // year buckets
-                        for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
-                            for (l = 0; l < category.yearBuckets.length; l++) {
-                                if (category.yearBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
-                                    for (var m = 0; m < category.yearBuckets[l].Items.length; m++) {
-                                        if (category.yearBuckets[l].Items[m] == PivotCollection.Items[i].Id)
-                                            valueFoundForFacet++;
-                                    }
+                        } else {
+                            var category = PivotCollection.GetFacetCategoryByName(datetimeFacets[k].facet);
+                            // So I have the itemId PivotCollection.Items[i].Id
+                            // I have the selected bucket
+                            // I need to find the selected bucket in one of the bucket arrays but I don't know which one
+                            // First search the decade buckets
+                            for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
+                                for (l = 0; l < category.decadeBuckets.length; l++) {
+                                    if (category.decadeBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
+                                        for (var m = 0; m < category.decadeBuckets[l].Items.length; m++) {
+                                            if (category.decadeBuckets[l].Items[m] == PivotCollection.Items[i].Id)
+                                                valueFoundForFacet++;
+                                        }
+                                }
                             }
-                        }
-                        // month buckets
-                        for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
-                            for (l = 0; l < category.monthBuckets.length; l++) {
-                                if (category.monthBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
-                                    for (var m = 0; m < category.monthBuckets[l].Items.length; m++) {
-                                        if (category.monthBuckets[l].Items[m] == PivotCollection.Items[i].Id)
-                                            valueFoundForFacet++;
-                                    }
+                            // year buckets
+                            for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
+                                for (l = 0; l < category.yearBuckets.length; l++) {
+                                    if (category.yearBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
+                                        for (var m = 0; m < category.yearBuckets[l].Items.length; m++) {
+                                            if (category.yearBuckets[l].Items[m] == PivotCollection.Items[i].Id)
+                                                valueFoundForFacet++;
+                                        }
+                                }
                             }
-                        }
-                        // day buckets
-                        for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
-                            for (l = 0; l < category.dayBuckets.length; l++) {
-                                if (category.dayBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
-                                    for (var m = 0; m < category.dayBuckets[l].Items.length; m++) {
-                                        if (category.dayBuckets[l].Items[m] == PivotCollection.Items[i].Id)
-                                            valueFoundForFacet++;
-                                    }
+                            // month buckets
+                            for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
+                                for (l = 0; l < category.monthBuckets.length; l++) {
+                                    if (category.monthBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
+                                        for (var m = 0; m < category.monthBuckets[l].Items.length; m++) {
+                                            if (category.monthBuckets[l].Items[m] == PivotCollection.Items[i].Id)
+                                                valueFoundForFacet++;
+                                        }
+                                }
                             }
-                        }
-                        // hour buckets
-                        for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
-                            for (l = 0; l < category.hourBuckets.length; l++) {
-                                if (category.hourBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
-                                    for (var m = 0; m < category.hourBuckets[l].Items.length; m++) {
-                                        if (category.hourBuckets[l].Items[m] == PivotCollection.Items[i].Id)
-                                            valueFoundForFacet++;
-                                    }
+                            // day buckets
+                            for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
+                                for (l = 0; l < category.dayBuckets.length; l++) {
+                                    if (category.dayBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
+                                        for (var m = 0; m < category.dayBuckets[l].Items.length; m++) {
+                                            if (category.dayBuckets[l].Items[m] == PivotCollection.Items[i].Id)
+                                                valueFoundForFacet++;
+                                        }
+                                }
                             }
-                        }
-                        // minute buckets
-                        for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
-                            for (l = 0; l < category.minuteBuckets.length; l++) {
-                                if (category.minuteBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
-                                    for (var m = 0; m < category.minuteBuckets[l].Items.length; m++) {
-                                        if (category.minuteBuckets[l].Items[m] == PivotCollection.Items[i].Id)
-                                            valueFoundForFacet++;
-                                    }
+                            // hour buckets
+                            for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
+                                for (l = 0; l < category.hourBuckets.length; l++) {
+                                    if (category.hourBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
+                                        for (var m = 0; m < category.hourBuckets[l].Items.length; m++) {
+                                            if (category.hourBuckets[l].Items[m] == PivotCollection.Items[i].Id)
+                                                valueFoundForFacet++;
+                                        }
+                                }
                             }
-                        }
-                        // second buckets
-                        for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
-                            for (l = 0; l < category.secondBuckets.length; l++) {
-                                if (category.secondBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
-                                    for (var m = 0; m < category.secondBuckets[l].Items.length; m++) {
-                                        if (category.secondBuckets[l].Items[m] == PivotCollection.Items[i].Id)
-                                            valueFoundForFacet++;
-                                    }
+                            // minute buckets
+                            for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
+                                for (l = 0; l < category.minuteBuckets.length; l++) {
+                                    if (category.minuteBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
+                                        for (var m = 0; m < category.minuteBuckets[l].Items.length; m++) {
+                                            if (category.minuteBuckets[l].Items[m] == PivotCollection.Items[i].Id)
+                                                valueFoundForFacet++;
+                                        }
+                                }
+                            }
+                            // second buckets
+                            for (var n = 0, _nLen = datetimeFacets[k].facetValue.length; n < _nLen; n++) {
+                                for (l = 0; l < category.secondBuckets.length; l++) {
+                                    if (category.secondBuckets[l].Name == datetimeFacets[k].facetValue[n]) 
+                                        for (var m = 0; m < category.secondBuckets[l].Items.length; m++) {
+                                            if (category.secondBuckets[l].Items[m] == PivotCollection.Items[i].Id)
+                                                valueFoundForFacet++;
+                                        }
+                                }
                             }
                         }
                     }
@@ -1362,27 +1397,27 @@
         //Find the datetime buckets that we are displaying and set relevant
         //visibility and counts
         for (var i = 0; i < PivotCollection.FacetCategories.length; i++) {
-if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
-            if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime ) {
-                var category = PivotCollection.FacetCategories[i];
-
-                if (category.decadeBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.decadeBuckets[0].Name.toString())).css('visibility') != 'hidden') 
-                    BucketCounts(category.decadeBuckets, category.Name, filterItems);
-                if (category.yearBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.yearBuckets[0].Name.toString())).css('visibility') != 'hidden') 
-                    BucketCounts(category.yearBuckets, category.Name, filterItems);
-                if (category.monthBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.monthBuckets[0].Name.toString())).css('visibility') != 'hidden') 
-                    BucketCounts(category.monthBuckets, category.Name, filterItems);
-                if (category.dayBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.dayBuckets[0].Name.toString())).css('visibility') != 'hidden') 
-                    BucketCounts(category.dayBuckets, category.Name, filterItems);
-                if (category.hourBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.hourBuckets[0].Name.toString())).css('visibility') != 'hidden') 
-                    BucketCounts(category.hourBuckets, category.Name, filterItems);
-                if (category.minuteBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.minuteBuckets[0].Name.toString())).css('visibility') != 'hidden') 
-                    BucketCounts(category.minuteBuckets, category.Name, filterItems);
-                if (category.secondBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.secondBuckets[0].Name.toString())).css('visibility') != 'hidden') 
-                    BucketCounts(category.secondBuckets, category.Name, filterItems);
+            if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
+                if (PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.DateTime ) {
+                    var category = PivotCollection.FacetCategories[i];
+        
+                    if (category.decadeBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.decadeBuckets[0].Name.toString())).css('visibility') != 'hidden') 
+                        BucketCounts(category.decadeBuckets, category.Name, filterItems);
+                    if (category.yearBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.yearBuckets[0].Name.toString())).css('visibility') != 'hidden') 
+                        BucketCounts(category.yearBuckets, category.Name, filterItems);
+                    if (category.monthBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.monthBuckets[0].Name.toString())).css('visibility') != 'hidden') 
+                        BucketCounts(category.monthBuckets, category.Name, filterItems);
+                    if (category.dayBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.dayBuckets[0].Name.toString())).css('visibility') != 'hidden') 
+                        BucketCounts(category.dayBuckets, category.Name, filterItems);
+                    if (category.hourBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.hourBuckets[0].Name.toString())).css('visibility') != 'hidden') 
+                        BucketCounts(category.hourBuckets, category.Name, filterItems);
+                    if (category.minuteBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.minuteBuckets[0].Name.toString())).css('visibility') != 'hidden') 
+                        BucketCounts(category.minuteBuckets, category.Name, filterItems);
+                    if (category.secondBuckets.length > 0 && $('#pv-facet-item-' + CleanName(category.Name) + "__" + CleanName(category.secondBuckets[0].Name.toString())).css('visibility') != 'hidden') 
+                        BucketCounts(category.secondBuckets, category.Name, filterItems);
+                }
             }
         }
-}
     };
 
     UpdateBreadcrumbNavigation = function (stringFacets, numericFacets, datetimeFacets) {
@@ -1787,6 +1822,8 @@ if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
             var checked = $('.pv-facet-facetitem:checked');
             for (var i = 0; i < checked.length; i++) {
                 $(checked[i]).prop('checked', false);
+                if ($(checked[i]).attr('itemvalue') == "CustomRange") 
+                    HideCustomDateRange($(checked[i]).attr('itemfacet'));
             }
             //Reset all Numeric Facets
             var sliders = $('.pv-filterpanel-numericslider');
@@ -1813,6 +1850,7 @@ if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
                 var checked = $(this.parentElement).next().find('.pv-facet-facetitem:checked');
                 for (var i = 0; i < checked.length; i++) {
                     $(checked[i]).prop('checked', false);
+                    HideCustomDateRange($(checked[i]).attr('itemfacet'));
                 }
             } else if (facetType == "String") {
                 //get selected items in current group
@@ -1835,6 +1873,10 @@ if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
         //Numeric facet type slider drag
         $('.ui-slider-range').on('mousedown', function (e) {
             //drag it
+        });
+        //Datetime Facet Custom Range Text input changed
+        $('.pv-facet-customrange').on('change', function (e) {
+            CustomRangeChanged(this);
         });
         //Info panel
         $('.pv-infopanel-details').on('click', '.detail-item-value-filter', function (e) {
@@ -2083,7 +2125,12 @@ if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
     FacetItemClick = function (checkbox) {
         if ($(checkbox).prop('checked') == true) {
             $(checkbox.parentElement.parentElement.parentElement).prev().find('.pv-filterpanel-accordion-heading-clear').css('visibility', 'visible');
-        }
+            if ($(checkbox).attr('itemvalue') == "CustomRange"){
+                GetCustomDateRange($(checkbox).attr('itemfacet'));
+                return;
+            }
+        } else if ($(checkbox).prop('checked') == false && $(checkbox).attr('itemvalue') == "CustomRange")
+                HideCustomDateRange($(checkbox).attr('itemfacet'));
         FilterCollection(false);
     };
 
@@ -2190,6 +2237,55 @@ if ($.inArray(PivotCollection.FacetCategories[i].Name, selectedFacets) < 0) {
             currentFacetCategory.hourBuckets.sort(function (a, b) {return a.StartDate - b.StartDate});
             currentFacetCategory.minuteBuckets.sort(function (a, b) {return a.StartDate - b.StartDate});
             currentFacetCategory.secondBuckets.sort(function (a, b) {return a.StartDate - b.StartDate});
+        }
+    };
+
+    HideCustomDateRange = function (facetName) {
+        $('#pv-custom-range-' + CleanName(facetName) + '__Start').css('visibility', 'hidden'); 
+        $('#pv-custom-range-' + CleanName(facetName) + '__Finish').css('visibility', 'hidden'); 
+        $('#pv-custom-range-' + CleanName(facetName) + '__StartDate').datepicker("setDate", null);
+        $('#pv-custom-range-' + CleanName(facetName) + '__FinishDate').datepicker("setDate", null);
+    };
+
+    GetCustomDateRange = function (facetName) {
+        $('#pv-custom-range-' + CleanName(facetName) + '__Start').css('visibility', 'visible'); 
+        $('#pv-custom-range-' + CleanName(facetName) + '__Finish').css('visibility', 'visible'); 
+        $('#pv-custom-range-' + CleanName(facetName) + '__StartDate').datepicker({
+            showOn: 'button',
+            buttonText: 'Show Date',
+            buttonImageOnly: true,
+            buttonImage: 'http://jqueryui.com/resources/demos/datepicker/images/calendar.gif'
+        });
+        $('#pv-custom-range-' + CleanName(facetName) + '__FinishDate').datepicker({
+            showOn: 'button',
+            buttonText: 'Show Date',
+            buttonImageOnly: true,
+            buttonImage: 'http://jqueryui.com/resources/demos/datepicker/images/calendar.gif'
+        });
+    };
+
+    CustomRangeChanged = function (textbox) {
+        var start;        
+        var end;
+        if ($(textbox).attr('itemvalue') == "CustomRangeStart") {
+            // Check we have value for matching end
+            start = $(textbox)[0].value;
+            end = $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__FinishDate')[0].value;
+            $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__FinishDate').datepicker("option", "minDate", new Date(start));
+        } else if ($(textbox).attr('itemvalue') == "CustomRangeFinish") {
+            // Check we have value for matching start
+            end = $(textbox)[0].value;
+            start = $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__StartDate')[0].value;
+            $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__StartDate').datepicker("option", "maxDate", new Date(end));
+        }
+        if (start && end) {
+            // Clear any filters already set for this facet
+            var checked = $(textbox.parentElement.parentElement.parentElement.parentElement.children).next().find('.pv-facet-facetitem:checked');
+            for (var i = 0; i < checked.length; i++) {
+                if ($(checked[i]).attr('itemvalue') != 'CustomRange')
+                    $(checked[i]).prop('checked', false);
+            }
+            FilterCollection(false);
         }
     };
 
