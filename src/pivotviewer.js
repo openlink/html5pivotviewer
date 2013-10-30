@@ -2176,7 +2176,7 @@
     CreateDatetimeBuckets = function () {
         var months = new Array(12);
         months[0] = "January";
-        months[1] = "Febuary";
+        months[1] = "February";
         months[2] = "March";
         months[3] = "April";
         months[4] = "May";
