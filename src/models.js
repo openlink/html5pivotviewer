@@ -53,6 +53,13 @@ PivotViewer.Models.FacetCategory = Object.subClass({
 		this.IsMetaDataVisible = IsMetaDataVisible != null && IsMetaDataVisible != undefined ? IsMetaDataVisible : true;
 		this.IsWordWheelVisible = IsWordWheelVisible != null && IsWordWheelVisible != undefined ? IsWordWheelVisible : true;
 		this.CustomSort;
+                this.decadeBuckets = [];
+                this.yearBuckets = [];
+                this.monthBuckets = [];
+                this.dayBuckets = [];
+                this.hourBuckets = [];
+                this.minuteBuckets = [];
+                this.secondBuckets = [];
 	}
 });
 
@@ -96,6 +103,14 @@ PivotViewer.Models.FacetValue = Object.subClass({
 	init: function (Value) {
 		this.Value = Value;
 		this.Href = "";
+	}
+});
+
+PivotViewer.Models.DateTimeInfo = Object.subClass({
+	init: function (Name, StartDate) {
+		this.Name = Name;
+                this.StartDate = StartDate;
+		this.Items = [];
 	}
 });
 
