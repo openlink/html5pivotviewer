@@ -2199,7 +2199,7 @@
                    var currentItem = PivotCollection.Items[j];
                    for (var k = 0; k < currentItem.Facets.length; k++) {
                        if (currentItem.Facets[k].Name == currentFacetCategory.Name) {
-                           value = currentItem.Facets[i].FacetValues[0];
+                           value = currentItem.Facets[k].FacetValues[0];
                            var dateValue = new Date(value.Value);
                        
                            // get date and time parts...
@@ -2241,22 +2241,22 @@
     };
 
     HideCustomDateRange = function (facetName) {
-        $('#pv-custom-range-' + CleanName(facetName) + '__Start').css('visibility', 'hidden'); 
-        $('#pv-custom-range-' + CleanName(facetName) + '__Finish').css('visibility', 'hidden'); 
-        $('#pv-custom-range-' + CleanName(facetName) + '__StartDate').datepicker("setDate", null);
-        $('#pv-custom-range-' + CleanName(facetName) + '__FinishDate').datepicker("setDate", null);
+        $('#pv-custom-range-' + facetName + '__Start').css('visibility', 'hidden'); 
+        $('#pv-custom-range-' + facetName + '__Finish').css('visibility', 'hidden'); 
+        $('#pv-custom-range-' + facetName + '__StartDate').datepicker("setDate", null);
+        $('#pv-custom-range-' + facetName + '__FinishDate').datepicker("setDate", null);
     };
 
     GetCustomDateRange = function (facetName) {
-        $('#pv-custom-range-' + CleanName(facetName) + '__Start').css('visibility', 'visible'); 
-        $('#pv-custom-range-' + CleanName(facetName) + '__Finish').css('visibility', 'visible'); 
-        $('#pv-custom-range-' + CleanName(facetName) + '__StartDate').datepicker({
+        $('#pv-custom-range-' + facetName + '__Start').css('visibility', 'visible'); 
+        $('#pv-custom-range-' + facetName + '__Finish').css('visibility', 'visible'); 
+        $('#pv-custom-range-' + facetName + '__StartDate').datepicker({
             showOn: 'button',
             buttonText: 'Show Date',
             buttonImageOnly: true,
             buttonImage: 'http://jqueryui.com/resources/demos/datepicker/images/calendar.gif'
         });
-        $('#pv-custom-range-' + CleanName(facetName) + '__FinishDate').datepicker({
+        $('#pv-custom-range-' + facetName + '__FinishDate').datepicker({
             showOn: 'button',
             buttonText: 'Show Date',
             buttonImageOnly: true,
@@ -2270,13 +2270,13 @@
         if ($(textbox).attr('itemvalue') == "CustomRangeStart") {
             // Check we have value for matching end
             start = $(textbox)[0].value;
-            end = $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__FinishDate')[0].value;
-            $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__FinishDate').datepicker("option", "minDate", new Date(start));
+            end = $('#pv-custom-range-' + $(textbox).attr('itemfacet') + '__FinishDate')[0].value;
+            $('#pv-custom-range-' + $(textbox).attr('itemfacet') + '__FinishDate').datepicker("option", "minDate", new Date(start));
         } else if ($(textbox).attr('itemvalue') == "CustomRangeFinish") {
             // Check we have value for matching start
             end = $(textbox)[0].value;
-            start = $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__StartDate')[0].value;
-            $('#pv-custom-range-' + CleanName($(textbox).attr('itemfacet')) + '__StartDate').datepicker("option", "maxDate", new Date(end));
+            start = $('#pv-custom-range-' + $(textbox).attr('itemfacet') + '__StartDate')[0].value;
+            $('#pv-custom-range-' + $(textbox).attr('itemfacet') + '__StartDate').datepicker("option", "maxDate", new Date(end));
         }
         if (start && end) {
             // Clear any filters already set for this facet
