@@ -80,7 +80,10 @@ DB.DBA.PV_GEN_INPUT (in _name varchar, in _type varchar, in _label varchar, in _
 		_vec := vector (
 			'',                   'No link out',
 			'121',                'External resource link',
-			'LOCAL_TTL',          'External description resource (TTL)',
+                        'DESCRIBE',           'External Description Link',
+                        'ABOUT_RDF',          'External Sponged Data Link (RDF)',
+                        'ABOUT_HTML',         'External Sponged Data Link (HTML)',
+                        'LOCAL_TTL',          'External Description Resource (TTL)',
 			'LOCAL_NTRIPLES',     'External description resource (NTRIPLES)',
 			'LOCAL_JSON',         'External description resource (JSON)',
 			'LOCAL_XML',          'External description resource (RDF/XML)'
@@ -99,6 +102,9 @@ DB.DBA.PV_GEN_INPUT (in _name varchar, in _type varchar, in _label varchar, in _
 			'',                   'Local Faceted Navigation Links',
 			'121',                'External Resource Links',
 			'LOCAL_PIVOT',        'External Faceted Navigation Links',
+                        'DESCRIBE',           'External Description Links',
+                        'ABOUT_RDF',          'External Sponged Data Links (RDF)',
+                        'ABOUT_HTML',         'External Sponged Data Links (HTML)',
 			'LOCAL_TTL',          'External Faceted Description Resource (TTL)',
 			'LOCAL_CXML',         'External Faceted Description Resource (CXML)',
 			'LOCAL_NTRIPLES',     'External description resource (NTRIPLES)',
