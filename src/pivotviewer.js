@@ -2245,23 +2245,47 @@
         $('#pv-custom-range-' + facetName + '__Finish').css('visibility', 'hidden'); 
         $('#pv-custom-range-' + facetName + '__StartDate').datepicker("setDate", null);
         $('#pv-custom-range-' + facetName + '__FinishDate').datepicker("setDate", null);
+        $('#pv-custom-range-' + facetName + '__FinishDate').datepicker("option", "minDate", null);
+        $('#pv-custom-range-' + facetName + '__StartDate').datepicker("option", "minDate", null);
+        $('#pv-custom-range-' + facetName + '__FinishDate').datepicker("option", "maxDate", null);
+        $('#pv-custom-range-' + facetName + '__StartDate').datepicker("option", "maxDate", null);
     };
 
     GetCustomDateRange = function (facetName) {
+        var facet = _nameMapping[facetName];
+        var category = PivotCollection.GetFacetCategoryByName(facet);
+        var maxYear, minYear;
+        var maxDate, minDate;
         $('#pv-custom-range-' + facetName + '__Start').css('visibility', 'visible'); 
         $('#pv-custom-range-' + facetName + '__Finish').css('visibility', 'visible'); 
         $('#pv-custom-range-' + facetName + '__StartDate').datepicker({
             showOn: 'button',
+            changeMonth: true,
+            changeYear: true,
             buttonText: 'Show Date',
             buttonImageOnly: true,
             buttonImage: 'http://jqueryui.com/resources/demos/datepicker/images/calendar.gif'
         });
         $('#pv-custom-range-' + facetName + '__FinishDate').datepicker({
             showOn: 'button',
+            changeMonth: true,
+            changeYear: true,
             buttonText: 'Show Date',
             buttonImageOnly: true,
             buttonImage: 'http://jqueryui.com/resources/demos/datepicker/images/calendar.gif'
         });
+        if (category.dayBuckets.length > 0){
+           maxDate = category.dayBuckets[category.yearBuckets.length - 1].StartDate;
+           minDate = category.dayBuckets[0].StartDate;
+           $('#pv-custom-range-' + facetName + '__StartDate').datepicker( "option", "defaultDate", minDate );
+           $('#pv-custom-range-' + facetName + '__FinishDate').datepicker( "option", "defaultDate", maxDate );
+           if (category.yearBuckets.length > 0){
+               maxYear = category.yearBuckets[category.yearBuckets.length - 1].Name;
+               minYear = category.yearBuckets[0].Name;
+               $('#pv-custom-range-' + facetName + '__StartDate').datepicker( "option", "yearRange", minYear + ':' + maxYear );
+               $('#pv-custom-range-' + facetName + '__FinishDate').datepicker( "option", "yearRange", minYear + ':' + maxYear );
+            }
+        }
     };
 
     CustomRangeChanged = function (textbox) {
