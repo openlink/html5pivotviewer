@@ -73,8 +73,17 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
 
                 //FacetCategory
                 var facetCategories = $(xml).find("FacetCategory");
+                savedNamespacePrefix = namespacePrefix;
                 for (var i = 0; i < facetCategories.length; i++) {
                     var facetElement = $(facetCategories[i]);
+
+                    // Handle locally defined namespaces
+                    for (var j = 0; j < facetElement[0].attributes.length; j++) {
+                        if (facetElement[0].attributes[j].value == "http://schemas.microsoft.com/livelabs/pivot/collection/2009") {
+                            namespacePrefix = facetElement[0].attributes[j].localName != undefined ? facetElement[0].attributes[j].localName : facetElement[0].attributes[j].baseName;
+                            break;
+                        }
+                    }
 
                     var facetCategory = new PivotViewer.Models.FacetCategory(
                     facetElement.attr("Name"),
@@ -103,6 +112,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                         facetCategory.CustomSort = customSort;
                     }
                     collection.FacetCategories.push(facetCategory);
+                    namespacePrefix = savedNamespacePrefix;
                 }
                 //Items
                 var facetItems = $(xml).find("Items");
@@ -174,9 +184,19 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                             }
                             var itemExtension = $(facetItem[i]).find("Extension");
                             if (itemExtension.length == 1) {
-                                var itemRelated = $(itemExtension[0]).find('d1p1\\:Related, Related');
+                                var savedNamespacePrefix = namespacePrefix;
+                    
+                                // Handle locally defined namespaces
+                                for (var j = 0; j < itemExtension[0].children.length; j++) {
+                                    namespacePrefix = itemExtension[0].children[0].lookupPrefix("http://schemas.microsoft.com/livelabs/pivot/collection/2009");
+                                    if (namespacePrefix)
+                                        break;
+                                }
+
+                                //var itemRelated = $(itemExtension[0]).find('d1p1\\:Related, Related');
+                                var itemRelated = $(itemExtension[0]).find(namespacePrefix + '\\:Related, Related');
                                 if (itemRelated.length == 1) {
-                                    var links = $(itemRelated[0]).find('d1p1\\:Link, Link');
+                                    var links = $(itemRelated[0]).find(namespacePrefix + '\\:Link, Link');
                                     for (var l = 0; l < links.length; l++) {
                                         var linkName = $(links[l]).attr("Name"); 
                                         var linkHref = $(links[l]).attr("Href"); 
@@ -191,6 +211,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                     if (links.length > maxRelatedLinksLength)
                                        maxRelatedLinksLength = links.length;
                                 }
+                                namespacePrefix = savedNamespacePrefix;
                             }
                             collection.Items.push(item);
                         }
@@ -201,12 +222,23 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 var extension = $(xml).find("Extension");
                 if (extension.length > 1) {
                     for (x = 0; x < extension.length; x++) {
-                        var collectionCopyright = $(extension[x]).find('d1p1\\:Copyright, Copyright');
+                        var savedNamespacePrefix = namespacePrefix;
+                    
+                        // Handle locally defined namespaces
+                        for (var j = 0; j < extension[x].children.length; j++) {
+                            namespacePrefix = extension[0].children[0].lookupPrefix("http://schemas.microsoft.com/livelabs/pivot/collection/2009");
+                            if (namespacePrefix)
+                                break;
+                        }
+
+                        //var collectionCopyright = $(extension[x]).find('d1p1\\:Copyright, Copyright');
+                        var collectionCopyright = $(extension[x]).find(namespacePrefix + '\\:Copyright, Copyright');
                         if (collectionCopyright.length > 0) { 
                             collection.CopyrightName = $(collectionCopyright[0]).attr("Name");
                             collection.CopyrightHref = $(collectionCopyright[0]).attr("Href");
                             break;
                         }
+                        namespacePrefix = savedNamespacePrefix;
                     }
                 }
 
