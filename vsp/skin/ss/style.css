@@ -138,6 +138,34 @@ a.logo {
     float:left;
 }
 
+.goog-te-banner-frame{visibility:hidden !important;}
+#MAIN_BODY{top:0px !important;}
+
+#google_translate_element {
+        float: left;
+}
+#google_translate_element .goog-te-gadget-simple {
+        height: 21px;
+        font-size: 8pt;
+        padding: 0px;
+        border:1px solid #C7D7DF !important;
+        border-radius: 5px;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+}
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value {
+        color:#3e83a4 !important;
+}
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value img{
+        float: none;
+        margin: 0 0 0 0;
+}
+#google_translate_element .goog-te-gadget-icon {
+        float: none;
+        margin: 1px 0 0 1px;
+        height: 19px;
+        width: 19px;
+}
 #MD {
     background-color:#E9F2F7;
     float:left;
