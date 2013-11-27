@@ -63,9 +63,10 @@
     _enable_translation := registry_get ('_pivot_enableTranslation');
     if ('false' = _enable_translation) _enable_translation := 0;
     if ('no' = _enable_translation) _enable_translation := 0;
+    if ('0' = _enable_translation) _enable_translation := 0;
     _translation_source_lang := registry_get ('_pivot_transSourceLang');
     if (0 = _translation_source_lang) _translation_source_lang := 'en';
-
+    if ('0' = _translation_source_lang) _translation_source_lang := 'en';
     _collUriFromQuery := {?'url'};
     _collUriFromBox := get_keyword ('collectionUri', params, '');
     if (_collUriFromQuery <> '')

@@ -73,6 +73,7 @@ EXTRA_DIST = \
 	vadpacker \
 	vsp/*.sql \
 	vsp/*.vsp \
+	vsp/*.vspx \
 	vsp/scripts/*.js \
 	vsp/skin/i/*.png \
 	vsp/skin/ss/*.css
