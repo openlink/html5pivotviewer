@@ -32,6 +32,7 @@ SOURCES		= \
 	$(srcdir)/src/views/iimagecontroller.js \
 	$(srcdir)/src/views/LoadImageSetHelper.js \
 	$(srcdir)/src/views/mapview.js \
+	$(srcdir)/src/views/timeview.js \
 	$(srcdir)/src/views/tableview.js \
 	$(srcdir)/src/views/tilecontroller.js \
 	$(srcdir)/src/views/deepzoom.js \

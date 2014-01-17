@@ -204,6 +204,15 @@
 	}
     }
 ?>
+    <script>
+     Timeline_ajax_url="scripts/timeline_ajax/simile-ajax-api.js";
+     Timeline_urlPrefix='scripts/timeline_js/';       
+     Timeline_parameters='bundle=true';
+    </script>
+    <script src="scripts/timeline_js/timeline-api.js"    
+     type="text/javascript">
+    </script>
+    <script>SimileAjax.History.enabled = false;</script>
 
     <script src="scripts/oplpivot.js" type="text/javascript"></script>
     <script src="scripts/jquery-1.7.1.min.js" type="text/javascript"></script>

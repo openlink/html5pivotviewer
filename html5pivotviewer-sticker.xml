@@ -35,11 +35,20 @@
   <file source_uri="vsp/scripts/*.js" target_uri="html5pivotviewer/scripts/$f$" />
   <file source_uri="vsp/*.vsp" target_uri="html5pivotviewer/$f$" />
   <file source_uri="vsp/*.sql" target_uri="html5pivotviewer/$f$" />
+  <file source_uri="vsp/*.json" target_uri="html5pivotviewer/$f$" />
   <file source_uri="vsp/vad_html5pivotviewer_config.vspx" target_uri="conductor/$f$" />
   <file source_uri="pivotviewer.min.js" target_uri="html5pivotviewer/scripts/$f$" />
   <file source_uri="style/*.css" target_uri="html5pivotviewer/" />
   <file source_uri="lib/**/*.js" target_uri="html5pivotviewer/scripts/$f$" />
   <file source_uri="lib/**/*.css" target_uri="html5pivotviewer/style/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/*" target_uri="html5pivotviewer/scripts/timeline_ajax/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/content/*" target_uri="html5pivotviewer/scripts/timeline_ajax/content/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/images/*" target_uri="html5pivotviewer/scripts/timeline_ajax/images$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/scripts/*" target_uri="html5pivotviewer/scripts/timeline_ajax/scripts/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/styles/*" target_uri="html5pivotviewer/scripts/timeline_ajax/styles/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/*" target_uri="html5pivotviewer/scripts/timeline_js/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/images/*" target_uri="html5pivotviewer/scripts/timeline_js/images/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/scripts/*" target_uri="html5pivotviewer/scripts/timeline_js/scripts/$f$" />
 </resources>
 <registry>
 </registry>

@@ -37,6 +37,7 @@
         _initMapCentreY = "",
         _initMapType = "",
         _initMapZoom = "",
+        _initTimelineFacet = "",
         _handledInitSettings = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
@@ -112,6 +113,9 @@
                         //Map Zoom
                         else if (splitItem[0] == '$mapZoom$')
                             _viewerState.MapZoom = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                        //Timeline Selected Facet
+                        else if (splitItem[0] == '$timelineFacet$')
+                            _viewerState.TimelineFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
                         //Filters
                         else {
                             var filter = { Facet: splitItem[0], Predicates: [] };
@@ -177,11 +181,12 @@
         _initMapCentreY = _viewerState.MapCentreY;
         _initMapType = _viewerState.MapType;
         _initMapZoom = _viewerState.MapZoom;
+        _initTimelineFacet = _viewerState.TimelineFacet;
 
         //Set the width for displaying breadcrumbs as we now know the control sizes 
-        //Hardcoding the value for the width of the viewcontrols images (124=21*4) as the webkit browsers 
+        //Hardcoding the value for the width of the viewcontrols images (145=29*5) as the webkit browsers 
         //do not know the size of the images at this point.
-        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - ($('.pv-toolbarpanel-brandimage').outerWidth(true) +25 + $('.pv-toolbarpanel-name').outerWidth(true) + $('.pv-toolbarpanel-zoomcontrols').outerWidth(true) + 124 + $('.pv-toolbarpanel-sortcontrols').outerWidth(true));
+        var controlsWidth = $('.pv-toolbarpanel').innerWidth() - ($('.pv-toolbarpanel-brandimage').outerWidth(true) + 25 + $('.pv-toolbarpanel-name').outerWidth(true) + $('.pv-toolbarpanel-zoomcontrols').outerWidth(true) + 145 + $('.pv-toolbarpanel-sortcontrols').outerWidth(true));
 
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
@@ -223,7 +228,8 @@
             toolbarPanel += "<img class='pv-toolbarpanel-brandimage' src='" + brandImage + "'></img>";
         toolbarPanel += "<span class='pv-toolbarpanel-name'>" + PivotCollection.CollectionName + "</span>";
         toolbarPanel += "<div class='pv-toolbarpanel-facetbreadcrumb'></div>";
-        toolbarPanel += "<div class='pv-toolbarpanel-zoomcontrols'><div class='pv-toolbarpanel-zoomslider'></div></div>";
+        toolbarPanel += "<div class='pv-toolbarpanel-zoomcontrols'><div class='pv-toolbarpanel-zoomslider'></div>";
+        toolbarPanel += "<div class='pv-toolbarpanel-timelineselector'></div></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-viewcontrols'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-sortcontrols'></div>";
         toolbarPanel += "</div>";
@@ -256,6 +262,9 @@
 
         //add canvas for map to the mainpanel
         $('.pv-viewpanel').append("<div class='pv-mapview-canvas' id='pv-map-canvas'></div>");
+
+        //add canvas for timeline to the mainpanel
+        $('.pv-viewpanel').append("<div class='pv-timeview-canvas' id='pv-time-canvas'></div>");
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
@@ -657,6 +666,7 @@
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
         _views.push(new PivotViewer.Views.MapView());
+        _views.push(new PivotViewer.Views.TimeView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -678,6 +688,7 @@
        _views[1].SetFacetCategories(PivotCollection);
        _views[2].SetFacetCategories(PivotCollection);
        _views[3].SetFacetCategories(PivotCollection);
+       _views[4].SetFacetCategories(PivotCollection);
 
     };
 
@@ -1197,6 +1208,9 @@
                 _views[_currentView].SetMapInitZoom(_initMapZoom);
                 _views[_currentView].applyBookmark = true;
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
+            } else if (_currentView == 4) {
+                _views[_currentView].SetSelectedFacet(_initTimelineFacet);
+                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
@@ -1568,6 +1582,9 @@
                 if (_views[_currentView].GetMapZoom())
 	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
             }
+            if (_currentView == 4) 
+                if (_views[_currentView].GetSelectedFacet())
+	    	  currentViewerState += "&$timelineFacet$=" + _views[_currentView].GetSelectedFacet();
 	    // Add filters and create title
             var title = PivotCollection.CollectionName;
             if (_numericFacets.length + _stringFacets.length > 0)
@@ -1739,7 +1756,7 @@
             _selectedItem = selectedItem;
             _selectedItemBkt = evt.bkt;
 
-            if (_currentView == 2)
+            if (_currentView == 2 || _currentView == 4)
                 _views[_currentView].Selected(_selectedItem.Id); 
             if (_currentView == 3) 
                 _views[_currentView].RedrawMarkers(_selectedItem.Id); 

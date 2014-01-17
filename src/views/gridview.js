@@ -218,6 +218,19 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                     $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
                 });
             }
+            if ($('.pv-timeview-canvas').is(':visible')){
+                changingFromNonTileView = true;
+                $('.pv-timeview-canvas').fadeOut();
+                this.selected = "";
+                $('.pv-toolbarpanel-timelineselector').fadeOut();
+                $('.pv-toolbarpanel-sort').fadeIn();
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('#MAIN_BODY').css('overflow', 'auto');
+                $('.pv-viewarea-canvas').fadeIn(function(){
+                    $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+                });
+            }
         }
 
         this.tiles = dzTiles;

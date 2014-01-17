@@ -123,6 +123,7 @@
 .pv-tableview-odd-row:hover { background-color:#CBE4F0; }
 .pv-tableview-even-row:hover { background-color:#CBE4F0; }
 .pv-mapview-canvas { position: absolute; top:0px; left:193px; padding: 0px 3px 0px 3px; display:none; overflow-y: auto; margin-top:5px; margin-left:5px;}
+.pv-timeview-canvas { position: absolute; top:0px; left:193px; padding: 0px 3px 0px 3px; display:none; overflow-y: auto; margin-top:5px; margin-left:5px;}
 /*
  * jQuery UI CSS Framework 1.8.16
  *

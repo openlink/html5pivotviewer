@@ -65,8 +65,12 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-tableview-table').fadeOut();
+            $('.pv-timeview-table').fadeOut();
+            $('.pv-toolbarpanel-sort').fadeIn();
+            $('.pv-toolbarpanel-timelineselector').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
             $('.pv-toolbarpanel-zoomcontrols').css('border-width', '0');
+            $('#MAIN_BODY').css('overflow', 'auto');
             $('.pv-mapview-canvas').fadeIn(function(){
                 if (selectedItem)
                     $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);

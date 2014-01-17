@@ -218,6 +218,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         if (changingView) {
             if ($('.pv-tableview-table').is(':visible')){
                 $('.pv-tableview-table').fadeOut();
+                $('.pv-tableview-table').fadeOut();
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
                 $('.pv-viewarea-canvas').fadeIn();
@@ -226,6 +227,15 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-mapview-canvas').fadeOut();
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('.pv-viewarea-canvas').fadeIn();
+            }
+            if ($('.pv-timeview-canvas').is(':visible')){
+                $('.pv-timeview-canvas').fadeOut();
+                $('.pv-toolbarpanel-timelineselector').fadeOut();
+                $('.pv-toolbarpanel-sort').fadeIn();
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('#MAIN_BODY').css('overflow', 'auto');
                 $('.pv-viewarea-canvas').fadeIn();
             }
         }
