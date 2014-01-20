@@ -1,7 +1,7 @@
 /*
  *   This file is part of the html5 pivotviewer project
  *
- *   Copyright (C) 2012-2013 OpenLink Software
+ *   Copyright (C) 2012-2014 OpenLink Software
  *
  *   This project is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
