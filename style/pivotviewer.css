@@ -20,6 +20,8 @@ a { font-weight:normal; }
 .pv-filterpanel-version { color:#E2E2E2; font-size: 8pt; float:left; height:24px; width:180px; margin-top: 3px; margin-bottom: 3px; padding: 4px 4px 4px 4px;}
 .pv-filterpanel-clearall { width:56px; margin-top: 3px; padding: 4px 4px 4px 4px; float:right; cursor:pointer; color:#97A8B2; background-image: url('../images/FilterPanelClear.png'); background-position	: right center; background-repeat: no-repeat; visibility:hidden; }
 .pv-filterpanel-clearall:hover { background-color:#CBE4F0; }
+.pv-filterpanel-export { width: 16px; height: 16px; margin-top: 7px; float: left; cursor: pointer; background-image: url('../images/Export.png'); background-repeat: no-repeat; }
+.pv-filterpanel-export:hover { background-color:#CBE4F0; }
 .pv-filterpanel-search { margin-top: 9px; margin-bottom:0px; height:24px; border:1px solid #E2E2E2; }
 .pv-filterpanel-search:-webkit-input-placeholder { color:#787676; font-style:italic; font-size:9pt; }
 .pv-filterpanel-search:-moz-placeholder { color:#787676; font-style:italic; font-family: 'Segoe UI', Tahoma, Arial, Helvetica, Sans-Serif; font-size:9pt; }

@@ -268,7 +268,9 @@
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
-        filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
+        filterPanel
+            .append("<div class='pv-filterpanel-export' title='Export data'></div>")
+            .append("<div class='pv-filterpanel-clearall'>Clear All</div>")
             .append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' /><div class='pv-filterpanel-search-autocomplete'></div>")
             .css('height', mainPanelHeight - 13 + 'px');
         if (navigator.userAgent.match(/iPad/i) != null)
@@ -1887,6 +1889,54 @@
                     checked[i].checked = false;
             }
             FacetItemClick(cb[0]);
+        });
+        //Export data click - gets the current filter and outputs it to a new window so it can be copied into another application
+        $('.pv-filterpanel-export').on('click', function (e) {
+            //get current selection and generate output HTML.
+            output = '<html>';
+            output += '<head><title>Export current filter.</title></head>'
+            output += '<body><table><tr><th>Name</th>'
+            //add columns for facet categories
+            for (var m = 0; m < PivotCollection.FacetCategories.length; m++) {
+                output += '<th>' + PivotCollection.FacetCategories[m].Name + '</th>';
+            }
+
+            //add rows for each selected item
+            for(var i = 0; i < _filterItems.length; i++){
+                for (var j = 0; j < _tiles.length; j++) {
+                    //find item from filter
+                    if (_tiles[j].facetItem.Id == _filterItems[i].Id) {
+                        var item = _tiles[j];
+                        //add the items name as the first column
+                        output += '<tr><td>' + item.facetItem.Name + '</td>';
+                        //add the other columns
+                        for (var m = 0; m < PivotCollection.FacetCategories.length; m++) {
+                            var value = '';
+                            for(var t = 0; t < item.facetItem.Facets.length; t++){
+                                //if then facet category names match then set the value
+                                if(item.facetItem.Facets[t].Name == PivotCollection.FacetCategories[m].Name){
+                                    var values = [];
+                                    for(var v = 0; v < item.facetItem.Facets[t].FacetValues.length; v++){
+                                        if(item.facetItem.Facets[t].FacetValues[v].Value)
+                                            values.push(item.facetItem.Facets[t].FacetValues[v].Value);
+                                    }
+                                    //output the values as a comma delimited list
+                                    value = values.join();
+                                    break;
+                                }
+                            }
+                            output += '<td>' + value + '</td>';
+                        }
+                        output += '</tr>';
+                    }
+                }
+            }
+
+            output += '</tr></table></body></html>';
+            //open a new window and write the contents
+            var win = window.open('', '_blank');
+            win.document.write(output);
+            win.document.close();
         });
         //Facet clear all click
         $('.pv-filterpanel-clearall').on('click', function (e) {
