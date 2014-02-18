@@ -670,8 +670,7 @@
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
         _views.push(new PivotViewer.Views.MapView());
-        _views.push(new PivotViewer.Views.MapView());
-        //_views.push(new PivotViewer.Views.TimeView());
+        _views.push(new PivotViewer.Views.TimeView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
