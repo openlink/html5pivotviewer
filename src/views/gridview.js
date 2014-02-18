@@ -209,11 +209,13 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             }
             if ($('.pv-mapview-canvas').is(':visible')){
                 changingFromNonTileView = true;
+                $('.pv-toolbarpanel-maplegend').fadeOut(400, function(){
+                    $('.pv-toolbarpanel-zoomslider').fadeIn();
+                    $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                });
+                $('.pv-mapview-legend').hide('slide', {direction: 'up'});
                 $('.pv-mapview-canvas').fadeOut();
-                //this.selected = changeViewSelectedItem;
                 this.selected = "";
-                $('.pv-toolbarpanel-zoomslider').fadeIn();
-                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
                 $('.pv-viewarea-canvas').fadeIn(function(){
                     $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
                 });
@@ -223,6 +225,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-timeview-canvas').fadeOut();
                 this.selected = "";
                 $('.pv-toolbarpanel-timelineselector').fadeOut();
+                $('.pv-toolbarpanel-maplegend').fadeOut();
                 $('.pv-toolbarpanel-sort').fadeIn();
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');

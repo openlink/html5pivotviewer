@@ -45,9 +45,12 @@ PivotViewer.Views.TimeView = PivotViewer.Views.IPivotViewerView.subClass({
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-tableview-table').fadeOut();
+            $('.pv-toolbarpanel-maplegend').fadeOut();
+            $('.pv-mapview-legend').fadeOut();
             $('.pv-mapview-canvas').fadeOut();
             $('.pv-toolbarpanel-sort').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
+            $('.pv-toolbarpanel-maplegend').fadeOut();
             $('.pv-toolbarpanel-timelineselector').fadeIn();
             $('.pv-toolbarpanel-zoomcontrols').css('border-width', '0');
             $('.pv-timeview-canvas').fadeIn();

@@ -224,14 +224,18 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
                 $('.pv-viewarea-canvas').fadeIn();
             }
             if ($('.pv-mapview-canvas').is(':visible')){
+                $('.pv-toolbarpanel-maplegend').fadeOut(400, function(){
+                    $('.pv-toolbarpanel-zoomslider').fadeIn();
+                    $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                });
+                $('.pv-mapview-legend').fadeOut();
                 $('.pv-mapview-canvas').fadeOut();
-                $('.pv-toolbarpanel-zoomslider').fadeIn();
-                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
                 $('.pv-viewarea-canvas').fadeIn();
             }
             if ($('.pv-timeview-canvas').is(':visible')){
                 $('.pv-timeview-canvas').fadeOut();
                 $('.pv-toolbarpanel-timelineselector').fadeOut();
+                $('.pv-toolbarpanel-maplegend').fadeOut();
                 $('.pv-toolbarpanel-sort').fadeIn();
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');

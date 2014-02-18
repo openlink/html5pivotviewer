@@ -229,7 +229,8 @@
         toolbarPanel += "<span class='pv-toolbarpanel-name'>" + PivotCollection.CollectionName + "</span>";
         toolbarPanel += "<div class='pv-toolbarpanel-facetbreadcrumb'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-zoomcontrols'><div class='pv-toolbarpanel-zoomslider'></div>";
-        toolbarPanel += "<div class='pv-toolbarpanel-timelineselector'></div></div>";
+        toolbarPanel += "<div class='pv-toolbarpanel-timelineselector'></div>";
+        toolbarPanel += "<div class='pv-toolbarpanel-maplegend'></div></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-viewcontrols'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-sortcontrols'></div>";
         toolbarPanel += "</div>";
@@ -262,6 +263,8 @@
 
         //add canvas for map to the mainpanel
         $('.pv-viewpanel').append("<div class='pv-mapview-canvas' id='pv-map-canvas'></div>");
+        //add map legend 
+        $('.pv-mainpanel').append("<div class='pv-mapview-legend' id='pv-map-legend'></div>");
 
         //add canvas for timeline to the mainpanel
         $('.pv-viewpanel').append("<div class='pv-timeview-canvas' id='pv-time-canvas'></div>");
@@ -297,6 +300,9 @@
             infoPanel.append("<div class='pv-infopanel-copyright'><a href=\"" + PivotCollection.CopyrightHref + "\" target=\"_blank\">" + PivotCollection.CopyrightName + "</a></div>");
         }
         infoPanel.hide();
+        //position the map legend panel
+        $('.pv-mapview-legend').css('left', (($('.pv-mainpanel').offset().left + $('.pv-mainpanel').width()) - 205) + 'px')
+            .css('height', mainPanelHeight - 28 + 'px');
     };
 
     //Creates facet list for the filter panel
@@ -1685,6 +1691,8 @@
         var selectedItem = GetItem(evt.id);
         if (selectedItem != null) {
             var alternate = true;
+            if ($('.pv-mapview-legend').is(":visible"))
+                $('.pv-mapview-legend').hide('slide', {direction: 'up'});
             $('.pv-infopanel-heading').empty();
             $('.pv-infopanel-heading').append("<a href=\"" + selectedItem.Href + "\" target=\"_blank\">" + selectedItem.Name + "</a></div>");
             var infopanelDetails = $('.pv-infopanel-details');

@@ -52,10 +52,13 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
 
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
+            $('.pv-toolbarpanel-maplegend').fadeOut();
+            $('.pv-mapview-legend').fadeOut();
             $('.pv-mapview-canvas').fadeOut();
             $('.pv-timeview-canvas').fadeOut();
             $('.pv-toolbarpanel-sort').fadeIn();
             $('.pv-toolbarpanel-timelineselector').fadeOut();
+            $('.pv-toolbarpanel-mapview').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
             $('.pv-toolbarpanel-zoomcontrols').css('border-width', '0');
             $('#MAIN_BODY').css('overflow', 'auto');

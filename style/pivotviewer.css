@@ -11,6 +11,7 @@ a { font-weight:normal; }
 .pv-toolbarpanel-name { float:left; margin-top:5px; margin-left:4px; color:#05314A; }
 .pv-toolbarpanel-zoomcontrols { float: right; width:146px; height:20px; margin-right:4px; border: 1px solid #D3D4D4; }
 .pv-toolbarpanel-zoomslider { margin: 6px 10px 0px 10px; }
+.pv-toolbarpanel-maplegend { margin-top:5px; margin-left:4px; color:#05314A; }
 .pv-toolbarpanel-viewcontrols { float: right; margin-right:5px; height:20px; }
 .pv-toolbarpanel-view { height:20px; border:1px solid #D3D4D4; float:left; cursor:pointer; }
 .pv-toolbarpanel-sortcontrols { float: right; margin-right:5px; }
@@ -123,6 +124,8 @@ a { font-weight:normal; }
 .pv-tableview-odd-row:hover { background-color:#CBE4F0; }
 .pv-tableview-even-row:hover { background-color:#CBE4F0; }
 .pv-mapview-canvas { position: absolute; top:0px; left:193px; padding: 0px 3px 0px 3px; display:none; overflow-y: auto; margin-top:5px; margin-left:5px;}
+.pv-mapview-legend { position: absolute; z-index:30; width: 182px; margin-top:5px; display:none; padding: 8px 8px 8px 8px; background:#FEFEFE; border: 1px solid #C5C5C5; -moz-border-radius: 3px; border-radius: 3px; -moz-box-shadow: 0 0 2px 2px #D7D9DA; -webkit-box-shadow: 0 0 2px 2px #D7D9DA; box-shadow: 0 0 2px 2px #D7D9DA; }
+.pv-legend-heading { color: #05314A; width: 80%; font-size: 12px; float:left; padding: .5em .5em .5em .7em; overflow: hidden; text-overflow: ellipsis; font-weight:normal;}
 .pv-timeview-canvas { position: absolute; top:0px; left:193px; padding: 0px 3px 0px 3px; display:none; overflow-y: auto; margin-top:5px; margin-left:5px;}
 /*
  * jQuery UI CSS Framework 1.8.16
