@@ -217,6 +217,8 @@
             }
         }
 
+        //display tile count
+        UpdateItemCount();
     };
 
     InitUI = function () {
@@ -227,6 +229,7 @@
         if (brandImage.length > 0)
             toolbarPanel += "<img class='pv-toolbarpanel-brandimage' src='" + brandImage + "'></img>";
         toolbarPanel += "<span class='pv-toolbarpanel-name'>" + PivotCollection.CollectionName + "</span>";
+        toolbarPanel += "<span class='pv-toolbarpanel-itemcount'></span>";
         toolbarPanel += "<div class='pv-toolbarpanel-facetbreadcrumb'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-zoomcontrols'><div class='pv-toolbarpanel-zoomslider'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-timelineselector'></div></div>";
@@ -666,7 +669,8 @@
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
         _views.push(new PivotViewer.Views.MapView());
-        _views.push(new PivotViewer.Views.TimeView());
+        _views.push(new PivotViewer.Views.MapView());
+        //_views.push(new PivotViewer.Views.TimeView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -1240,6 +1244,9 @@
         }
         _filterItems = sortedFilter;
 
+        //Update item count
+        UpdateItemCount();
+
 	// Update the bookmark
         UpdateBookmark ();
 
@@ -1515,6 +1522,12 @@
             }
         }
         bc.append(bcItems);
+    };
+
+    UpdateItemCount = function(){
+        var $itemCount = $('.pv-toolbarpanel-itemcount');
+        $itemCount.empty();
+        $itemCount.append(_filterItems.length);
     };
 
     DeselectInfoPanel = function () {
