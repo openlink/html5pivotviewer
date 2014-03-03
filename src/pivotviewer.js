@@ -396,10 +396,14 @@
 
         var facets = ["<div class='pv-filterpanel-accordion'>"];
         var sort = [];
+        var activeNumber = 0;
         for (var i = 0; i < PivotCollection.FacetCategories.length; i++) {
             var controlVisibility = 'inherit';
             if (!PivotCollection.FacetCategories[i].IsFilterVisible) 
                 controlVisibility = 'none';
+
+            if (i == activeNumber && controlVisibility == 'none')
+              activeNumber++;
 
             facets[i + 1] = "<h3 style='display:" + controlVisibility + "'><a href='#' title=" + PivotCollection.FacetCategories[i].Name + ">";
             facets[i + 1] += PivotCollection.FacetCategories[i].Name;
@@ -498,6 +502,9 @@
         $(".pv-filterpanel-accordion").accordion({
         });
         $('.pv-toolbarpanel-sortcontrols').append('<select class="pv-toolbarpanel-sort">' + sort.join('') + '</select>');
+
+        // Set the active div in the accordion
+        $( ".pv-filterpanel-accordion" ).accordion( "option", "active", activeNumber ); 
 
         //setup numeric facets
         for (var i = 0; i < _facetNumericItemTotals.length; i++)
