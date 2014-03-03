@@ -8,16 +8,16 @@ html {
         color: #2c2c2c;
 */
 .tooltipster-default {
-        background: #fff;
+        background: #ffffca;
         box-shadow: 0px 0px 14px rgba(0,0,0,0.3);
 }
 
 /* Use this next selector to style things like font-size and line-height: */
 .tooltipster-default .tooltipster-content {
         font-family: 'Segoe UI', Tahoma, Arial, Helvetica, Sans-Serif;
-	font-size: 12px;
-	line-height: 14px;
-	padding: 4px 8px;
+	font-size: 10px;
+	line-height: 12px;
+	padding: 4px 4px;
 	overflow: hidden;
 }
 
