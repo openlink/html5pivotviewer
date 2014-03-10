@@ -24,15 +24,14 @@ on Codeplex using Mercurial into Git and will continue to maintain
 it on GitHub in the hope it will attract contributions from the
 larger open source community.
 
+This project is a fork of the OpenLink Software project by the original 
+developer Roger Noble. The aim of this fork is to simplify the project 
+and leverage node.js for development and build.
+
 The original project can be found at:
 
 	http://lobsterpothtml5pv.codeplex.com
 
-The new project can be found at:
+The OpenLink Software project can be found at:
 
 	http://github.com/openlink/html5pivotviewer
-
-A built version of this project containing pivotviewer.js and pivotviewer.min.js can be downloaded as either a zip or a compressed tar archive from:
-
-	http://opldownload.s3.amazonaws.com/HTML5/PivotViewer/html5pivotviewer-1.0.zip
-	http://opldownload.s3.amazonaws.com/HTML5/PivotViewer/html5pivotviewer-1.0.tar.gz
