@@ -1,10 +1,15 @@
-HTML5 PivotViewer
+# HTML5 PivotViewer
+A HTML5 data exploration tool for image based data sets.
 
-Original Code:
+## Getting Started
+This project leverages [Node.js](http://nodejs.org/) and [Grunt](http://gruntjs.com/) for it's development and build server.
+
+## History
+### Original Code:
   Copyright (C) 2011 LobsterPot Solutions - http://www.lobsterpot.com.au/
   enquiries@lobsterpot.com.au
 
-Enhancements:
+### Enhancements:
   Copyright (C) 2012-2014 OpenLink Software - http://www.openlinksw.com/
 
 
