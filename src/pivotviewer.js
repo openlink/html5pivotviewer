@@ -33,11 +33,6 @@
         _selectedItemBkt = 0,
         _initSelectedItem = "",
         _initTableFacet = "",
-        _initMapCentreX = "",
-        _initMapCentreY = "",
-        _initMapType = "",
-        _initMapZoom = "",
-        _initTimelineFacet = "",
         _handledInitSettings = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
@@ -177,12 +172,7 @@
         ApplyViewerState();
         _initSelectedItem = GetItem(_viewerState.Selection);
         _initTableFacet = _viewerState.TableFacet;
-        _initMapCentreX = _viewerState.MapCentreX;
-        _initMapCentreY = _viewerState.MapCentreY;
-        _initMapType = _viewerState.MapType;
-        _initMapZoom = _viewerState.MapZoom;
-        _initTimelineFacet = _viewerState.TimelineFacet;
-
+        
         //Set the width for displaying breadcrumbs as we now know the control sizes 
         //Hardcoding the value for the width of the viewcontrols images (145=29*5) as the webkit browsers 
         //do not know the size of the images at this point.
@@ -667,8 +657,6 @@
         _views.push(new PivotViewer.Views.GridView());
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
-        _views.push(new PivotViewer.Views.MapView());
-        _views.push(new PivotViewer.Views.TimeView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -689,8 +677,6 @@
        // The table, graph and the map view needs to know about the facet categories
        _views[1].SetFacetCategories(PivotCollection);
        _views[2].SetFacetCategories(PivotCollection);
-       _views[3].SetFacetCategories(PivotCollection);
-       _views[4].SetFacetCategories(PivotCollection);
 
     };
 
@@ -1202,16 +1188,6 @@
         if (!_handledInitSettings){
             if (_currentView == 2) { 
                 _views[_currentView].SetSelectedFacet(_initTableFacet);
-                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
-            } else if (_currentView == 3) {
-                _views[_currentView].SetMapInitCentreX(_initMapCentreX);
-                _views[_currentView].SetMapInitCentreY(_initMapCentreY);
-                _views[_currentView].SetMapInitType(_initMapType);
-                _views[_currentView].SetMapInitZoom(_initMapZoom);
-                _views[_currentView].applyBookmark = true;
-                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
-            } else if (_currentView == 4) {
-                _views[_currentView].SetSelectedFacet(_initTimelineFacet);
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);

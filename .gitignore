@@ -42,3 +42,5 @@ pivotviewer.min.js
 vadpacker/elementtree/ElementPath.pyc
 vadpacker/elementtree/ElementTree.pyc
 vadpacker/elementtree/__init__.pyc
+collection/
+node_modules/

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HTML 5 PivotViewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link href="style/pivotviewer.css" rel="stylesheet" type="text/css" />
+    
+    <!-- libs -->
+    <script src="lib/jquery/jquery-2.1.0.min.js"></script>
+    <script src="lib/modernizr/modernizr.custom.65936.js"></script>
+    <script src="lib/jquery-ui/jquery-ui-1.10.4.custom.min.js"></script>
+    <script src="lib/purl-master/purl.js"></script>
+    <link href="lib/jquery.tooltipster/tooltipster.css" rel="stylesheet" />
+    <script src="lib/jquery.tooltipster/jquery.tooltipster.min.js"></script>
+    <script src="lib/jquery.mousewheel/jquery.mousewheel.min.js"></script>
+    
+    <script src="lib/easing/easing.js"></script>
+    <script src="lib/colResizable/colResizable-1.3.min.js"></script>
+
+    <!-- src -->
+    <script src="src/namespaces.js"></script>
+    <script src="src/pubsub.js"></script>
+    <script src="src/utils.js"></script>
+    <script src="src/collectionloader.js"></script>
+    <script src="src/models.js"></script>
+    <script src="src/pivotviewer.js"></script>
+    <!-- src/views -->
+    <script src="src/views/ipivotviewerview.js"></script>
+    <script src="src/views/iimagecontroller.js"></script>
+    <script src="src/views/tilebasedview.js"></script>
+    <script src="src/views/tilecontroller.js"></script>
+    <script src="src/views/dataview.js"></script>
+    <script src="src/views/deepzoom.js"></script>
+    <script src="src/views/graphview.js"></script>
+    <script src="src/views/gridview.js"></script>
+    <script src="src/views/LoadImageSetHelper.js"></script>
+    <script src="src/views/tableview.js"></script>
+    
+    <style>
+        html, body, div {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="pivotviewer" style="margin-top: 25px; margin-left:25px; width: 800px; height: 600px;"></div>
+    <script type="text/javascript">
+        var debug = false;
+        $(document).ready(function () {
+
+            $("#pivotviewer").outerHeight($(window).height() - 50).outerWidth($(window).width() - 50);
+            $('#pivotviewer').PivotViewer({
+                Loader: new PivotViewer.Models.Loaders.CXMLLoader("collection/pivot.cxml")
+            });
+
+        });
+    </script>
+</body>
+</html>
