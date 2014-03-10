@@ -262,10 +262,12 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             var styleClass = i % 2 == 0 ? "graphview-bucket-dark" : "graphview-bucket-light";
             uiElements[i] = "<div class='pv-viewarea-graphview-overlay-bucket " + styleClass + "' id='pv-viewarea-graphview-overlay-bucket-" + i + "' style='width: " + (Math.floor(this.columnWidth) - 4) + "px; height:" + (this.height - 2) + "px; left:" + ((i * this.columnWidth) - 2) + "px;'>";
             if (this.buckets[i].startRange == this.buckets[i].endRange)
-                uiElements[i] += "<div class='pv-viewarea-graphview-overlay-buckettitle' style='top: " + (this.canvasHeightUIAdjusted + 4) + "px;'>" + this.buckets[i].startRange + "</div></div>";
+                uiElements[i] += "<div class='pv-viewarea-graphview-overlay-buckettitle' style='top: " + (this.canvasHeightUIAdjusted + 4) + "px;'>" + this.buckets[i].startRange + "</div>";
             else
-                uiElements[i] += "<div class='pv-viewarea-graphview-overlay-buckettitle' style='top: " + (this.canvasHeightUIAdjusted + 4) + "px;'>" + this.buckets[i].startRange + "<br/>to<br/>" + this.buckets[i].endRange + "</div></div>";
-
+                uiElements[i] += "<div class='pv-viewarea-graphview-overlay-buckettitle' style='top: " + (this.canvasHeightUIAdjusted + 4) + "px;'>" + this.buckets[i].startRange + "<br/>to<br/>" + this.buckets[i].endRange + "</div>";
+            //Add bucket count
+            uiElements[i] += "<span class='pv-viewarea-graphview-overlay-count' style='top: " + (this.canvasHeightUIAdjusted - 39) + "px;'>" + this.buckets[i].Ids.length + '</span>';
+            uiElements[i] += "</div>";
             if (this.bigCount < this.buckets[i].Ids.length) {
                 this.bigCount = this.buckets[i].Ids.length;
             }
