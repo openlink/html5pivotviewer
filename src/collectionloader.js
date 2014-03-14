@@ -205,6 +205,11 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                                 var url = $.url(this.url);
                                                 linkHref = url.attr('protocol') + "://" + url.attr('authority') + url.attr('directory') + linkHref;
                                         }
+                                        else if (linkHref.indexOf(".cxml") == -1 && 
+                                            linkHref.indexOf("sparql") >= 0) {
+                                                var url = $.url(this.url);
+                                                linkHref = location.origin + location.pathname  +"?url=" + linkHref;
+                                        }
                                         var link = new PivotViewer.Models.ItemLink(linkName, linkHref);
                                         item.Links.push(link);
                                     }
