@@ -1906,7 +1906,7 @@
                                 if(item.facetItem.Facets[t].Name == PivotCollection.FacetCategories[m].Name){
                                     var values = [];
                                     for(var v = 0; v < item.facetItem.Facets[t].FacetValues.length; v++){
-                                        if(item.facetItem.Facets[t].FacetValues[v].Value)
+                                        if(typeof item.facetItem.Facets[t].FacetValues[v].Value != 'undefined') 
                                             values.push(item.facetItem.Facets[t].FacetValues[v].Value);
                                     }
                                     //output the values as a comma delimited list
