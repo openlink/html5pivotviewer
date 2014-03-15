@@ -1800,7 +1800,7 @@
             }
             if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
                 PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Number) {
-                var s = $('#pv-filterpanel-numericslider-' + PivotViewer.Utils.EscapeMetaChars(evt.Facet));
+                var s = $('#pv-filterpanel-numericslider-' + CleanName(evt.Facet));
                 FacetSliderDrag(s, evt.Item, evt.MaxRange);
             }
         }
