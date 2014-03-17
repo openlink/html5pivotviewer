@@ -33,11 +33,6 @@
         _selectedItemBkt = 0,
         _initSelectedItem = "",
         _initTableFacet = "",
-        _initMapCentreX = "",
-        _initMapCentreY = "",
-        _initMapType = "",
-        _initMapZoom = "",
-        _initTimelineFacet = "",
         _handledInitSettings = false,
         _changeToTileViewSelectedItem = "",
         _currentSort = "",
@@ -177,16 +172,12 @@
         ApplyViewerState();
         _initSelectedItem = GetItem(_viewerState.Selection);
         _initTableFacet = _viewerState.TableFacet;
-        _initMapCentreX = _viewerState.MapCentreX;
-        _initMapCentreY = _viewerState.MapCentreY;
-        _initMapType = _viewerState.MapType;
-        _initMapZoom = _viewerState.MapZoom;
-        _initTimelineFacet = _viewerState.TimelineFacet;
-
+        
         //Set the width for displaying breadcrumbs as we now know the control sizes 
         //Hardcoding the value for the width of the viewcontrols images (145=29*5) as the webkit browsers 
         //do not know the size of the images at this point.
         var controlsWidth = $('.pv-toolbarpanel').innerWidth() - ($('.pv-toolbarpanel-brandimage').outerWidth(true) + 25 + $('.pv-toolbarpanel-name').outerWidth(true) + $('.pv-toolbarpanel-zoomcontrols').outerWidth(true) + 145 + $('.pv-toolbarpanel-sortcontrols').outerWidth(true));
+        controlsWidth -= 30; //width of the item count
 
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
@@ -217,6 +208,8 @@
             }
         }
 
+        //display tile count
+        UpdateItemCount();
     };
 
     InitUI = function () {
@@ -227,6 +220,7 @@
         if (brandImage.length > 0)
             toolbarPanel += "<img class='pv-toolbarpanel-brandimage' src='" + brandImage + "'></img>";
         toolbarPanel += "<span class='pv-toolbarpanel-name'>" + PivotCollection.CollectionName + "</span>";
+        toolbarPanel += "<span class='pv-toolbarpanel-itemcount'></span>";
         toolbarPanel += "<div class='pv-toolbarpanel-facetbreadcrumb'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-zoomcontrols'><div class='pv-toolbarpanel-zoomslider'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-timelineselector'></div></div>";
@@ -268,7 +262,9 @@
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
-        filterPanel.append("<div class='pv-filterpanel-clearall'>Clear All</div>")
+        filterPanel
+            .append("<div class='pv-filterpanel-export' title='Export data'></div>")
+            .append("<div class='pv-filterpanel-clearall'>Clear All</div>")
             .append("<input class='pv-filterpanel-search' type='text' placeholder='Search...' /><div class='pv-filterpanel-search-autocomplete'></div>")
             .css('height', mainPanelHeight - 13 + 'px');
         if (navigator.userAgent.match(/iPad/i) != null)
@@ -665,8 +661,6 @@
         _views.push(new PivotViewer.Views.GridView());
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
-        _views.push(new PivotViewer.Views.MapView());
-        _views.push(new PivotViewer.Views.TimeView());
 
         //init the views interfaces
         for (var i = 0; i < _views.length; i++) {
@@ -687,8 +681,6 @@
        // The table, graph and the map view needs to know about the facet categories
        _views[1].SetFacetCategories(PivotCollection);
        _views[2].SetFacetCategories(PivotCollection);
-       _views[3].SetFacetCategories(PivotCollection);
-       _views[4].SetFacetCategories(PivotCollection);
 
     };
 
@@ -1201,16 +1193,6 @@
             if (_currentView == 2) { 
                 _views[_currentView].SetSelectedFacet(_initTableFacet);
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
-            } else if (_currentView == 3) {
-                _views[_currentView].SetMapInitCentreX(_initMapCentreX);
-                _views[_currentView].SetMapInitCentreY(_initMapCentreY);
-                _views[_currentView].SetMapInitType(_initMapType);
-                _views[_currentView].SetMapInitZoom(_initMapZoom);
-                _views[_currentView].applyBookmark = true;
-                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
-            } else if (_currentView == 4) {
-                _views[_currentView].SetSelectedFacet(_initTimelineFacet);
-                _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _selectedItem);
             _handledInitSettings = true;
@@ -1239,6 +1221,9 @@
             }
         }
         _filterItems = sortedFilter;
+
+        //Update item count
+        UpdateItemCount();
 
 	// Update the bookmark
         UpdateBookmark ();
@@ -1517,6 +1502,12 @@
         bc.append(bcItems);
     };
 
+    UpdateItemCount = function(){
+        var $itemCount = $('.pv-toolbarpanel-itemcount');
+        $itemCount.empty();
+        $itemCount.append(_filterItems.length);
+    };
+
     DeselectInfoPanel = function () {
         //de-select details
         $('.pv-infopanel').fadeOut();
@@ -1664,8 +1655,8 @@
     $.subscribe("/PivotViewer/ImageController/Collection/Loaded", function (event) {
         InitPivotViewer();
         var filterPanel = $('.pv-filterpanel');
-        filterPanel.append("<div class='pv-filterpanel-version'><a href=\"#pv-open-version\">About HTHL5 PivotViewer</a></div>");
-        filterPanel.append("<div id=\"pv-open-version\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>Version: " + $(PivotViewer)[0].Version + "</p><p>The sources are available on <a href=\"https://github.com/openlink/html5pivotviewer\" target=\"_blank\">github</a></p></div></div>");
+        filterPanel.append("<div class='pv-filterpanel-version'><a href=\"#pv-open-version\">About HTML5 PivotViewer</a></div>");
+        filterPanel.append("<div id=\"pv-open-version\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>Version: 1.0.2</p><p>The sources are available on <a href=\"https://github.com/RogerNoble/html5pivotviewer\" target=\"_blank\">github</a></p></div></div>");
     });
 
     //Item selected - show the info panel
@@ -1809,7 +1800,7 @@
             }
             if (PivotCollection.FacetCategories[i].Name == evt.Facet && 
                 PivotCollection.FacetCategories[i].Type == PivotViewer.Models.FacetType.Number) {
-                var s = $('#pv-filterpanel-numericslider-' + PivotViewer.Utils.EscapeMetaChars(evt.Facet));
+                var s = $('#pv-filterpanel-numericslider-' + CleanName(evt.Facet));
                 FacetSliderDrag(s, evt.Item, evt.MaxRange);
             }
         }
@@ -1887,6 +1878,54 @@
                     checked[i].checked = false;
             }
             FacetItemClick(cb[0]);
+        });
+        //Export data click - gets the current filter and outputs it to a new window so it can be copied into another application
+        $('.pv-filterpanel-export').on('click', function (e) {
+            //get current selection and generate output HTML.
+            output = '<html>';
+            output += '<head><title>Export current filter.</title></head>'
+            output += '<body><table><tr><th>Name</th>'
+            //add columns for facet categories
+            for (var m = 0; m < PivotCollection.FacetCategories.length; m++) {
+                output += '<th>' + PivotCollection.FacetCategories[m].Name + '</th>';
+            }
+
+            //add rows for each selected item
+            for(var i = 0; i < _filterItems.length; i++){
+                for (var j = 0; j < _tiles.length; j++) {
+                    //find item from filter
+                    if (_tiles[j].facetItem.Id == _filterItems[i].Id) {
+                        var item = _tiles[j];
+                        //add the items name as the first column
+                        output += '<tr><td>' + item.facetItem.Name + '</td>';
+                        //add the other columns
+                        for (var m = 0; m < PivotCollection.FacetCategories.length; m++) {
+                            var value = '';
+                            for(var t = 0; t < item.facetItem.Facets.length; t++){
+                                //if then facet category names match then set the value
+                                if(item.facetItem.Facets[t].Name == PivotCollection.FacetCategories[m].Name){
+                                    var values = [];
+                                    for(var v = 0; v < item.facetItem.Facets[t].FacetValues.length; v++){
+                                        if(typeof item.facetItem.Facets[t].FacetValues[v].Value != 'undefined') 
+                                            values.push(item.facetItem.Facets[t].FacetValues[v].Value);
+                                    }
+                                    //output the values as a comma delimited list
+                                    value = values.join();
+                                    break;
+                                }
+                            }
+                            output += '<td>' + value + '</td>';
+                        }
+                        output += '</tr>';
+                    }
+                }
+            }
+
+            output += '</tr></table></body></html>';
+            //open a new window and write the contents
+            var win = window.open('', '_blank');
+            win.document.write(output);
+            win.document.close();
         });
         //Facet clear all click
         $('.pv-filterpanel-clearall').on('click', function (e) {
