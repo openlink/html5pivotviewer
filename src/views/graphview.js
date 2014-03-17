@@ -338,10 +338,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
     },
     GetButtonImage: function () {
-        return 'images/GraphView.png';
+        return '/images/GraphView.png';
     },
     GetButtonImageSelected: function () {
-        return 'images/GraphViewSelected.png';
+        return '/images/GraphViewSelected.png';
     },
     GetViewName: function () {
         return 'Graph View';

@@ -1655,8 +1655,8 @@
     $.subscribe("/PivotViewer/ImageController/Collection/Loaded", function (event) {
         InitPivotViewer();
         var filterPanel = $('.pv-filterpanel');
-        filterPanel.append("<div class='pv-filterpanel-version'><a href=\"#pv-open-version\">About HTHL5 PivotViewer</a></div>");
-        filterPanel.append("<div id=\"pv-open-version\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>Version: 1.0.1</p><p>The sources are available on <a href=\"https://github.com/RogerNoble/html5pivotviewer\" target=\"_blank\">github</a></p></div></div>");
+        filterPanel.append("<div class='pv-filterpanel-version'><a href=\"#pv-open-version\">About HTML5 PivotViewer</a></div>");
+        filterPanel.append("<div id=\"pv-open-version\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>Version: 1.0.2</p><p>The sources are available on <a href=\"https://github.com/RogerNoble/html5pivotviewer\" target=\"_blank\">github</a></p></div></div>");
     });
 
     //Item selected - show the info panel
