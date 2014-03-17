@@ -117,8 +117,8 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 //Items
                 var facetItems = $(xml).find("Items");
                 if (facetItems.length == 1) {
-                    collection.ImageBase = $(facetItems[0]).attr("ImgBase");
                     var facetItem = $(facetItems[0]).find("Item");
+                    collection.ImageBase = $(facetItems[0]).attr("ImgBase");
                     if (facetItem.length == 0) {
                         //Make sure throbber is removed else everyone thinks the app is still running
                         $('.pv-loading').remove();
@@ -247,7 +247,8 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                     }
                 }
 
-                $.publish("/PivotViewer/Models/Collection/Loaded", null);
+                if (facetItem.length > 0) 
+                  $.publish("/PivotViewer/Models/Collection/Loaded", null);
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 //Make sure throbber is removed else everyone thinks the app is still running
