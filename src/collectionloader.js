@@ -187,8 +187,8 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                                 var savedNamespacePrefix = namespacePrefix;
                     
                                 // Handle locally defined namespaces
-                                for (var j = 0; j < itemExtension[0].children.length; j++) {
-                                    namespacePrefix = itemExtension[0].children[0].lookupPrefix("http://schemas.microsoft.com/livelabs/pivot/collection/2009");
+                                for (var j = 0; j < itemExtension[0].childNodes.length; j++) {
+                                    namespacePrefix = itemExtension[0].childNodes[j].lookupPrefix("http://schemas.microsoft.com/livelabs/pivot/collection/2009");
                                     if (namespacePrefix)
                                         break;
                                 }
@@ -230,8 +230,8 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                         var savedNamespacePrefix = namespacePrefix;
                     
                         // Handle locally defined namespaces
-                        for (var j = 0; j < extension[x].children.length; j++) {
-                            namespacePrefix = extension[0].children[0].lookupPrefix("http://schemas.microsoft.com/livelabs/pivot/collection/2009");
+                        for (var j = 0; j < extension[x].childNodes.length; j++) {
+                            namespacePrefix = extension[0].childNodes[j].lookupPrefix("http://schemas.microsoft.com/livelabs/pivot/collection/2009");
                             if (namespacePrefix)
                                 break;
                         }
