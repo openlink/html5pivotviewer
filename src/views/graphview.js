@@ -8,7 +8,7 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2014 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -218,14 +218,28 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         if (changingView) {
             if ($('.pv-tableview-table').is(':visible')){
                 $('.pv-tableview-table').fadeOut();
+                $('.pv-tableview-table').fadeOut();
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
                 $('.pv-viewarea-canvas').fadeIn();
             }
             if ($('.pv-mapview-canvas').is(':visible')){
+                $('.pv-toolbarpanel-maplegend').fadeOut(400, function(){
+                    $('.pv-toolbarpanel-zoomslider').fadeIn();
+                    $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                });
+                $('.pv-mapview-legend').fadeOut();
                 $('.pv-mapview-canvas').fadeOut();
+                $('.pv-viewarea-canvas').fadeIn();
+            }
+            if ($('.pv-timeview-canvas').is(':visible')){
+                $('.pv-timeview-canvas').fadeOut();
+                $('.pv-toolbarpanel-timelineselector').fadeOut();
+                $('.pv-toolbarpanel-maplegend').fadeOut();
+                $('.pv-toolbarpanel-sort').fadeIn();
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('#MAIN_BODY').css('overflow', 'auto');
                 $('.pv-viewarea-canvas').fadeIn();
             }
             if ($('.pv-mapview2-canvas').is(':visible')){
@@ -332,10 +346,10 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
     },
     GetButtonImage: function () {
-        return 'Content/images/GraphView.png';
+        return 'images/GraphView.png';
     },
     GetButtonImageSelected: function () {
-        return 'Content/images/GraphViewSelected.png';
+        return 'images/GraphViewSelected.png';
     },
     GetViewName: function () {
         return 'Graph View';
@@ -411,9 +425,77 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             }
         }
     },
+    GetDatetimeBuckets: function (bktArray, filterList, name) {
+        var newBkts = [];
+        var handled = [];
+        for (var i = 0; i < bktArray.length; i++) {
+            var datetimeitem = $('#pv-facet-item' + CleanName(name) + "__" + CleanName(bktArray[i].Name.toString()));
+            for (var j = 0; j < filterList.length; j++) {
+                if (bktArray[i].Items.indexOf(filterList[j]) != -1) {
+                    var bucketIndex = -1;
+                    if (newBkts.length == 0)
+                        newBkts.push({startRange: bktArray[i].Name, endRange: bktArray[i].Name, Ids:[filterList[j]], Values:[bktArray[i].Name]});
+                    else {
+                        for (var k = 0; k < newBkts.length; k++) {
+                            if (newBkts[k].startRange == bktArray[i].Name) 
+                                bucketIndex = k;
+                        }
+                        if (bucketIndex > -1)          
+                            newBkts[bucketIndex].Ids.push(filterList[j]);
+                        else
+                            newBkts.push({startRange: bktArray[i].Name, endRange: bktArray[i].Name, Ids:[filterList[j]], Values:[bktArray[i].Name]});
+                    }
+                    handled.push(filterList[j]);
+                }
+            }
+        }
+        // Anything in the filter list that isn't now in a bucket needs to go in the '(no info)' bucket
+        newBkts.push({startRange: '(no info)', endRange: '(no info)', Ids:[], Values:['(no info)']});
+        for (var k = 0; k < filterList.length; k++) {
+            if (handled.indexOf(filterList[k]) == -1)
+                newBkts[newBkts.length - 1].Ids.push(filterList[k]);
+        }
+        if (newBkts[newBkts.length - 1].Ids.length == 0)
+            newBkts.pop();
+
+        return newBkts;
+    },
     //Groups into buckets based on first n chars
     Bucketize: function (dzTiles, filterList, orderBy, stringFacets) {
         var bkts = [];
+        // Handle datetime data differently.
+        var orderByCategory;
+
+        for (i = 0; i < this.categories.length; i++) {
+             if (this.categories[i].Name == orderBy) {
+                 orderByCategory = this.categories[i];
+                 break;
+            }
+        }
+        if (orderByCategory.Type == PivotViewer.Models.FacetType.DateTime) {
+            //Start with biggest time difference
+            var dtBuckets;
+            dtBuckets = this.GetDatetimeBuckets(orderByCategory.decadeBuckets, filterList, orderByCategory.Name);
+            if (dtBuckets.length > 1)
+                return dtBuckets;
+            dtBuckets = this.GetDatetimeBuckets(orderByCategory.yearBuckets, filterList, orderByCategory.Name);
+            if (dtBuckets.length > 1)
+                return dtBuckets;
+            dtBuckets = this.GetDatetimeBuckets(orderByCategory.monthBuckets, filterList, orderByCategory.Name);
+            if (dtBuckets.length > 1)
+                return dtBuckets;
+            dtBuckets = this.GetDatetimeBuckets(orderByCategory.dayBuckets, filterList, orderByCategory.Name);
+            if (dtBuckets.length > 1)
+                return dtBuckets;
+            dtBuckets = this.GetDatetimeBuckets(orderByCategory.hourBuckets, filterList, orderByCategory.Name);
+            if (dtBuckets.length > 1)
+                return dtBuckets;
+            dtBuckets = this.GetDatetimeBuckets(orderByCategory.minuteBuckets, filterList, orderByCategory.Name);
+            if (dtBuckets.length > 1)
+                return dtBuckets;
+            dtBuckets = this.GetDatetimeBuckets(orderByCategory.secondBuckets, filterList, orderByCategory.Name);
+            return dtBuckets;
+        }
         for (var i = 0; i < dzTiles.length; i++) {
             if ($.inArray(dzTiles[i].facetItem.Id, filterList) >= 0) {
                 var hasValue = false;
@@ -670,5 +752,8 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
             var bucketNumber = Math.floor((clickX - that.offsetX) / that.columnWidth);
             $.publish("/PivotViewer/Views/Item/Filtered", [{ Facet: that.sortFacet, Item: that.buckets[bucketNumber].startRange, MaxRange: that.buckets[bucketNumber].endRange, Values: that.buckets[bucketNumber].Values, ClearFacetFilters:true}]);
         }
+    },
+    SetFacetCategories: function (collection) {
+        this.categories = collection.FacetCategories;
     }
 });

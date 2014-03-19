@@ -1,0 +1,4 @@
+Vadpacker 1.1
+	* Improve --prefix option which allows to virtually change into a subfolder.
+	* Selection of source uris via arbitrary shell commands.
+	* New parameter --print-sticker.

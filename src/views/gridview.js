@@ -8,7 +8,7 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2014 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -209,11 +209,27 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             }
             if ($('.pv-mapview-canvas').is(':visible')){
                 changingFromNonTileView = true;
+                $('.pv-toolbarpanel-maplegend').fadeOut(400, function(){
+                    $('.pv-toolbarpanel-zoomslider').fadeIn();
+                    $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                });
+                $('.pv-mapview-legend').hide('slide', {direction: 'up'});
                 $('.pv-mapview-canvas').fadeOut();
-                //this.selected = changeViewSelectedItem;
                 this.selected = "";
+                $('.pv-viewarea-canvas').fadeIn(function(){
+                    $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+                });
+            }
+            if ($('.pv-timeview-canvas').is(':visible')){
+                changingFromNonTileView = true;
+                $('.pv-timeview-canvas').fadeOut();
+                this.selected = "";
+                $('.pv-toolbarpanel-timelineselector').fadeOut();
+                $('.pv-toolbarpanel-maplegend').fadeOut();
+                $('.pv-toolbarpanel-sort').fadeIn();
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('#MAIN_BODY').css('overflow', 'auto');
                 $('.pv-viewarea-canvas').fadeIn(function(){
                     $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
                 });
@@ -325,10 +341,10 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             return "<div class='pv-viewpanel-unabletodisplay'><h2>Unfortunately this view is unavailable as your browser does not support this functionality.</h2>Please try again with one of the following supported browsers: IE 9+, Chrome 4+, Firefox 2+, Safari 3.1+, iOS Safari 3.2+, Opera 9+<br/><a href='http://caniuse.com/#feat=canvas'>http://caniuse.com/#feat=canvas</a></div>";
     },
     GetButtonImage: function () {
-        return 'Content/images/GridView.png';
+        return 'images/GridView.png';
     },
     GetButtonImageSelected: function () {
-        return 'Content/images/GridViewSelected.png';
+        return 'images/GridViewSelected.png';
     },
     GetViewName: function () {
         return 'Grid View';
