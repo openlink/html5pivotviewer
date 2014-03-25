@@ -37,6 +37,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.mapCentreX = "";
         this.mapCentreY = "";
         this.applyBookmark = false;
+        this.geocodeService = "";
         var that = this;
         this.buckets = [];
         this.iconFiles = [
@@ -343,92 +344,204 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
     GetViewName: function () { return 'Map View'; },
     MakeGeocodeCallBack: function(locName) {
         var that = this;
-        var geocodeCallBack = function(results, status) {
-            var dummy = new google.maps.LatLng(0, 0);
-            var loc = dummy;
-            
-            if (status == google.maps.GeocoderStatus.OK) 
-                var loc = results[0].geometry.location;
-            else 
+        if (this.geocodeService == "Google"){
+            var geocodeCallBack = function(results, status) {
+                var dummy = new google.maps.LatLng(0, 0);
                 var loc = dummy;
+                
+                if (status == google.maps.GeocoderStatus.OK) 
+                    var loc = results[0].geometry.location;
+                else 
+                    var loc = dummy;
 
-            // Add to local cache
-            that.locCache.push ({locName: locName, loc: loc});
-
-            // Add to persistent cache
-            if (this.localStorage) {
-                var newLoc = {
-                    lat: loc.lat(),
-                    lng: loc.lng()
-                };
-                localStorage.setItem(locName, JSON.stringify(newLoc));
-            }
-
-            // Find items that have that location
-            for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
-                var itemId = that.itemsToGeocode[i].id;
-                var value = that.itemsToGeocode[i].locName;
-                var title = that.itemsToGeocode[i].title;
-                if (value == locName) {
-                    that.locList.push({id: itemId, loc:loc, title: title});
-                    if (loc.lat() != 0 || loc.lng() != 0)
-                         that.inScopeLocList.push({id:itemId, loc:loc, title: title});
+                // Add to local cache
+                that.locCache.push ({locName: locName, loc: loc});
+       
+                // Add to persistent cache
+                if (this.localStorage) {
+                    var newLoc = {
+                        lat: loc.lat(),
+                        lng: loc.lng()
+                    };
+                    localStorage.setItem(locName, JSON.stringify(newLoc));
                 }
-            }
-
-            var doneGeocoding = true;
-            for (var g = 0; g < that.geocodeList.length; g++) {
-                var value = that.geocodeList[g];
-                var currentLocNotFound = true;
-                for (var c = 0; c < that.locCache.length; c++) {
-                    if (that.locCache[c].locName == value) {
-                        currentLocNotFound = false;
-                        break;
+       
+                // Find items that have that location
+                for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
+                    var itemId = that.itemsToGeocode[i].id;
+                    var value = that.itemsToGeocode[i].locName;
+                    var title = that.itemsToGeocode[i].title;
+                    if (value == locName) {
+                        that.locList.push({id: itemId, loc:loc, title: title});
+                        if (loc.lat() != 0 || loc.lng() != 0)
+                             that.inScopeLocList.push({id:itemId, loc:loc, title: title});
                     }
                 }
-                if (currentLocNotFound) {
-                   doneGeocoding = false;
-                   break;
-               }
-            }
-            // If geocoding has taken more than 20 secs then try to set
-            // the bookmark.  Otherwise, if the time taken is more than 
-            // 2 secs make the pins we have so far
-            var now = new Date();
-            if ((now.getTime() - that.geocodeZero.getTime())/1000 > 20) {
-                that.RedrawMarkers(that.selectedItemId);
-                that.startGeocode = new Date();
-            } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
-                that.RedrawMarkers(that.selectedItemId);
-                that.RefitBounds();
-                that.startGeocode = new Date();
-            }
-
-            // If the geocodeResults array is totally filled, make the pins.
-            if (doneGeocoding || that.geocodeList.Count == 0)
-            {
-               //change cursor back ?
-               that.geocodeList = [];
-               if (that.inScopeLocList.Count == 0) {
-                   this.ShowMapError();
-                   return;
-               } else {
-                   that.CreateMap(that.selectedItemId);
-                   if (that.applyBookmark) {
-                       that.SetBookmark();
-                       that.applyBookmark = false;
+       
+                var doneGeocoding = true;
+                for (var g = 0; g < that.geocodeList.length; g++) {
+                    var value = that.geocodeList[g];
+                    var currentLocNotFound = true;
+                    for (var c = 0; c < that.locCache.length; c++) {
+                        if (that.locCache[c].locName == value) {
+                            currentLocNotFound = false;
+                            break;
+                        }
+                    }
+                    if (currentLocNotFound) {
+                       doneGeocoding = false;
+                       break;
+                   }
+                }
+                // If geocoding has taken more than 20 secs then try to set
+                // the bookmark.  Otherwise, if the time taken is more than 
+                // 2 secs make the pins we have so far
+                var now = new Date();
+                if ((now.getTime() - that.geocodeZero.getTime())/1000 > 20) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.startGeocode = new Date();
+                } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.RefitBounds();
+                    that.startGeocode = new Date();
+                }
+       
+                // If the geocodeResults array is totally filled, make the pins.
+                if (doneGeocoding || that.geocodeList.Count == 0)
+                {
+                   //change cursor back ?
+                   that.geocodeList = [];
+                   if (that.inScopeLocList.Count == 0) {
+                       this.ShowMapError();
+                       return;
+                   } else {
+                       that.CreateMap(that.selectedItemId);
+                       if (that.applyBookmark) {
+                           that.SetBookmark();
+                           that.applyBookmark = false;
+                       }
                    }
                }
-           }
+            }
+        } else {
+            var geocodeCallBack = function(xml) {
+                //var dummy = new L.LatLng(0, 0);
+                var dummy = new google.maps.LatLng(0, 0);
+                var loc = dummy;
+                var results = $(xml).find("searchresults");
+                var place = $(xml).find("place");
+ 
+                if (place) {
+                    var lat = $(place).attr("lat");
+                    var lon = $(place).attr("lon");
+                    if (lat && lon)
+                      loc = new google.maps.LatLng(lat, lon);
+                }
+
+                // Add to local cache
+                that.locCache.push ({locName: locName, loc: loc});
+       
+                // Add to persistent cache
+                if (this.localStorage) {
+                    var newLoc = {
+                        lat: loc.lat(),
+                        lng: loc.lng()
+                    };
+                    localStorage.setItem(locName, JSON.stringify(newLoc));
+                }
+       
+                // Find items that have that location
+                for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
+                    var itemId = that.itemsToGeocode[i].id;
+                    var value = that.itemsToGeocode[i].locName;
+                    var title = that.itemsToGeocode[i].title;
+                    if (value == locName) {
+                        that.locList.push({id: itemId, loc:loc, title: title});
+                        if (loc.lat() != 0 || loc.lng() != 0)
+                             that.inScopeLocList.push({id:itemId, loc:loc, title: title});
+                    }
+                }
+       
+                var doneGeocoding = true;
+                for (var g = 0; g < that.geocodeList.length; g++) {
+                    var value = that.geocodeList[g];
+                    var currentLocNotFound = true;
+                    for (var c = 0; c < that.locCache.length; c++) {
+                        if (that.locCache[c].locName == value) {
+                            currentLocNotFound = false;
+                            break;
+                        }
+                    }
+                    if (currentLocNotFound) {
+                       doneGeocoding = false;
+                       break;
+                   }
+                }
+                // If geocoding has taken more than 20 secs then try to set
+                // the bookmark.  Otherwise, if the time taken is more than 
+                // 2 secs make the pins we have so far
+                var now = new Date();
+                if ((now.getTime() - that.geocodeZero.getTime())/1000 > 20) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.startGeocode = new Date();
+                } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.RefitBounds();
+                    that.startGeocode = new Date();
+                }
+       
+                // If the geocodeResults array is totally filled, make the pins.
+                if (doneGeocoding || that.geocodeList.Count == 0)
+                {
+                   //change cursor back ?
+                   that.geocodeList = [];
+                   if (that.inScopeLocList.Count == 0) {
+                       this.ShowMapError();
+                       return;
+                   } else {
+                       that.CreateMap(that.selectedItemId);
+                       if (that.applyBookmark) {
+                           that.SetBookmark();
+                           that.applyBookmark = false;
+                       }
+                   }
+               }
+            }
+
         }
         return geocodeCallBack;
     },
+    Geocode: function (locName, callbackFunction) {
+        if (this.geocodeService == "Google"){
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode( {address: locName}, callbackFunction);
+        } else {
+            var that = this;
+            var nominatimUrl = "http://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(locName) + "&format=xml";
+            $.ajax({
+                type: "GET",
+                url: nominatimUrl,
+                success: callbackFunction,
+                error: function(jqXHR, textStatus, errorThrown) {
+                    //Throw an alert so the user knows something is wrong
+                    var msg = '';
+                    msg = msg + 'Error goecoding<br><br>';
+                    msg = msg + 'URL        : ' + nominatimUrl + '<br>';
+                    msg = msg + 'Status : ' + jqXHR.status + ' ' + errorThrown + '<br>';
+                    msg = msg + 'Details    : ' + jqXHR.responseText + '<br>';
+                    msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                    $('.pv-wrapper').append("<div id=\"pv-dzloading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>"+ msg + "</p></div></div>");
+                   var t=setTimeout(function(){window.open("#pv-dzloading-error","_self")},1000)
+          
+                }
+            });
+        }
+    },
     GetLocationsFromNames: function () {
-        var geocoder = new google.maps.Geocoder();
         var that = this;
         for (l = 0; l < this.itemsToGeocode.length; l ++) {
            var locName = this.itemsToGeocode[l].locName;
-           geocoder.geocode( {address: locName}, this.MakeGeocodeCallBack(locName));
+           this.Geocode(locName, this.MakeGeocodeCallBack(locName));
         }
         // Change cursor?
         this.startGeocode = new Date();
@@ -444,7 +557,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 
         centreLat = parseFloat(this.mapCentreX);
         centreLng = parseFloat(this.mapCentreY);
-        if (!isNaN(centreLat) && !isNaN(centreLng)) {
+        if ((!isNaN(centreLat) && !isNaN(centreLng)) && (centreLat != 0 && centreLng != 0)) {
             centreLoc = new google.maps.LatLng(centreLat, centreLng);
             gotLoc = true;
         }
@@ -498,6 +611,9 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         }
         // should never get here...
         return "not set";
+    },
+    SetGeocodeService: function (service) {
+        this.geocodeService = service;
     },
     GetBucketNumber: function (id) {
         for (var i = 0; i < this.buckets.length; i++) {

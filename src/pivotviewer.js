@@ -49,6 +49,8 @@
         _nameMapping = {},
         _googleAPILoaded = false,
         _googleAPIKey,
+        _mapService = "OpenStreetMap",
+        _geocodeService = "Nominatim",
         PivotCollection = new PivotViewer.Models.Collection();
 
     var methods = {
@@ -78,9 +80,25 @@
             else
                 _imageController = options.ImageController;
 
-            //Google map key
-            if (options.GoogleAPIKey != undefined)
+            //Options Map Service
+            if (options.MapService == "Google" && options.GoogleAPIKey != undefined) {
                _googleAPIKey = options.GoogleAPIKey;
+               _mapService = "Google";
+            } else if (options.MapService == "Google" && options.GoogleAPIKey == undefined) {
+               _mapService = "OpenStreetMap";
+               Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
+            } else
+               _mapService == "OpenStreetMap";
+
+            //Options Geocode Service
+            if (options.GeocodeService == "Google" && options.GoogleAPIKey != undefined) {
+               _googleAPIKey = options.GoogleAPIKey;
+               _geocodeService = "Google";
+            } else if (options.GeocodeService == "Google" && options.GoogleAPIKey == undefined) {
+               _geocodeService = "Nominatim";
+               Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
+            } else
+               _geocodeService == "Nominatim";
 
             //ViewerState
             //http://i2.silverlight.net/content/pivotviewer/developer-info/api/html/P_System_Windows_Pivot_PivotViewer_ViewerState.htm
@@ -268,9 +286,6 @@
 
         //add canvas for timeline to the mainpanel
         $('.pv-viewpanel').append("<div class='pv-timeview-canvas' id='pv-time-canvas'></div>");
-
-        //add canvas for map to the mainpanel
-        $('.pv-viewpanel').append("<div class='pv-mapview2-canvas' id='pv-map2-canvas'></div>");
 
         //filter panel
         var filterPanel = $('.pv-filterpanel');
@@ -681,8 +696,10 @@
         _views.push(new PivotViewer.Views.GridView());
         _views.push(new PivotViewer.Views.GraphView());
         _views.push(new PivotViewer.Views.TableView());
-        _views.push(new PivotViewer.Views.MapView());
-        _views.push(new PivotViewer.Views.MapView2());
+        if (_mapService == "Google")
+          _views.push(new PivotViewer.Views.MapView());
+        else
+          _views.push(new PivotViewer.Views.MapView2());
         _views.push(new PivotViewer.Views.TimeView());
 
         //init the views interfaces
@@ -707,6 +724,8 @@
        _views[3].SetFacetCategories(PivotCollection);
        _views[4].SetFacetCategories(PivotCollection);
 
+       // Set which geocode service should be used by the map view
+       _views[3].SetGeocodeService(_geocodeService);
     };
 
     /// Google API has loaded
@@ -720,7 +739,7 @@
 
         // If changing to map view and the Google API has not yet loaded,
         // load it now.
-        if (viewNumber == 3 && !_googleAPILoaded && _googleAPIKey) {
+        if (viewNumber == 3 && (_mapService == "Google" || _geocodeService == "Google") && !_googleAPILoaded && _googleAPIKey) {
             // Load the google maps api
             var script = document.createElement("script");
             script.type = "text/javascript";
@@ -729,7 +748,7 @@
             return;
         }
         
-        if (viewNumber == 3 && !_googleAPIKey) {
+        if (viewNumber == 3 && _mapService == "Google" && !_googleAPIKey) {
             var msg = '';
             msg = msg + 'Viewing the data on Google maps requires an API key. This can be obtained from <a href=\"https://code.google.com/apis/console/?noredirect\" target=\"_blank\">here</a>';
             $('.pv-wrapper').append("<div id=\"pv-nomapkey-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
@@ -1226,11 +1245,6 @@
                 _views[_currentView].applyBookmark = true;
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else if (_currentView == 4) {
-                _views[_currentView].SetMapInitCentreX(_initMapCentreX);
-                _views[_currentView].SetMapInitCentreY(_initMapCentreY);
-                _views[_currentView].SetMapInitZoom(_initMapZoom);
-                _views[_currentView].applyBookmark = true;
-            } else if (_currentView == 5) {
                 _views[_currentView].SetSelectedFacet(_initTimelineFacet);
                 _views[_currentView].Filter(_tiles, filterItems, sort, stringFacets, changingView, _initSelectedItem);
             } else 
@@ -1604,15 +1618,7 @@
                 if (_views[_currentView].GetMapZoom())
 	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
             }
-            if (_currentView == 4) {
-                if (_views[_currentView].GetMapCentreX())
-	    	  currentViewerState += "&$mapCentreX$=" + _views[_currentView].GetMapCentreX();
-                if (_views[_currentView].GetMapCentreY())
-	    	  currentViewerState += "&$mapCentreY$=" + _views[_currentView].GetMapCentreY();
-                if (_views[_currentView].GetMapZoom())
-	    	  currentViewerState += "&$mapZoom$=" + _views[_currentView].GetMapZoom();
-            }
-            if (_currentView == 5) 
+            if (_currentView == 4) 
                 if (_views[_currentView].GetSelectedFacet())
 	    	  currentViewerState += "&$timelineFacet$=" + _views[_currentView].GetSelectedFacet();
 	    // Add filters and create title
@@ -1791,8 +1797,6 @@
             if (_currentView == 2 || _currentView == 4)
                 _views[_currentView].Selected(_selectedItem.Id); 
             if (_currentView == 3) 
-                _views[_currentView].RedrawMarkers(_selectedItem.Id); 
-            if (_currentView == 4) 
                 _views[_currentView].RedrawMarkers(_selectedItem.Id); 
 
 	    // Update the bookmark
