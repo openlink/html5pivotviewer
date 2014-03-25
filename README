@@ -5,7 +5,7 @@ Original Code:
   enquiries@lobsterpot.com.au
 
 Enhancements:
-  Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+  Copyright (C) 2012-2014 OpenLink Software - http://www.openlinksw.com/
 
 
 The HTML5 PivotViewer is a fork of a project that was started
@@ -31,3 +31,8 @@ The original project can be found at:
 The new project can be found at:
 
 	http://github.com/openlink/html5pivotviewer
+
+A built version of this project containing pivotviewer.js and pivotviewer.min.js can be downloaded as either a zip or a compressed tar archive from:
+
+	http://opldownload.s3.amazonaws.com/HTML5/PivotViewer/html5pivotviewer-1.0.zip
+	http://opldownload.s3.amazonaws.com/HTML5/PivotViewer/html5pivotviewer-1.0.tar.gz
