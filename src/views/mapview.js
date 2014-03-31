@@ -38,6 +38,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.mapCentreY = "";
         this.applyBookmark = false;
         this.geocodeService = "";
+        this.geometryValue = "";
         var that = this;
         this.buckets = [];
         this.iconFiles = [
@@ -124,6 +125,23 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         $('.pv-toolbarpanel-maplegend').empty();
         if (!changingView && !selectedItem) 
             $('.pv-mapview-legend').show('slide', {direction: 'up'});
+
+        //Check for geomentry facet
+        var gotGeometry = false;
+        for (var i = 0; i < currentFilter.length && !gotGeometry; i++) {
+            for (var j = 0; j < this.tiles.length && !gotGeometry; j++) { 
+                if (this.tiles[j].facetItem.Id == currentFilter[i]) {
+                    for (k = 0; k < this.tiles[j].facetItem.Facets.length; k++) {
+                        if (this.tiles[j].facetItem.Facets[k].Name.toUpperCase().indexOf("GEOMETRY") >= 0) {
+                            //If multiple values just use the first one for now...
+                            this.geometryValue = this.tiles[j].facetItem.Facets[k].FacetValues[0].Value;
+                            gotGeometry = true;
+                            break;
+                        }
+                    }
+                }
+            }
+         }
 
         //Create a list of in scope locations
         for (var i = 0; i < currentFilter.length; i++) {
@@ -568,13 +586,38 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         if (this.mapType && this.mapType != "")
             type = this.mapType;
 
-        //this.map = new google.maps.Map(document.getElementById('pv-map-canvas'), mapOptions);
         this.map = new google.maps.Map(document.getElementById('pv-map-canvas'));
 
         if (gotLoc)
             this.map.panTo(centreLoc);
         else if (this.selectedItemId) 
             this.CentreOnSelected (this.selectedItemId);
+
+        //Add geometry to map using wicket library for reading WKT
+        var geometryOK = true;
+        var wkt = new Wkt.Wkt();
+        try { // Catch any malformed WKT strings
+            wkt.read(this.geometryValue);
+        } catch (e1) {
+            try {
+                wkt.read(this.geometryValue.replace('\n', '').replace('\r', '').replace('\t', ''));
+            } catch (e2) {
+                if (e2.name === 'WKTError') {
+                    Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
+                    //return;
+                    geometryOK = false;
+                }
+            }
+        }
+        if (geometryOK) {
+            var obj = wkt.toObject(this.map.defaults);
+            if (Wkt.isArray(obj)) {
+                for (var o = 0; o < obj.length; o++) { 
+                    obj[o].setMap(this.map);
+                }
+            } else 
+                obj.setMap(this.map);
+        }
 
         this.map.setMapTypeId(type);
         this.map.setZoom(zoom);

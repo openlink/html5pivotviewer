@@ -88,7 +88,21 @@
                _mapService = "OpenStreetMap";
                Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
             } else
-               _mapService == "OpenStreetMap";
+               _mapService = "OpenStreetMap";
+
+            if ( _mapService == "Google") {
+                // Load the google maps plugin for wicket
+                var script = document.createElement("script");
+                script.type = "text/javascript";
+                script.src = "Scripts/wicket-gmap3.min.js";
+                document.body.appendChild(script);
+            } else {
+                // Load the leaflets plugin for wicket
+                var script = document.createElement("script");
+                script.type = "text/javascript";
+                script.src = "Scripts/wicket-leaflet.min.js";
+                document.body.appendChild(script);
+            }
 
             //Options Geocode Service
             if (options.GeocodeService == "Google" && options.GoogleAPIKey != undefined) {
