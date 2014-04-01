@@ -94,13 +94,13 @@
                 // Load the google maps plugin for wicket
                 var script = document.createElement("script");
                 script.type = "text/javascript";
-                script.src = "Scripts/wicket-gmap3.min.js";
+                script.src = "scripts/wicket-gmap3.min.js";
                 document.body.appendChild(script);
             } else {
                 // Load the leaflets plugin for wicket
                 var script = document.createElement("script");
                 script.type = "text/javascript";
-                script.src = "Scripts/wicket-leaflet.min.js";
+                script.src = "scripts/wicket-leaflet.min.js";
                 document.body.appendChild(script);
             }
 
