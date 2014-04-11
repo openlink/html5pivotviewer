@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+          <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html version="-//W3C//DTD XHTML 1.1//EN"
       xmlns="http://www.w3.org/1999/xhtml"
@@ -41,11 +41,14 @@
     declare _translation_dest_lang varchar;
     declare _mapservice varchar;
     declare _geocodeservice varchar;
+    declare qrimg any;
+    declare _showPopup varchar;
 
     _collectionUri := '';
     _collUriFromQuery := '';
     _collUriFromBox := '';
     _no_input_box := '';
+    _showPopup := '';
 
     skinpfx := registry_get ('_pivot_SkinPrefix');
     if (skinpfx = 0) skinpfx := 'skin/';
@@ -85,6 +88,8 @@
 
    if (_collectionUri <> '')
 	_no_input_box := 'display:none';
+
+    _showPopup := get_keyword ('showPopup', params, '');
 
     --
     --  Create link for alternate output formats without #bookmark part
@@ -291,10 +296,41 @@
 <?vsp if (_c_link is not null) { ?>
           <a id="editlink" href="<?=sprintf('/HtmlPivotViewer/edit.vsp?url=%U', _c_link) ?>">Edit</a>&nbsp;|&nbsp;
           <a id="permalink" href="<?=sprintf('/HtmlPivotViewer/?url=%U', _c_link) ?>">Permalink</a>
+<?vsp 
+          qrimg := PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/?url=%U%%23%U', _proto, _host, _c_link, _bookmark));
+          if (qrimg is not null) {
+?>
+            <script type="text/javascript">
+              function myFunction() {
+                var el = document.getElementById ("permalink");
+                var permalink = el.href;
+                var collection = document.getElementById("collectionUri");
+                var popup = document.getElementById("showPopup");
+                collection.value = decodeURIComponent(el.search).substr(5);
+                popup.value = "showPopup";
+                document.getElementById("form1").submit();
+              }             
+            </script>
+  
+            <img id="qrthumb" onclick="myFunction()" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></img>
+  
+<?vsp     } ?>
 <?vsp } else { ?>
           <a id="editlink" href="/HtmlPivotViewer/edit.vsp">Edit</a>&nbsp;|&nbsp;
           <a id="permalink" href="#">Permalink</a>
+<?vsp 
+          qrimg := PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/', _proto, _host));
+?>
+          <a id="qrthumb2" href="#qrpopup"><img id="qrthumb2" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></a>
 <?vsp } ?>
+          <div id="qrpopup" class="modalDialog">
+            <div style="height:208px; width:185px;" >
+              <a href="#close" title="Close" class="close">X</a>
+              <h2 style="color:#000000; text-align:center; margin:0 0 0 0;">QRCode</h2>
+              <img id="qrcode_img" style="height:180px; width:180px;" alt="QRcode image" src="<?V qrimg ?>"/>
+            </div>
+          </div>
+
         </div> <!-- #menu -->
 <?vsp if (0 <> _addthis_key) { ?>
 	<!-- AddThis Button BEGIN -->
@@ -324,8 +360,9 @@
 	    }
 	    else
 		http('<input type="url" id="collectionUri" name="collectionUri" size="80"/>');
+	    http('<input type="hidden" id="showPopup" name="showPopup" value=""/>');
 	?>
-	<input type="submit" name="submit" value="Submit" />
+	<input type="submit" name="submitBtn" value="Submit" />
 	</p>
 	</form>
 
@@ -354,7 +391,12 @@
           http ('"});\n });\n ');
 	  http ('</script>');
         }
+      if (_showPopup = 'showPopup') {
 ?>
+        <script type="text/javascript">
+          window.location.href = "#qrpopup";
+        </script>
+<?vsp } ?>
     </div> <!-- #MD -->
     <div id="FT">
   <div id="ft_t">

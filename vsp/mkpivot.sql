@@ -241,6 +241,27 @@ DB.DBA.PV_URL_REW (in par varchar, in fmt varchar, in val varchar) returns varch
 };
 
 
+create procedure
+DB.DBA.PV_make_qr_code (in data_to_qrcode any, in src_width int := 120, in src_height int := 120, in qr_scale int := 4) __SOAP_HTTP 'text/plain'
+{
+  declare qrcode_bytes, mixed_content, content varchar;
+  declare qrcode any;
+
+  if (__proc_exists ('QRcode encodeString8bit', 2) is null)
+    return null;
+
+  declare exit handler for sqlstate '*' { return null; };
+
+  content := "IM CreateImageBlob" (src_width, src_height, 'white', 'jpg');
+  qrcode := "QRcode encodeString8bit" (data_to_qrcode);
+  qrcode_bytes := aref_set_0 (qrcode, 0);
+  mixed_content := "IM PasteQRcode" (qrcode_bytes, qrcode[1], qrcode[2], qr_scale, qr_scale, 0, 0, cast (content as varchar), length (content));
+  mixed_content := encode_base64 (cast (mixed_content as varchar));
+  mixed_content := replace (mixed_content, '\r\n', '');
+  return 'data:image/jpg;base64,' || mixed_content;
+}
+;
+
 DB.DBA.VHOST_REMOVE (
 	 lhost=>'*ini*',
 	 vhost=>'*ini*',

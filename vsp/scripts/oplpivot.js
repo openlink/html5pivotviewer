@@ -17,42 +17,6 @@
  *   51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-function onSilverlightError(sender, args)
-{
-	var appSource = "";
-	if (sender != null && sender != 0) {
-		appSource = sender.getHost().Source;
-	}
-
-	var errorType = args.ErrorType;
-	var iErrorCode = args.ErrorCode;
-
-	if (errorType == "ImageError" || errorType == "MediaError") {
-		return;
-	}
-
-	var errMsg = "Unhandled Error in Silverlight Application " +  appSource + "\n" ;
-
-	errMsg += "Code: "+ iErrorCode + "    \n";
-	errMsg += "Category: " + errorType + "       \n";
-	errMsg += "Message: " + args.ErrorMessage + "     \n";
-
-	if (errorType == "ParserError") {
-		errMsg += "File: " + args.xamlFile + "     \n";
-		errMsg += "Line: " + args.lineNumber + "     \n";
-		errMsg += "Position: " + args.charPosition + "     \n";
-	}
-	else if (errorType == "RuntimeError") {
-		if (args.lineNumber != 0) {
-			errMsg += "Line: " + args.lineNumber + "     \n";
-			errMsg += "Position: " +  args.charPosition + "     \n";
-		}
-		errMsg += "MethodName: " + args.methodName + "     \n";
-	}
-
-	throw new Error(errMsg);
-}
-
 function SetBookmark(collectionBaseUri, bookmark, title)
 {
         if (!collectionBaseUri) {
@@ -111,6 +75,14 @@ function SetBookmark(collectionBaseUri, bookmark, title)
 	if (el) {
 		el.href = edit_bookmark;
 	}
+
+	//
+	//  Update QR Code
+	//
+//	el = document.getElementById ("qrcode_img");
+//	if (el) {
+//		el.src = new_qrcode;
+//	}
 }
 
 function pivotviewer_post ()
