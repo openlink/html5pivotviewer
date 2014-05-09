@@ -54,6 +54,7 @@
                             <ul style="list-style: none;"><li><v:radio-button name="geocode_google" value="Google" initial-checked="--case registry_get ('_pivot_GeocodeService') when 'Google' then 1  else 0 end " />Google (requires an API key)</li>
                             <li><v:radio-button name="geocode_nominatim" value="Nominatim" initial-checked="--case registry_get ('_pivot_GeocodeService') when 'Nominatim' then 1  else 0 end " />Nominatim</li></ul>
                             </v:radio-group>
+                            Add a WMS overlay to the map: <v:text name="mapOverlay" value="--registry_get ('_pivot_MapOverlay')" /><br/><br/>
 			    Enable translation with Google Translate: <v:check-box name="enableTrans" initial-checked="--case registry_get ('_pivot_enableTranslation') when '1' then 1  else 0 end " /><br/><br/>
 			    Source language code: <v:text name="transSourceLang" value="--registry_get ('_pivot_transSourceLang')" /><br/><br/>
 			    <v:button action="simple" name="set" value="Set">
@@ -69,6 +70,7 @@
 				        registry_set ('_pivot_GoogleMapsKey', self.googleMaps.ufl_value);
                                     } else 
 				        registry_set ('_pivot_GeocodeService', 'Nominatim');
+				    registry_set ('_pivot_MapOverlay', self.mapOverlay.ufl_value);
 				    registry_set ('_pivot_AddThis', self.addThis.ufl_value);
                                     if (self.enableTrans.ufl_selected) {
 				        registry_set ('_pivot_enableTranslation', '1');

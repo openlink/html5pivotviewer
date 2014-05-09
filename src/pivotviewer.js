@@ -51,6 +51,7 @@
         _googleAPIKey,
         _mapService = "OpenStreetMap",
         _geocodeService = "Nominatim",
+        _overlayBaseUrl = "",
         PivotCollection = new PivotViewer.Models.Collection();
 
     var methods = {
@@ -113,6 +114,10 @@
                Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
             } else
                _geocodeService == "Nominatim";
+
+            //Options map overlay
+            if (options.MapOverlay != undefined)
+              _overlayBaseUrl = options.MapOverlay;
 
             //ViewerState
             //http://i2.silverlight.net/content/pivotviewer/developer-info/api/html/P_System_Windows_Pivot_PivotViewer_ViewerState.htm
@@ -740,7 +745,10 @@
 
        // Set which geocode service should be used by the map view
        _views[3].SetGeocodeService(_geocodeService);
-    };
+       // Set map overlay url
+       if (_overlayBaseUrl != "") 
+           _views[3].SetOverlayBaseUrl(_overlayBaseUrl);
+    }
 
     /// Google API has loaded
     global.setMapReady = function () {

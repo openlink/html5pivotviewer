@@ -23,6 +23,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.inScopeLocList = Array();
         this.map; 
         this.markers = Array();
+        this.overlay;
+        this.overlayBaseImageUrl = "";
         this.selectedItemId;
         this.geocodeList = Array();
         this.itemsToGeocode = Array();
@@ -89,7 +91,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-tableview-table').fadeOut();
             $('.pv-mapview2-canvas').fadeOut();
-            $('.pv-timeview-table').fadeOut();
+            $('.pv-timeview-canvas').fadeOut();
             $('.pv-toolbarpanel-sort').fadeIn();
             $('.pv-toolbarpanel-timelineselector').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
@@ -421,6 +423,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                 } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
                     that.RedrawMarkers(that.selectedItemId);
                     that.RefitBounds();
+        	    that.GetOverlay();
                     that.startGeocode = new Date();
                 }
        
@@ -630,6 +633,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         google.maps.event.addListener( this.map, 'zoom_changed', function() { 
             that.SetMapZoom(that.map.getZoom());
             $.publish("/PivotViewer/Views/Item/Updated", null);
+            that.GetOverlay();
         } );
         google.maps.event.addListener( this.map, 'center_changed', function() { 
             var centre = that.map.getCenter();
@@ -637,11 +641,13 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                 that.SetMapCentreX(centre.lat());
                 that.SetMapCentreY(centre.lng());
                 $.publish("/PivotViewer/Views/Item/Updated", null);
+                that.GetOverlay();
             }
         } );
 
         this.CreateMarkers();
         this.RefitBounds();
+        this.GetOverlay();
         this.CreateLegend();
     },
     SetFacetCategories: function (collection) {
@@ -697,6 +703,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                 marker.setIcon(this.iconFilesSelected[bucket]);
                 marker.setZIndex(1000000000);
                 $('.pv-toolbarpanel-maplegend').empty();
+                $('.pv-toolbarpanel-maplegend').css( 'overflow', 'hidden');
+                $('.pv-toolbarpanel-maplegend').css( 'text-overflow', 'ellipsis');
                 var toolbarContent;
                 toolbarContent = "<img style='height:15px;width:auto' src='" + that.iconFiles[bucket] + "'></img>";
                 if (that.buckets[bucket].startRange == that.buckets[bucket].endRange)
@@ -714,6 +722,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                         selectedTile = null;
                         that.selectedItemId = "";
                         that.RefitBounds();
+        		that.GetOverlay();
                         $('.pv-toolbarpanel-maplegend').empty();
                         $('.pv-mapview-legend').show('slide', {direction: 'up'});
                         $.publish("/PivotViewer/Views/Update/GridSelection", [{selectedItem: that.selectedItemId,  selectedTile: selectedTile}]);
@@ -754,6 +763,23 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.map.fitBounds(bounds);
         if (this.currentFilter.length == 1 && this.map.getZoom() > 15)
             this.map.setZoom(15);
+    },
+    GetOverlay: function () {
+        // Get the boundary and use to get image to overlay
+        var mapBounds = this.map.getBounds();
+        if (mapBounds) {
+          var southWest = mapBounds.getSouthWest();
+          var northEast = mapBounds.getNorthEast();
+          var width = $('#pv-map-canvas').width();
+          var height = $('#pv-map-canvas').height();
+          if (this.overlayBaseImageUrl != "") {
+            if (this.overlay) 
+                this.overlay.setMap(null);
+            var overlayImageUrl = this.overlayBaseImageUrl+ "&bbox=" + southWest.lng() + "," + southWest.lat() + "," + northEast.lng() + "," + northEast.lat() + "&width=" + width + "&height=" + height ;
+            this.overlay = new google.maps.GroundOverlay (overlayImageUrl, mapBounds, {opacity: 0.4});
+            this.overlay.setMap(this.map);
+          }
+        }
     },
     RedrawMarkers: function (selectedItemId) {
         this.selectedItemId = selectedItemId;
@@ -848,16 +874,21 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.map.setMapTypeId(type);
         this.map.setZoom(zoom);
     },
+    SetOverlayBaseUrl: function(baseUrl) {
+        this.overlayBaseImageUrl = baseUrl;
+    },
     CreateLegend: function() {
+        // Get width of the info panel (width of icon image = 30 )
+        var width = $('.pv-mapview-legend').width() - 32;
         $('.pv-mapview-legend').empty();
         $('.pv-mapview-legend').append("<div class='pv-legend-heading' style='height:28px' title='" + this.sortFacet + "'>" + this.sortFacet + "</div>");
         var tableContent = "<table id='pv-legend-data' style='color:#484848;'>";
         for (var i = 0; i < this.buckets.length; i++) {
             tableContent += "<tr><td><img src='" + this.iconFiles[i] + "'></img></td>";
             if (this.buckets[i].startRange == this.buckets[i].endRange)
-              tableContent += "<td>" + this.buckets[i].startRange + "</td></tr>"; 
+              tableContent += "<td><div style='overflow:hidden;white-space:nowrap;width:" + width + "px;text-overflow:ellipsis'>" + this.buckets[i].startRange + "</div></td></tr>"; 
             else
-              tableContent += "<td>" + this.buckets[i].startRange + " to " + this.buckets[i].endRange + "</td></tr>"; 
+              tableContent += "<td><div style='overflow:hidden;white-space:nowrap;width:" + width + "px;text-overflow:ellipsis'>" + this.buckets[i].startRange + " to " + this.buckets[i].endRange + "</div></td></tr>"; 
         }
         tableContent +="</table>";
         $('.pv-mapview-legend').append(tableContent);

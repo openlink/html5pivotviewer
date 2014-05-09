@@ -41,6 +41,7 @@
     declare _translation_dest_lang varchar;
     declare _mapservice varchar;
     declare _geocodeservice varchar;
+    declare _overlayurl varchar;
     declare qrimg any;
     declare _showPopup varchar;
 
@@ -78,6 +79,9 @@
 
     _geocodeservice := registry_get ('_pivot_GeocodeService');
     if (0 = _geocodeservice) _geocodeservice := 'Nominatim';
+
+    _overlayurl := registry_get ('_pivot_MapOverlay');
+    if (0 = _overlayurl) _overlayurl := '';
 
     _collUriFromQuery := {?'url'};
     _collUriFromBox := get_keyword ('collectionUri', params, '');
@@ -386,6 +390,8 @@
           http (_mapservice);
           http ('", GeocodeService: "');
           http (_geocodeservice);
+          http ('", MapOverlay: "');
+          http (_overlayurl);
           http ('", GoogleAPIKey: "');
           http (_googlemaps_key);
           http ('"});\n });\n ');

@@ -23,6 +23,8 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         this.inScopeLocList = Array();
         this.map; 
         this.markers = Array();
+        this.overlay;
+        this.overlayBaseImageUrl = "";
         this.selectedItemId;
         this.geocodeList = Array();
         this.itemsToGeocode = Array();
@@ -115,6 +117,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-tableview-table').fadeOut();
             $('.pv-mapview-canvas').fadeOut();
+            $('.pv-timeview-canvas').fadeOut();
             $('.pv-toolbarpanel-sort').fadeIn();
             $('.pv-toolbarpanel-timelineselector').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
@@ -449,6 +452,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                 } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
                     that.RedrawMarkers(that.selectedItemId);
                     that.RefitBounds();
+        	    that.GetOverlay();
                     that.startGeocode = new Date();
                 }
        
@@ -659,31 +663,25 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                 this.map.addLayer(obj);
         }
 
-        //this.map.setMapTypeId(type);
-//        this.map.setZoom(zoom);
-
 	this.map.addLayer(this.osm);
 
         // add map event listeners
-        //google.maps.event.addListener( this.map, 'maptypeid_changed', function() { 
-         //   that.SetMapType(that.map.getMapTypeId());
-          //  $.publish("/PivotViewer/Views/Item/Updated", null);
-        //} );
-        //google.maps.event.addListener( this.map, 'zoom_changed', function() { 
         this.map.on('zoomend', function(e) {
             that.SetMapZoom(that.map.getZoom());
             $.publish("/PivotViewer/Views/Item/Updated", null);
+            that.GetOverlay();
         } );
-        //google.maps.event.addListener( this.map, 'center_changed', function() { 
         this.map.on('moveend', function(e) {
             var centre = that.map.getCenter();
             that.SetMapCentreX(centre.lat);
             that.SetMapCentreY(centre.lng);
             $.publish("/PivotViewer/Views/Item/Updated", null);
+            that.GetOverlay();
         } );
 
         this.CreateMarkers();
         this.RefitBounds();
+        this.GetOverlay();
         this.CreateLegend();
     },
     SetFacetCategories: function (collection) {
@@ -751,6 +749,8 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                 marker.setIcon(new this.iconsSelected[bucket]);
                 marker.setZIndexOffset(1000000000);
                 $('.pv-toolbarpanel-maplegend').empty();
+                $('.pv-toolbarpanel-maplegend').css( 'overflow', 'hidden');
+                $('.pv-toolbarpanel-maplegend').css( 'text-overflow', 'ellipsis');
                 var toolbarContent;
                 toolbarContent = "<img style='height:15px;width:auto' src='" + marker._icon.src + "'></img>";
                 if (that.buckets[bucket].startRange == that.buckets[bucket].endRange)
@@ -770,6 +770,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                         selectedTile = null;
                         that.selectedItemId = "";
                         that.RefitBounds();
+        		that.GetOverlay();
                         $('.pv-toolbarpanel-maplegend').empty();
                         $('.pv-mapview-legend').show('slide', {direction: 'up'});
                         $.publish("/PivotViewer/Views/Update/GridSelection", [{selectedItem: that.selectedItemId,  selectedTile: selectedTile}]);
@@ -803,15 +804,35 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         var bounds;
         var markerPos = [];
 
-        for (i = 0; i < this.markers.length; i++) {  
-            //extend the bounds to include each marker's position
-            //bounds.extend(this.markers[i].position);
-            markerPos.push (this.markers[i].getLatLng());
+        if (this.markers.length > 0) {
+            for (i = 0; i < this.markers.length; i++) {  
+                //extend the bounds to include each marker's position
+                //bounds.extend(this.markers[i].position);
+                markerPos.push (this.markers[i].getLatLng());
+            }
+            bounds = new L.LatLngBounds(markerPos);
+        
+            //now fit the map to the newly inclusive bounds
+            this.map.fitBounds(bounds);
         }
-        bounds = new L.LatLngBounds(markerPos);
-
-        //now fit the map to the newly inclusive bounds
-        this.map.fitBounds(bounds);
+    },
+    GetOverlay: function () {
+        // Get the boundary and use to get image to overlay
+        var mapBounds = this.map.getBounds();
+        var west = mapBounds.getWest();
+        var east = mapBounds.getEast();
+        var north = mapBounds.getNorth();
+        var south = mapBounds.getSouth();
+        var mapSize = this.map.getSize();
+        var width = mapSize.x;
+        var height = mapSize.y;
+        if (this.overlayBaseImageUrl != "") {
+          if (this.overlay && this.map.hasLayer(this.overlay)) 
+              this.map.removeLayer(this.overlay);
+          var overlayImageUrl = this.overlayBaseImageUrl+ "&bbox=" + west + "," + south + "," + east + "," + north + "&width=" + width + "&height=" + height ;
+          this.overlay = new L.imageOverlay (overlayImageUrl, mapBounds, {opacity: 0.4});
+          this.overlay.addTo(this.map);
+        }
     },
     RedrawMarkers: function (selectedItemId) {
         this.selectedItemId = selectedItemId;
@@ -907,7 +928,12 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         //this.map.setMapTypeId(type);
         this.map.setZoom(zoom);
     },
+    SetOverlayBaseUrl: function(baseUrl) {
+        this.overlayBaseImageUrl = baseUrl;
+    },
     CreateLegend: function() {
+        // Get width of the info panel (width of icon image = 30 )
+        var width = $('.pv-mapview-legend').width() - 32;
         $('.pv-mapview-legend').empty();
         $('.pv-mapview-legend').append("<div class='pv-legend-heading' style='height:28px' title='" + this.sortFacet + "'>" + this.sortFacet + "</div>");
         var tableContent = "<table id='pv-legend-data' style='color:#484848;'>";
@@ -915,9 +941,9 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
             var icon = new this.icons[i];
             tableContent += "<tr><td><img src='" + icon.options.iconUrl + "'></img></td>";
             if (this.buckets[i].startRange == this.buckets[i].endRange)
-              tableContent += "<td>" + this.buckets[i].startRange + "</td></tr>"; 
+              tableContent += "<td><div style='overflow:hidden;white-space:nowrap;width:" + width + "px;text-overflow:ellipsis'>" + this.buckets[i].startRange + "</div></td></tr>"; 
             else
-              tableContent += "<td>" + this.buckets[i].startRange + " to " + this.buckets[i].endRange + "</td></tr>"; 
+              tableContent += "<td><div style='overflow:hidden;white-space:nowrap;width:" + width + "px;text-overflow:ellipsis'>" + this.buckets[i].startRange + " to " + this.buckets[i].endRange + "</div></td></tr>"; 
         }
         tableContent +="</table>";
         $('.pv-mapview-legend').append(tableContent);
