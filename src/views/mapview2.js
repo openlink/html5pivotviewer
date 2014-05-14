@@ -41,6 +41,8 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         this.applyBookmark = false;
         this.geocodeService = "";
         this.geometryValue = "";
+        this.areaValues = Array();
+        this.areaObj;
         var that = this;
         this.buckets = [];
         this.icons = [];
@@ -154,7 +156,9 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         if (!changingView && !selectedItem) 
             $('.pv-mapview-legend').show('slide', {direction: 'up'});
 
-        //Check for geomentry facet
+        //Check for geometry facet
+        //This should contain a geometry definition im WKT that applies to the whole collection
+        //E.g. where a geometry filter has been applied
         var gotGeometry = false;
         for (var i = 0; i < currentFilter.length && !gotGeometry; i++) {
             for (var j = 0; j < this.tiles.length && !gotGeometry; j++) { 
@@ -169,7 +173,23 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                     }
                 }
             }
-         }
+        }
+
+        //Check for area facet
+        //This should contain a geometry definition im WKT that applies to an individual item
+        for (var i = 0; i < currentFilter.length; i++) {
+            for (var j = 0; j < this.tiles.length; j++) { 
+                if (this.tiles[j].facetItem.Id == currentFilter[i]) {
+                    for (k = 0; k < this.tiles[j].facetItem.Facets.length; k++) {
+                        if (this.tiles[j].facetItem.Facets[k].Name.toUpperCase().indexOf("AREA") >= 0) {
+                            var areaValue = this.tiles[j].facetItem.Facets[k].FacetValues[0].Value;
+                            this.areaValues.push({id: this.tiles[j].facetItem.Id, area: areaValue});
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         //Create a list of in scope locations
         for (var i = 0; i < currentFilter.length; i++) {
@@ -834,6 +854,45 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
           this.overlay.addTo(this.map);
         }
     },
+    DrawArea: function (selectedItemId) {
+        var areaValue;
+        var areaWkt = new Wkt.Wkt();
+
+        //clear existing area object
+        if (this.areaObj)
+          this.map.removeLayer(this.areaObj);
+        for (var i = 0; i < this.areaValues.length; i++) {
+           if (this.areaValues[i].id == selectedItemId) {
+              areaValue = this.areaValues[i].area;
+              break;
+           }
+        }
+        if (areaValue) {
+            var geometryOK = true;
+            try { // Catch any malformed WKT strings
+                areaWkt.read(areaValue);
+            } catch (e1) {
+                try {
+                    areaWkt.read(areaValue.replace('\n', '').replace('\r', '').replace('\t', ''));
+                } catch (e2) {
+                    if (e2.name === 'WKTError') {
+                        Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
+                        //return;
+                        geometryOK = false;
+                    }
+                }
+            }
+            if (geometryOK) {
+                this.areaObj = areaWkt.toObject({color:'#990000',fillColor:'#EEFFCC',fillOpacity:0.6});
+                if (Wkt.isArray(this.areaObj)) {
+                    for (var o = 0; o < this.areaObj.length; o++) { 
+                        this.map.addLayer(this.areaObj[o]);
+                    }
+                } else 
+                    this.map.addLayer(this.areaObj);
+            }
+        }
+    },
     RedrawMarkers: function (selectedItemId) {
         this.selectedItemId = selectedItemId;
 
@@ -846,6 +905,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
 
         this.CreateMarkers();
         this.CentreOnSelected (selectedItemId);
+        this.DrawArea(selectedItemId);
     },
     ShowMapError: function () {
         var msg = '';
