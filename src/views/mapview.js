@@ -312,15 +312,17 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                                   if (this.localStorage) {
                                                       var newLatLng;
                                                       var newLoc = JSON.parse(localStorage.getItem(geoLoc));
-                                                      var lat = parseFloat(newLoc.lat);
-                                                      var lng = parseFloat(newLoc.lng);
-                                                      if (!NaN(lat) && !NaN(lng)) {
-                                                          newLatLng = new google.maps.LatLng(lat, lng);
-                                                          // Add it to local cache
-                                                          this.locCache.push({locName: geoLoc, loc: newLatLng});
-                                                          this.locList.push({id: itemId, loc: newLatLng, title: itemName});
-                                                          this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
-                                                          gotLocation = true;
+                                                      if (newLoc) {
+                                                          var lat = parseFloat(newLoc.lat);
+                                                          var lng = parseFloat(newLoc.lng);
+                                                          if (!NaN(lat) && !NaN(lng)) {
+                                                              newLatLng = new google.maps.LatLng(lat, lng);
+                                                              // Add it to local cache
+                                                              this.locCache.push({locName: geoLoc, loc: newLatLng});
+                                                              this.locList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                              this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                              gotLocation = true;
+                                                          }
                                                       }
                                                   }
                                                   if (!gotLocation) {

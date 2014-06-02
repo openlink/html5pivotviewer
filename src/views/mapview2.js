@@ -338,15 +338,17 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                                                   if (this.localStorage) {
                                                       var newLatLng;
                                                       var newLoc = JSON.parse(localStorage.getItem(geoLoc));
-                                                      var lat = parseFloat(newLoc.lat);
-                                                      var lng = parseFloat(newLoc.lng);
-                                                      if (!isNaN(lat) && !isNaN(lng)) {
-                                                          newLatLng = new L.LatLng(lat, lng);
-                                                          // Add it to local cache
-                                                          this.locCache.push({locName: geoLoc, loc: newLatLng});
-                                                          this.locList.push({id: itemId, loc: newLatLng, title: itemName});
-                                                          this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
-                                                          gotLocation = true;
+                                                      if (newLoc) {
+                                                          var lat = parseFloat(newLoc.lat);
+                                                          var lng = parseFloat(newLoc.lng);
+                                                          if (!isNaN(lat) && !isNaN(lng)) {
+                                                              newLatLng = new L.LatLng(lat, lng);
+                                                              // Add it to local cache
+                                                              this.locCache.push({locName: geoLoc, loc: newLatLng});
+                                                              this.locList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                              this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                              gotLocation = true;
+                                                          }
                                                       }
                                                   }
                                                   if (!gotLocation) {
@@ -756,7 +758,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
 
                 //icon: blueIcon,
         for (i = 0; i < this.inScopeLocList.length; i++) {  
-            marker = new L.Marker(this.inScopeLocList[i].loc, {
+            var marker = new L.Marker(this.inScopeLocList[i].loc, {
                 title: this.inScopeLocList[i].title,
             })
             this.map.addLayer(marker);
