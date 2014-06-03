@@ -29,14 +29,14 @@
 </head>
 <body>
     <h1>Collection Filtered by Geometry.</h1>
-    <h2>Filter area superimposed.</h2>
+    <h2>Filter area superimposed.  Additional area associated with each item in the collection</h2>
 	<div id="pivotviewer" style="height:600px;">
         </div>
             <script type="text/javascript">
                 var debug = false;
                 $(document).ready(function () {
                     $('#pivotviewer').PivotViewer({ 
-                        Loader: new PivotViewer.Models.Loaders.CXMLLoader("samples/data/geometry.cxml"),
+                        Loader: new PivotViewer.Models.Loaders.CXMLLoader("samples/data/area.cxml"),
                         MapService: "OpenStreetMap",
                         GeocodeService: "Nominatim",
                         ViewerState: "$view$=4&$facet0$=virtcxml:FacetLabel"
