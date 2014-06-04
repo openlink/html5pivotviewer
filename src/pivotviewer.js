@@ -59,7 +59,13 @@
         // Loader: a loader that inherits from ICollectionLoader must be specified.  Currently the project only includes the CXMLLoader.  It takes the URL of the collection as a parameter.
         // ImageController: defaults to the DeepZoom image controller.
         // ViewerState: Sets the filters, selected item and chosen view when the PivotViewer first opens
-        // GoogleAPIKey: required to use the map view. 
+        // MapService: which map service to use.  This can be either Google or OpenStreetMap. 
+        // GeocodeService: which geocode service to use.  This can either be Google or Nominatim. 
+        // GoogleAPIKey: required to use the Google map or geocode service. 
+        // MapOverlay: option to add a WMS overlay to the map.  The base url of the WMS server should be
+        //   supplied without the bbox option e.g.
+        //     MapOverlay: http://maps.communities.gov.uk:8080/geoserver/eafloodareas/wms?service=WMS&version=1.1.0&request=GetMap&layers=FloodAlertsWarnings&styles=&srs=EPSG:4326&format=image%2Fjpeg
+ 
         init: function (options) {
             _self = this;
             _self.addClass('pv-wrapper');
