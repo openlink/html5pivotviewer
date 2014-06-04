@@ -1,14 +1,26 @@
-Oct 04 2013, V1.00.0:
+June 04 2014, V?.??.?:
 
- * Added new view to display collection data as a table.
- * Added new view to display collection data on a map.
-   NOTE: Requires Google Maps API key.
- * Improved image display - higher resolution images are assembled
-   from multiple deepzoom tiles and all images are now displayed with
-   the correct aspect ratio.
- * Added support for creating permalinks that include item and view
-   selection.
- * Added new html example file to the project
- * Improved error handling
- * Added support for jquery 1.9.1 and jquery-ui 1.10.2
- * Graph view filtering now works for numeric data as well as strings
+ * Added new examples
+ * Added batch file to make pivotviewer.js on Windows
+ * Added support for multiple areas plotted on a map
+    Each item can have an associated area which is shown on the
+    map once the item has been selected.
+ * Added the option to add WMS overlay to the map.
+    The base url of the WMS server is supplied without the bbox option
+    when calling PivotViewer. e.g.
+    MapOverlay: http://maps.communities.gov.uk:8080/geoserver/eafloodareas/wms?service=WMS&version=1.1.0&request=GetMap&layers=FloodAlertsWarnings&styles=&srs=EPSG:4326&format=image%2Fjpeg
+ * Mapview will now display geometries
+    You can now specify a geometry in a specially
+    named facet using WKT and it is displayed on the
+    map
+ * Added support for maps using OpenStreetMap as well as Google maps.
+ * Added grouping items in mapview using colored pins
+ * Added timeline view.
+ * Fixed bug in sorting
+    If a facet category was marked as wordwheelvisible but not filtervisible
+    then a search term in that category would not be found.
+ * Added filtering using a custom date range
+ * Improved handling of datetime data
+    now possible to filter based on time periods rather
+    than matching an exact date time.
+
