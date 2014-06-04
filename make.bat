@@ -17,7 +17,7 @@
 ::
 ::
 ::
-::  Make pivotviewer.js on Windows
+::  Make pivotviewer.js on Windows and create the scripts folder
 ::
 @echo off
 
@@ -42,3 +42,18 @@ type src\views\deepzoom.js >> pivotviewer.js
 type src\pivotviewer.js >> pivotviewer.js
 
 copy pivotviewer.js pivotviewer.min.js
+
+::
+::  Make scripts folder
+::
+mkdir scripts
+mkdir scripts\images
+mkdir scripts\timeline_js
+mkdir scripts\timeline_js\images
+copy lib\leaflet\images\* scripts\images\
+copy lib\wicket\wicket-arcgis.min.js scripts\
+copy lib\wicket\wicket-gmap3.min.js scripts\
+copy lib\wicket\wicket-leaflet.min.js scripts\
+copy lib\simile-timeline\timeline_js\images\blue-circle.png scripts\timeline_js\images\
+copy lib\simile-timeline\timeline_js\images\dark-red-circle.png scripts\timeline_js\images\
+
