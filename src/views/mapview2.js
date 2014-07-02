@@ -356,8 +356,8 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                                                       // Add location to list for geocoding (will need to keep itemId name with it)
                                                       if (g < 1000) {//limiting the number of items to geocode at once to 1000 for now
                                                           var foundIt = false;
-                                                          for (var g = 0; g < this.geocodeList.length; g++) {
-                                                              if (this.geocodeList[g] == geoLoc) {
+                                                          for (var gl = 0; gl < this.geocodeList.length; gl++) {
+                                                              if (this.geocodeList[gl] == geoLoc) {
                                                                   foundIt = true;
                                                                   break;
                                                               }
