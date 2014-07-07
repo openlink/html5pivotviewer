@@ -7,6 +7,15 @@
 </head>
 <body>
     <h1>PivotViewer Demos</h1>
+    <p>To run these demos you first need to create the pivotviewer.min.js file. You will then need to create a scripts folder and copy some files into it.</p>
+    <p>On Windows you can just run the make.bat script.  This will create pivotviewer.min.js and the scripts folder.</p>
+    <p>Otherwise you will need to first create an empty ChangeLog file in the root directory of the project, then run the following:
+      <li>./autogen.sh</li>
+      <li>./configure</li>
+      <li>make</li>
+      <li>./mk_scripts_folder.sh</li>
+    </p>
+    <h2>Demos</h2>
     <ol>
         <li><a href="simple.html">Simple collection</a></li>
         <li><a href="location.html">Collection with location information</a></li>
