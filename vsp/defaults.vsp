@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<?vsp
+--
+--  $Id$
+--
+--  This file is part of the OpenLink Software Virtuoso Open-Source (VOS)
+--  project.
+--
+--  Copyright (C) 1998-2014 OpenLink Software
+--
+--  This project is free software; you can redistribute it and/or modify it
+--  under the terms of the GNU General Public License as published by the
+--  Free Software Foundation; only version 2 of the License, dated June 1991.
+--
+--  This program is distributed in the hope that it will be useful, but
+--  WITHOUT ANY WARRANTY; without even the implied warranty of
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+--  General Public License for more details.
+--
+--  You should have received a copy of the GNU General Public License along
+--  with this program; if not, write to the Free Software Foundation, Inc.,
+--  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+--
+--
+?>
+<?vsp
+  http_rewrite ();
+
+  -- Control config values
+  declare _mapservice varchar;
+  declare _googlemaps_key varchar;
+  declare _geocodeservice varchar;
+  declare _overlayurl varchar;
+
+  _mapservice := registry_get ('_pivot_MapService');
+  if (0 = _mapservice) _mapservice := 'OpenStreetMap';
+
+  _googlemaps_key := registry_get ('_pivot_GoogleMapsKey');
+  if (0 = _googlemaps_key) _googlemaps_Key := '';
+
+  _geocodeservice := registry_get ('_pivot_GeocodeService');
+  if (0 = _geocodeservice) _geocodeservice := 'Nominatim';
+
+  _overlayurl := registry_get ('_pivot_MapOverlay');
+  if (0 = _overlayurl) _overlayurl := '';
+?>
+{
+	"MapService": "<?= _mapservice ?>",
+	"GoogleAPIKey": "<?= _googlemaps_key ?>",
+	"GeocodeService": "<?= _geocodeservice ?>",
+	"MapOverlay": "<?vsp http (_overlayurl); ?>"
+}
+

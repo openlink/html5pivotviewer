@@ -305,3 +305,23 @@ DB.DBA.URLREWRITE_CREATE_REGEX_RULE (
 	''
 );
 
+DB.DBA.VHOST_REMOVE (
+	 lhost=>'*ini*',
+	 vhost=>'*ini*',
+	 lpath=>'/HtmlPivotViewer/defaults'
+);
+
+
+DB.DBA.VHOST_DEFINE (
+	 lhost=>'*ini*',
+	 vhost=>'*ini*',
+	 lpath=>'/HtmlPivotViewer/defaults',
+	 ppath=>'/DAV/VAD/html5pivotviewer/',
+	 is_dav=>1,
+	 def_page=>'defaults.vsp',
+	 vsp_user=>'dba',
+	 ses_vars=>0,
+	 is_default_host=>0
+);
+
+

@@ -71,112 +71,158 @@
             _self.addClass('pv-wrapper');
             InitPreloader();
 
-            //Collection loader
-            if (options.Loader == undefined)
-                throw "Collection loader is undefined.";
-            if (options.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader)
-                options.Loader.LoadCollection(PivotCollection);
-            else
-                throw "Collection loader does not inherit from PivotViewer.Models.Loaders.ICollectionLoader.";
+            //Load default options from "defaults" file
+            $.getJSON("defaults")
+            .always( function (defaultOptions) {
 
-            //Image controller
-            if (options.ImageController == undefined)
-                _imageController = new PivotViewer.Views.DeepZoomImageController();
-            else if (!options.ImageController instanceof PivotViewer.Views.IImageController)
-                throw "Image Controller does not inherit from PivotViewer.Views.IImageController.";
-            else
-                _imageController = options.ImageController;
+                //Options Map Service
+                if (options.MapService == "Google" && options.GoogleAPIKey != undefined) {
+                   _googleAPIKey = options.GoogleAPIKey;
+                   _mapService = "Google";
+                } else if (options.MapService == "Google" && defaultOptions.GoogleAPIKey != undefined) {
+                   _googleAPIKey = defaultOptions.GoogleAPIKey;
+                   _mapService = "Google";
+                } else if (options.MapService == undefined && defaultOptions.MapService == "Google" && options.GoogleAPIKey != undefined) {
+                   _googleAPIKey = options.GoogleAPIKey;
+                   _mapService = "Google";
+                } else if (options.MapService == undefined && defaultOptions.MapService == "Google" && defaultOptions.GoogleAPIKey != undefined) {
+                   _googleAPIKey = defaultOptions.GoogleAPIKey;
+                   _mapService = "Google";
+                } else if (options.MapService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
+                   _mapService = "OpenStreetMap";
+                   Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
+                } else if (options.MapService == undefined && defaultOptions.MapService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
+                   _mapService = "OpenStreetMap";
+                   Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
+                } else
+                   _mapService = "OpenStreetMap";
+ 
+                if ( _mapService == "Google") {
+                    // Load the google maps plugin for wicket
+                    var script = document.createElement("script");
+                    script.type = "text/javascript";
+                    script.src = "scripts/wicket-gmap3.min.js";
+                    document.body.appendChild(script);
+                } else {
+                    // Load the leaflets plugin for wicket
+                    var script = document.createElement("script");
+                    script.type = "text/javascript";
+                    script.src = "scripts/wicket-leaflet.min.js";
+                    document.body.appendChild(script);
+                }
+ 
+                //Options Geocode Service
+                if (options.GeocodeService == "Google" && options.GoogleAPIKey != undefined) {
+                   _googleAPIKey = options.GoogleAPIKey;
+                   _geocodeService = "Google";
+                } else if (options.GeocodeService == "Google" && defaultOptions.GoogleAPIKey != undefined) {
+                   _googleAPIKey = defaultOptions.GoogleAPIKey;
+                   _geocodeService = "Google";
+                } else if (options.GeocodeService == undefined && defaultOptions.GeocodeService == "Google" && options.GoogleAPIKey != undefined) {
+                   _googleAPIKey = options.GoogleAPIKey;
+                   _geocodeService = "Google";
+                } else if (options.GeocodeService == undefined && defaultOptions.GeocodeService == "Google" && defaultOptions.GoogleAPIKey != undefined) {
+                   _googleAPIKey = defaultOptions.GoogleAPIKey;
+                   _geocodeService = "Google";
+                } else if (options.GeocodeService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
+                   _geocodeService = "Nominatim";
+                   Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
+                } else if (options.GeocodeService == undefined && defaultOptions.GeocodeService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
+                   _geocodeService = "Nominatim";
+                   Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
+                } else
+                   _geocodeService == "Nominatim";
+ 
+                //Options map overlay
+                if (options.MapOverlay != undefined)
+                  _overlayBaseUrl = options.MapOverlay;
+                else if (defaultOptions.MapOverlay != undefined)
+                  _overlayBaseUrl = defaultOptions.MapOverlay;
+ 
+                //ViewerState
+                //http://i2.silverlight.net/content/pivotviewer/developer-info/api/html/P_System_Windows_Pivot_PivotViewer_ViewerState.htm
+                if (options.ViewerState != undefined || defaultOptions.ViewerState != undefined) {
+                    var splitVS;
 
-            //Options Map Service
-            if (options.MapService == "Google" && options.GoogleAPIKey != undefined) {
-               _googleAPIKey = options.GoogleAPIKey;
-               _mapService = "Google";
-            } else if (options.MapService == "Google" && options.GoogleAPIKey == undefined) {
-               _mapService = "OpenStreetMap";
-               Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
-            } else
-               _mapService = "OpenStreetMap";
+                    if (options.ViewerState != undefined)
+                        splitVS = options.ViewerState.split('&');
+                    else
+                        splitVS = defaultOptions.ViewerState.split('&');
 
-            if ( _mapService == "Google") {
-                // Load the google maps plugin for wicket
-                var script = document.createElement("script");
-                script.type = "text/javascript";
-                script.src = "scripts/wicket-gmap3.min.js";
-                document.body.appendChild(script);
-            } else {
-                // Load the leaflets plugin for wicket
-                var script = document.createElement("script");
-                script.type = "text/javascript";
-                script.src = "scripts/wicket-leaflet.min.js";
-                document.body.appendChild(script);
-            }
-
-            //Options Geocode Service
-            if (options.GeocodeService == "Google" && options.GoogleAPIKey != undefined) {
-               _googleAPIKey = options.GoogleAPIKey;
-               _geocodeService = "Google";
-            } else if (options.GeocodeService == "Google" && options.GoogleAPIKey == undefined) {
-               _geocodeService = "Nominatim";
-               Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
-            } else
-               _geocodeService == "Nominatim";
-
-            //Options map overlay
-            if (options.MapOverlay != undefined)
-              _overlayBaseUrl = options.MapOverlay;
-
-            //ViewerState
-            //http://i2.silverlight.net/content/pivotviewer/developer-info/api/html/P_System_Windows_Pivot_PivotViewer_ViewerState.htm
-            if (options.ViewerState != undefined) {
-                var splitVS = options.ViewerState.split('&');
-                for (var i = 0, _iLen = splitVS.length; i < _iLen; i++) {
-                    var splitItem = splitVS[i].split('=');
-                    if (splitItem.length == 2) {
-                        //Selected view
-                        if (splitItem[0] == '$view$')
-                            _viewerState.View = parseInt(splitItem[1]) - 1;
-                        //Sorted by
-                        else if (splitItem[0] == '$facet0$')
-                            _viewerState.Facet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
-                        //Selected Item
-                        else if (splitItem[0] == '$selection$')
-                            _viewerState.Selection = PivotViewer.Utils.EscapeItemId(splitItem[1]);
-                        //Table Selected Facet
-                        else if (splitItem[0] == '$tableFacet$')
-                            _viewerState.TableFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
-                        //Map Centre X
-                        else if (splitItem[0] == '$mapCentreX$')
-                            _viewerState.MapCentreX = splitItem[1];
-                        //Map Centre Y
-                        else if (splitItem[0] == '$mapCentreY$')
-                            _viewerState.MapCentreY = splitItem[1];
-                        //Map Type
-                        else if (splitItem[0] == '$mapType$')
-                            _viewerState.MapType = PivotViewer.Utils.EscapeItemId(splitItem[1]);
-                        //Map Zoom
-                        else if (splitItem[0] == '$mapZoom$')
-                            _viewerState.MapZoom = PivotViewer.Utils.EscapeItemId(splitItem[1]);
-                        //Timeline Selected Facet
-                        else if (splitItem[0] == '$timelineFacet$')
-                            _viewerState.TimelineFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
-                        //Filters
-                        else {
-                            var filter = { Facet: splitItem[0], Predicates: [] };
-                            var filters = splitItem[1].split('_');
-                            for (var j = 0, _jLen = filters.length; j < _jLen; j++) {
-                                //var pred = filters[j].split('.');
-                                if (filters[j].indexOf('.') > 0) {
-                                    var pred = filters[j].substring(0, filters[j].indexOf('.'));
-                                    var value = filters[j].substring(filters[j].indexOf('.') + 1);
-                                    //if (pred.length == 2)
-                                    filter.Predicates.push({ Operator: pred, Value: value });
+                    for (var i = 0, _iLen = splitVS.length; i < _iLen; i++) {
+                        var splitItem = splitVS[i].split('=');
+                        if (splitItem.length == 2) {
+                            //Selected view
+                            if (splitItem[0] == '$view$')
+                                _viewerState.View = parseInt(splitItem[1]) - 1;
+                            //Sorted by
+                            else if (splitItem[0] == '$facet0$')
+                                _viewerState.Facet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                            //Selected Item
+                            else if (splitItem[0] == '$selection$')
+                                _viewerState.Selection = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                            //Table Selected Facet
+                            else if (splitItem[0] == '$tableFacet$')
+                                _viewerState.TableFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                            //Map Centre X
+                            else if (splitItem[0] == '$mapCentreX$')
+                                _viewerState.MapCentreX = splitItem[1];
+                            //Map Centre Y
+                            else if (splitItem[0] == '$mapCentreY$')
+                                _viewerState.MapCentreY = splitItem[1];
+                            //Map Type
+                            else if (splitItem[0] == '$mapType$')
+                                _viewerState.MapType = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                            //Map Zoom
+                            else if (splitItem[0] == '$mapZoom$')
+                                _viewerState.MapZoom = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                            //Timeline Selected Facet
+                            else if (splitItem[0] == '$timelineFacet$')
+                                _viewerState.TimelineFacet = PivotViewer.Utils.EscapeItemId(splitItem[1]);
+                            //Filters
+                            else {
+                                var filter = { Facet: splitItem[0], Predicates: [] };
+                                var filters = splitItem[1].split('_');
+                                for (var j = 0, _jLen = filters.length; j < _jLen; j++) {
+                                    //var pred = filters[j].split('.');
+                                    if (filters[j].indexOf('.') > 0) {
+                                        var pred = filters[j].substring(0, filters[j].indexOf('.'));
+                                        var value = filters[j].substring(filters[j].indexOf('.') + 1);
+                                        //if (pred.length == 2)
+                                        filter.Predicates.push({ Operator: pred, Value: value });
+                                    }
                                 }
+                                _viewerState.Filters.push(filter);
                             }
-                            _viewerState.Filters.push(filter);
                         }
                     }
                 }
-            }
+
+                //Collection loader
+                if (options.Loader == undefined && defaultOptions.Loader == undefined)
+                    throw "Collection loader is undefined.";
+                if (options.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader)
+                    options.Loader.LoadCollection(PivotCollection);
+                else if (defaultOptions.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader)
+                    defaultOptions.Loader.LoadCollection(PivotCollection);
+                else
+                    throw "Collection loader does not inherit from PivotViewer.Models.Loaders.ICollectionLoader.";
+ 
+                //Image controller
+                if (options.ImageController == undefined && defaultOptions.ImageController == undefined)
+                    _imageController = new PivotViewer.Views.DeepZoomImageController();
+                else if (options.ImageController instanceof PivotViewer.Views.IImageController)
+                    _imageController = options.ImageController;
+                else if (defaultOptions.ImageController instanceof PivotViewer.Views.IImageController)
+                    _imageController = defautlOptions.ImageController;
+                else
+                    throw "Image Controller does not inherit from PivotViewer.Views.IImageController.";
+ 
+            })
+            .fail (function (jqxhr, textStatus, error) {
+                var err = textStatus + ", " + error;
+                Debug.Log ("Getting defaults file failed: " + err);
+            });
         },
         show: function () {
             Debug.Log('Show');

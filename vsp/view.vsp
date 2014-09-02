@@ -29,21 +29,17 @@
 
     declare _collectionUri, _collUriFromQuery, _collUriFromBox  varchar;
     declare links varchar;
-    declare skinpfx varchar;
     declare _no_input_box varchar;
-    declare _addthis_key varchar;
-    declare _urchin_key varchar;
-    declare _bingmaps_key varchar;
-    declare _googlemaps_key varchar;
     declare _desc_qr, _desc_res_uri varchar;
-    declare _enable_translation varchar;
-    declare _translation_source_lang varchar;
-    declare _translation_dest_lang varchar;
-    declare _mapservice varchar;
-    declare _geocodeservice varchar;
-    declare _overlayurl varchar;
     declare qrimg any;
     declare _showPopup varchar;
+
+    -- Application config values
+    declare skinpfx varchar;
+    declare _enable_translation varchar;
+    declare _translation_source_lang varchar;
+    declare _addthis_key varchar;
+    declare _urchin_key varchar; 
 
     _collectionUri := '';
     _collUriFromQuery := '';
@@ -51,6 +47,7 @@
     _no_input_box := '';
     _showPopup := '';
 
+    -- Get application config settings from database
     skinpfx := registry_get ('_pivot_SkinPrefix');
     if (skinpfx = 0) skinpfx := 'skin/';
 
@@ -60,28 +57,14 @@
 
     _urchin_key := registry_get ('_pivot_urchinTracker');
 
-    _bingmaps_key := registry_get ('_pivot_BingMapsKey');
-    if (0 = _bingmaps_key) _bingmaps_Key := '';
-
-    _googlemaps_key := registry_get ('_pivot_GoogleMapsKey');
-    if (0 = _googlemaps_key) _googlemaps_Key := '';
-
     _enable_translation := registry_get ('_pivot_enableTranslation');
     if ('false' = _enable_translation) _enable_translation := 0;
     if ('no' = _enable_translation) _enable_translation := 0;
     if ('0' = _enable_translation) _enable_translation := 0;
+
     _translation_source_lang := registry_get ('_pivot_transSourceLang');
     if (0 = _translation_source_lang) _translation_source_lang := 'en';
     if ('0' = _translation_source_lang) _translation_source_lang := 'en';
-
-    _mapservice := registry_get ('_pivot_MapService');
-    if (0 = _mapservice) _mapservice := 'OpenStreetMap';
-
-    _geocodeservice := registry_get ('_pivot_GeocodeService');
-    if (0 = _geocodeservice) _geocodeservice := 'Nominatim';
-
-    _overlayurl := registry_get ('_pivot_MapOverlay');
-    if (0 = _overlayurl) _overlayurl := '';
 
     _collUriFromQuery := {?'url'};
     _collUriFromBox := get_keyword ('collectionUri', params, '');
@@ -378,23 +361,15 @@
         {
 	  http ('<div id="pivotviewer" style="height:inherit;"></div>\n');
 	  http ('<script type="text/javascript">\n');
-  	  http ('var debug = true;\n');
+	  http ('var debug = true;\n');
 	  http ('$(document).ready(function () { $("#pivotviewer").PivotViewer({');
- 	  http ('Loader: new PivotViewer.Models.Loaders.CXMLLoader("');
+	  http ('Loader: new PivotViewer.Models.Loaders.CXMLLoader("');
 	  http (_c_link);
 	  http ('", "');
 	  http (_proxy);
 	  http ('"), ViewerState: "');
 	  http (_bookmark);
-          http ('", MapService: "');
-          http (_mapservice);
-          http ('", GeocodeService: "');
-          http (_geocodeservice);
-          http ('", MapOverlay: "');
-          http (_overlayurl);
-          http ('", GoogleAPIKey: "');
-          http (_googlemaps_key);
-          http ('"});\n });\n ');
+	  http ('"});\n });\n ');
 	  http ('</script>');
         }
       if (_showPopup = 'showPopup') {
