@@ -121,6 +121,19 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         });
     },
 
+    GetImages: function (id, width, height) {
+        //Determine level
+        var biggest = width > height ? width : height;
+        var thisLevel = Math.ceil(Math.log(biggest) / Math.log(2));
+
+        if (thisLevel == Infinity || thisLevel == -Infinity)
+            thisLevel = 0;
+
+        //TODO: Look at caching last image to avoid using _controller
+        this._level = thisLevel;
+        return this.GetImagesAtLevel(id, thisLevel);
+    },
+
     GetImagesAtLevel: function (id, level) {
         //if the request level is greater than the collections max then set to max
         //level = (level > _maxLevel ? _maxLevel : level);

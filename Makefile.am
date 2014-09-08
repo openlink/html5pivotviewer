@@ -37,6 +37,7 @@ SOURCES		= \
 	$(srcdir)/src/views/tableview.js \
 	$(srcdir)/src/views/tilecontroller.js \
 	$(srcdir)/src/views/deepzoom.js \
+	$(srcdir)/src/views/simpleimage.js \
 	$(srcdir)/src/pivotviewer.js
 
 vad_DATA = html5pivotviewer_dav.vad

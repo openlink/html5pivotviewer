@@ -1,5 +1,4 @@
-{
+
 	"MapService": "OpenStreetMap",
 	"GeocodeService": "Nominatim",
-	"ViewerState": "$view$=5&$facet0$=virtcxml:FacetAltitude"
 }
