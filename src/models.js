@@ -20,7 +20,8 @@ PivotViewer.Models.Collection = Object.subClass({
 		this.BrandImage = "";
 		this.FacetCategories = [];
 		this.Items = [];
-		this.CXMLBase = "";
+		this.CollectionBase = "";
+		this.CollectionBaseNoProxy = "";
 		this.ImageBase = "";
                 this.CopyrightName = "";
                 this.CopyrightHref = "";
@@ -90,9 +91,12 @@ PivotViewer.Models.ItemLink = Object.subClass({
 });
 
 PivotViewer.Models.Facet = Object.subClass({
-	init: function (Name) {
+	init: function (Name, Values) {
 		this.Name = Name;
-		this.FacetValues = [];
+                if (Values === undefined)
+		  this.FacetValues = [];
+                else
+		  this.FacetValues = Values;
 	},
 	AddFacetValue: function (facetValue) {
 		this.FacetValues.push(facetValue);

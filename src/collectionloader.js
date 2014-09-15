@@ -35,8 +35,8 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
         var collection = collection;
         this._super(collection);
 
-        collection.CXMLBaseNoProxy = this.CXMLUriNoProxy;
-        collection.CXMLBase = this.CXMLUri;
+        collection.CollectionBaseNoProxy = this.CXMLUriNoProxy;
+        collection.CollectionBase = this.CXMLUri;
 
         $.ajax({
             type: "GET",

@@ -1,4 +1,4 @@
-
+{
 	"MapService": "OpenStreetMap",
-	"GeocodeService": "Nominatim",
+	"GeocodeService": "Nominatim"
 }

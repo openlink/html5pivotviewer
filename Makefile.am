@@ -24,6 +24,7 @@ SOURCES		= \
 	$(srcdir)/src/utils.js \
 	$(srcdir)/src/models.js \
 	$(srcdir)/src/collectionloader.js \
+	$(srcdir)/src/jsonloader.js \
 	$(srcdir)/src/views/ipivotviewerview.js \
 	$(srcdir)/src/views/tilebasedview.js \
 	$(srcdir)/src/views/dataview.js \

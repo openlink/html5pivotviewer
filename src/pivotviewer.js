@@ -244,7 +244,7 @@
         //init DZ Controller
         var baseCollectionPath = PivotCollection.ImageBase;
         if (!(baseCollectionPath.indexOf('http', 0) >= 0 || baseCollectionPath.indexOf('www.', 0) >= 0))
-            baseCollectionPath = PivotCollection.CXMLBase.substring(0, PivotCollection.CXMLBase.lastIndexOf('/') + 1) + baseCollectionPath;
+            baseCollectionPath = PivotCollection.CollectionBase.substring(0, PivotCollection.CollectionBase.lastIndexOf('/') + 1) + baseCollectionPath;
         var canvasContext = $('.pv-viewarea-canvas')[0].getContext("2d");
 
         //Init Tile Controller and start animation loop
@@ -1754,7 +1754,7 @@
             // Permalink bookmarks can be enabled by implementing a function 
             // SetBookmark(bookmark string, title string)  
             if ( typeof (SetBookmark) != undefined && typeof(SetBookmark) === "function") { 
-                SetBookmark( PivotCollection.CXMLBaseNoProxy, currentViewerState, title);
+                SetBookmark( PivotCollection.CollectionBaseNoProxy, currentViewerState, title);
             }
         };
 
