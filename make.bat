@@ -26,6 +26,7 @@ type src\pubsub.js >> pivotviewer.js
 type src\utils.js >> pivotviewer.js
 type src\models.js >> pivotviewer.js
 type src\collectionloader.js >> pivotviewer.js
+type src\jsonloader.js >> pivotviewer.js
 type src\views\ipivotviewerview.js >> pivotviewer.js
 type src\views\tilebasedview.js >> pivotviewer.js
 type src\views\dataview.js >> pivotviewer.js
@@ -39,6 +40,7 @@ type src\views\timeview.js >> pivotviewer.js
 type src\views\tableview.js >> pivotviewer.js
 type src\views\tilecontroller.js >> pivotviewer.js
 type src\views\deepzoom.js >> pivotviewer.js
+type src\views\simpleimage.js >> pivotviewer.js
 type src\pivotviewer.js >> pivotviewer.js
 
 copy pivotviewer.js pivotviewer.min.js
