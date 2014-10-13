@@ -57,6 +57,7 @@
                             Add a WMS overlay to the map: <v:text name="mapOverlay" value="--registry_get ('_pivot_MapOverlay')" /><br/><br/>
 			    Enable translation with Google Translate: <v:check-box name="enableTrans" initial-checked="--case registry_get ('_pivot_enableTranslation') when '1' then 1  else 0 end " /><br/><br/>
 			    Source language code: <v:text name="transSourceLang" value="--registry_get ('_pivot_transSourceLang')" /><br/><br/>
+			    Use proxying for dynamic queries: <v:check-box name="useProxy" initial-checked="--case registry_get ('_pivot_use_proxying') when '1' then 1  else 0 end " /><br/><br/>
 			    <v:button action="simple" name="set" value="Set">
 				<v:on-post><![CDATA[
 				    registry_set ('_pivot_AddThis', self.addThis.ufl_value);
@@ -78,6 +79,10 @@
                                     } else if (not self.enableTrans.ufl_selected) {
 				        registry_set ('_pivot_enableTranslation', '0');
                                     }
+                                    if (self.useProxy.ufl_selected) 
+                                      registry_set ('_pivot_use_proxying', '1');
+                                    else
+                                      registry_set ('_pivot_use_proxying', '0');
 				    ]]></v:on-post>
 			    </v:button>
 			    <v:button action="simple" name="back" value="Back to packages list">

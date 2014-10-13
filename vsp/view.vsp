@@ -40,6 +40,7 @@
     declare _translation_source_lang varchar;
     declare _addthis_key varchar;
     declare _urchin_key varchar; 
+    declare _use_proxying varchar;
 
     _collectionUri := '';
     _collUriFromQuery := '';
@@ -65,6 +66,11 @@
     _translation_source_lang := registry_get ('_pivot_transSourceLang');
     if (0 = _translation_source_lang) _translation_source_lang := 'en';
     if ('0' = _translation_source_lang) _translation_source_lang := 'en';
+
+    _use_proxying := registry_get ('_pivot_use_proxying');
+    if ('false' = _use_proxying) _use_proxying := 0;
+    if ('no' = _use_proxying) _use_proxying := 0;
+    if ('0' = _use_proxying) _use_proxying := 0;
 
     _collUriFromQuery := {?'url'};
     _collUriFromBox := get_keyword ('collectionUri', params, '');
@@ -136,13 +142,11 @@
 	}
 
  	--
-	--  Create a proxy link for silverlight for dynamic queries
+	--  If proxying is enabled, create a proxy link for dynamic queries
 	--
-	if (_dynamic_collection = 1) {
-		-- _p_link := sprintf ('%s://%s/proxy?url=%U', _proto, _host, _c_link);
+	if ( 0 <> _use_proxying AND _dynamic_collection = 1) {
 		_proxy := sprintf ('%s://%s/proxy?url=', _proto, _host);
 	} else {
-		-- _p_link := _c_link;
 		_proxy := '';
 	}
 
