@@ -1,4 +1,4 @@
-          <?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html version="-//W3C//DTD XHTML 1.1//EN"
       xmlns="http://www.w3.org/1999/xhtml"
@@ -283,14 +283,6 @@
 <?vsp } ?>
 
         <div id="MENU">
-          <a id="newlink" href="/HtmlPivotViewer/">New</a>&nbsp;|&nbsp;
-<?vsp if (_c_link is not null) { ?>
-          <a id="editlink" href="<?=sprintf('/HtmlPivotViewer/edit.vsp?url=%U', _c_link) ?>">Edit</a>&nbsp;|&nbsp;
-          <a id="permalink" href="<?=sprintf('/HtmlPivotViewer/?url=%U', _c_link) ?>">Permalink</a>
-<?vsp 
-          qrimg := PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/?url=%U%%23%U', _proto, _host, _c_link, _bookmark));
-          if (qrimg is not null) {
-?>
             <script type="text/javascript">
               function myFunction() {
                 var el = document.getElementById ("permalink");
@@ -302,23 +294,29 @@
                 document.getElementById("form1").submit();
               }             
             </script>
-  
+
+          <a id="newlink" href="/HtmlPivotViewer/">New</a>&nbsp;|&nbsp;
+<?vsp if (_c_link is not null) { ?>
+          <a id="editlink" href="<?=sprintf('/HtmlPivotViewer/edit.vsp?url=%U', _c_link) ?>">Edit</a>&nbsp;|&nbsp;
+          <a id="permalink" href="<?=sprintf('/HtmlPivotViewer/?url=%U', _c_link) ?>">Permalink</a>
             <img id="qrthumb" onclick="myFunction()" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></img>
   
-<?vsp     } ?>
 <?vsp } else { ?>
           <a id="editlink" href="/HtmlPivotViewer/edit.vsp">Edit</a>&nbsp;|&nbsp;
           <a id="permalink" href="#">Permalink</a>
-<?vsp 
-          qrimg := PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/', _proto, _host));
-?>
-          <a id="qrthumb2" href="#qrpopup"><img id="qrthumb2" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></a>
+          <a id="qrthumb" onclick="myFunction()" href="#qrpopup"><img id="qrthumb" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></a>
 <?vsp } ?>
           <div id="qrpopup" class="modalDialog">
             <div style="height:208px; width:185px;" >
               <a href="#close" title="Close" class="close">X</a>
               <h2 style="color:#000000; text-align:center; margin:0 0 0 0;">QRCode</h2>
-              <img id="qrcode_img" style="height:180px; width:180px;" alt="QRcode image" src="<?V qrimg ?>"/>
+<?vsp if (_showPopup = 'showPopup') { ?>
+<?vsp     if (_c_link is not null) { ?>
+              <img id="qrcode_img" style="height:180px; width:180px;" alt="QRcode image" src="<?=PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/?url=%U%%23%U', _proto, _host, _c_link, _bookmark)) ?>"/>
+<?vsp     } else { ?>
+              <img id="qrcode_img" style="height:180px; width:180px;" alt="QRcode image" src="<?=PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/', _proto, _host)) ?>"/>
+<?vsp     } ?>
+<?vsp } ?>
             </div>
           </div>
 
