@@ -32,7 +32,6 @@
     declare _no_input_box varchar;
     declare _desc_qr, _desc_res_uri varchar;
     declare qrimg any;
-    declare _showPopup varchar;
 
     -- Application config values
     declare skinpfx varchar;
@@ -46,7 +45,6 @@
     _collUriFromQuery := '';
     _collUriFromBox := '';
     _no_input_box := '';
-    _showPopup := '';
 
     -- Get application config settings from database
     skinpfx := registry_get ('_pivot_SkinPrefix');
@@ -81,8 +79,6 @@
 
    if (_collectionUri <> '')
 	_no_input_box := 'display:none';
-
-    _showPopup := get_keyword ('showPopup', params, '');
 
     --
     --  Create link for alternate output formats without #bookmark part
@@ -284,14 +280,14 @@
 
         <div id="MENU">
             <script type="text/javascript">
-              function myFunction() {
+              function dialogOpen() {
                 var el = document.getElementById ("permalink");
-                var permalink = el.href;
-                var collection = document.getElementById("collectionUri");
-                var popup = document.getElementById("showPopup");
-                collection.value = decodeURIComponent(el.search).substr(5);
-                popup.value = "showPopup";
-                document.getElementById("form1").submit();
+                var img = document.getElementById("qrcode_img");
+                var pl = el.href;
+                $.ajax({url:document.location.origin + "/c/qrcode?data_to_qrcode=" + encodeURI(pl), success:function(data){
+                  img.src = data;
+                }});
+                $("#qrpopup").dialog('open');
               }             
             </script>
 
@@ -299,27 +295,22 @@
 <?vsp if (_c_link is not null) { ?>
           <a id="editlink" href="<?=sprintf('/HtmlPivotViewer/edit.vsp?url=%U', _c_link) ?>">Edit</a>&nbsp;|&nbsp;
           <a id="permalink" href="<?=sprintf('/HtmlPivotViewer/?url=%U', _c_link) ?>">Permalink</a>
-            <img id="qrthumb" onclick="myFunction()" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></img>
+          <img id="qrthumb" onclick="dialogOpen()" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></img>
   
 <?vsp } else { ?>
           <a id="editlink" href="/HtmlPivotViewer/edit.vsp">Edit</a>&nbsp;|&nbsp;
           <a id="permalink" href="#">Permalink</a>
-          <a id="qrthumb" onclick="myFunction()" href="#qrpopup"><img id="qrthumb" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></a>
+          <img id="qrthumb" title="QR Code" onclick="dialogOpen()" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></img>
 <?vsp } ?>
-          <div id="qrpopup" class="modalDialog">
-            <div style="height:208px; width:185px;" >
-              <a href="#close" title="Close" class="close">X</a>
-              <h2 style="color:#000000; text-align:center; margin:0 0 0 0;">QRCode</h2>
-<?vsp if (_showPopup = 'showPopup') { ?>
-<?vsp     if (_c_link is not null) { ?>
-              <img id="qrcode_img" style="height:180px; width:180px;" alt="QRcode image" src="<?=PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/?url=%U%%23%U', _proto, _host, _c_link, _bookmark)) ?>"/>
-<?vsp     } else { ?>
-              <img id="qrcode_img" style="height:180px; width:180px;" alt="QRcode image" src="<?=PV_make_qr_code (sprintf('%s://%s/HtmlPivotViewer/', _proto, _host)) ?>"/>
-<?vsp     } ?>
-<?vsp } ?>
+          <div id="qrpopup" style="display:none; " title="QR Code" >
+            <div style="height:185px; width:185px;" >
+              <img id="qrcode_img" style="height:170px; width:170px; margin:8px 0px 0px 5px" alt="QRcode image" src=""/>
             </div>
           </div>
 
+	  <script type="text/javascript">
+              $("#qrpopup").dialog({autoOpen: false, width: 190, modal: true , resizable: false , position:["center","center"]});
+          </script>
         </div> <!-- #menu -->
 <?vsp if (0 <> _addthis_key) { ?>
 	<!-- AddThis Button BEGIN -->
@@ -349,7 +340,6 @@
 	    }
 	    else
 		http('<input type="url" id="collectionUri" name="collectionUri" size="80"/>');
-	    http('<input type="hidden" id="showPopup" name="showPopup" value=""/>');
 	?>
 	<input type="submit" name="submitBtn" value="Submit" />
 	</p>
@@ -374,12 +364,7 @@
 	  http ('"});\n });\n ');
 	  http ('</script>');
         }
-      if (_showPopup = 'showPopup') {
 ?>
-        <script type="text/javascript">
-          window.location.href = "#qrpopup";
-        </script>
-<?vsp } ?>
     </div> <!-- #MD -->
     <div id="FT">
   <div id="ft_t">

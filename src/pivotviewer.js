@@ -589,6 +589,7 @@
 	// Minus an extra 25 to leave room for the version number to be added underneath
         $(".pv-filterpanel-accordion").css('height', ($(".pv-filterpanel").height() - $(".pv-filterpanel-search").height() - 75) + "px");
         $(".pv-filterpanel-accordion").accordion({
+          icons: false
         });
         $('.pv-toolbarpanel-sortcontrols').append('<select class="pv-toolbarpanel-sort">' + sort.join('') + '</select>');
 
