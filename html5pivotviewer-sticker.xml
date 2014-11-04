@@ -35,7 +35,7 @@
   <file source_uri="vsp/scripts/*.js" target_uri="html5pivotviewer/scripts/$f$" />
   <file source_uri="vsp/*.vsp" target_uri="html5pivotviewer/$f$" />
   <file source_uri="vsp/*.sql" target_uri="html5pivotviewer/$f$" />
-  <file source_uri="vsp/*.json" target_uri="html5pivotviewer/$f$" />
+  <file source_uri="*.json" target_uri="html5pivotviewer/$f$" />
   <file source_uri="vsp/vad_html5pivotviewer_config.vspx" target_uri="conductor/$f$" />
   <file source_uri="pivotviewer.min.js" target_uri="html5pivotviewer/scripts/$f$" />
   <file source_uri="style/*.css" target_uri="html5pivotviewer/" />
