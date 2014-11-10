@@ -128,5 +128,5 @@ function pivotviewer_resize()
 
 	//  Now resize the pivotviewer control
 	myElement = document.getElementById ("MD");
-	if (myElement) { myElement.style.height = (myHeight - 110) + "px"; }
+	if (myElement) { myElement.style.height = (myHeight - 120) + "px"; }
 }

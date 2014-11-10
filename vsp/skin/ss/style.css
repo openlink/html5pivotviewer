@@ -42,7 +42,7 @@ body {
     background-image:url("../i/bg_header.png");
     border-bottom:1px solid #222266;
     float:left;
-    height:60px;
+    height:80px;
     width:100%;
 }
 
@@ -98,11 +98,26 @@ img.masthead_logo { }
     text-align: right;
 }
 
+#loggedin {
+    height: 21px;
+    float: right;
+    text-align: right;
+    font-size: 10pt
+}
+
+#login {
+    height: 21px;
+    float: right;
+    text-align: right;
+    font-size: 10pt
+}
+
 #MENU {
     float: right;
     clear: right;
     text-align: right;
     color: #fff;
+    margin-top: 8px;
     font-size: 10pt}
 
 #MENU a {
@@ -228,6 +243,7 @@ a.logo {
     float:left;
     padding-top:10px;
     text-align:center;
+    height: 28px;
     width:100%;
 }
 

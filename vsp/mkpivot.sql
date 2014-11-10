@@ -278,7 +278,12 @@ DB.DBA.VHOST_DEFINE (
 	 def_page=>'view.vsp',
 	 vsp_user=>'dba',
 	 ses_vars=>0,
-	 opts=>vector ('executable', 'yes', 'browse_sheet', '', 'url_rewrite', 'http_rule_pv5_list_1'),
+	 opts=>vector (
+	    'executable', 'yes', 
+	    'browse_sheet', '', 
+	    'url_rewrite', 'http_rule_pv5_list_1',
+	    '401_page', '40x.vsp',
+	    '403_page', '40x.vsp'),
 	 is_default_host=>0
 );
 
