@@ -29,6 +29,7 @@ PivotViewer.Views.SimpleImageController = PivotViewer.Views.IImageController.sub
         this._format = "";
         this._ratio = 1;
         this.MaxRatio = 1;
+        this._loadedCount = 0;
 
         this._zooming = false;
         var that = this;
@@ -49,12 +50,22 @@ PivotViewer.Views.SimpleImageController = PivotViewer.Views.IImageController.sub
             // for each item in the collection get the image filename
             for (var i = 0; i < images.ImageFiles.length; i++) {
                 var img = new Image(); 
+
+                img.onload = function() {
+                    for (var i = 0; i < that._items.length; i++) {
+                        if (that._items[i].Images[0] == this) {
+                            that._items[i].Width = this.width;
+                            that._items[i].Height = this.height;
+                            that._loadedCount ++;
+                        }
+                        if (that._loadedCount == that._items.length) 
+                            $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
+                        }
+                    };
+
                 img.src = that._baseUrl + "/" + images.ImageFiles[i];
                 that._items.push(new PivotViewer.Views.SimpleImageItem(images.ImageFiles[i], that._baseUrl, img.width, img.height, img));
            }
-
-           //Loaded image file list
-           $.publish("/PivotViewer/ImageController/Collection/Loaded", null);
         })
         .fail (function (jqxhr, textStatus, errorThrown) {
             //Make sure throbber is removed else everyone thinks the app is still running
