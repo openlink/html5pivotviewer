@@ -19,6 +19,7 @@
   <sql purpose="post-install">
     <![CDATA[
     DB.DBA.VAD_LOAD_SQL_FILE('/DAV/VAD/html5pivotviewer/mkpivot.sql', 1, 'report', 1);
+    DB.DBA.VAD_LOAD_SQL_FILE('/DAV/VAD/html5pivotviewer/setupacl.sql', 1, 'report', 1);
     ]]>
   </sql>
 </procedures>

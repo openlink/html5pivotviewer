@@ -41,10 +41,15 @@
     declare _urchin_key varchar; 
     declare _use_proxying varchar;
 
+    declare val_vad_present int;
     declare val_serviceId, val_sid, val_realm, val_uname varchar;
     declare val_isRealUser integer;
     declare val_webidGraph, val_cert varchar;
     declare pageUrl, idName, idUrl varchar;
+
+    val_vad_present := 0;
+    if (__proc_exists ('VAL.DBA.username_for_online_account') is not null) 
+      val_vad_present := 1;
 
     _collectionUri := '';
     _collUriFromQuery := '';
@@ -177,48 +182,50 @@
 	http_header (http_header_get () || links);
     }
 
-    -- Val login stuff
-    pageUrl := sprintf('%s://%s/HtmlPivotViewer', _proto, _host );
-    if (_collectionUri <> '')
-      pageUrl := sprintf('%s/?url=%U', pageUrl, _c_link);
-
-    -- Important since "realm" is an "inout" parameter!
-    val_realm := null;
-
-    VAL.DBA.authentication_details_for_connection (
-      sid=>val_sid,
-      serviceId=>val_serviceId,
-      uname=>val_uname,
-      isRealUser=>val_isRealUser,
-      realm=>val_realm);
-
-    if (val_serviceId is not null) {
-      idUrl := VAL.DBA.get_profile_url (val_serviceId);
-      idName := coalesce (VAL.DBA.get_profile_name (val_serviceId), val_serviceId);
+    -- if the VAL vad is installed check login details and access control
+    if (val_vad_present) {
+        pageUrl := sprintf('%s://%s/HtmlPivotViewer', _proto, _host );
+        if (_collectionUri <> '')
+          pageUrl := sprintf('%s/?url=%U', pageUrl, _c_link);
+ 
+        -- Important since "realm" is an "inout" parameter!
+        val_realm := null;
+ 
+        VAL.DBA.authentication_details_for_connection (
+          sid=>val_sid,
+          serviceId=>val_serviceId,
+          uname=>val_uname,
+          isRealUser=>val_isRealUser,
+          realm=>val_realm);
+ 
+        if (val_serviceId is not null) {
+          idUrl := VAL.DBA.get_profile_url (val_serviceId);
+          idName := coalesce (VAL.DBA.get_profile_name (val_serviceId), val_serviceId);
+        }
+ 
+        if (not val_isRealUser or not VAL.DBA.is_admin_user (val_uname)) {
+          if (not VAL.DBA.check_access_mode_for_resource (
+            serviceId=>val_serviceId,
+            resource=>'urn:virtuoso:access:pivotviewer',
+            realm=>val_realm,
+            scope=>'urn:virtuoso:val:scopes:pivotviewer',
+            mode=>VAL.DBA.oplacl_iri ('Read'),
+            webidGraph=>val_webidGraph,
+            certificate=>val_cert,
+            honorScopeState=>1)
+          ) {
+                connection_set ('__val_denied_service_id__', val_serviceId);
+                connection_set ('__val_req_acl_mode__', VAL.DBA.oplacl_iri ('Read'));
+              
+                if (val_serviceId is null)
+                  http_status_set(401);
+                else
+                  http_status_set(403);
+              
+                return '';
+            }
+        }
     }
-
-if (not val_isRealUser or not VAL.DBA.is_admin_user (val_uname)) {
-  if (not VAL.DBA.check_access_mode_for_resource (
-        serviceId=>val_serviceId,
-        resource=>'urn:virtuoso:access:pivotviewer',
-        realm=>val_realm,
-        scope=>'urn:virtuoso:val:scopes:pivotviewer',
-        mode=>VAL.DBA.oplacl_iri ('Read'),
-        webidGraph=>val_webidGraph,
-        certificate=>val_cert,
-        honorScopeState=>1)
-  ) {
-    connection_set ('__val_denied_service_id__', val_serviceId);
-    connection_set ('__val_req_acl_mode__', VAL.DBA.oplacl_iri ('Read'));
-
-    if (val_serviceId is null)
-      http_status_set(401);
-    else
-      http_status_set(403);
-
-    return '';
-  }
-}
 
 ?>
 
@@ -327,15 +334,17 @@ if (not val_isRealUser or not VAL.DBA.is_admin_user (val_uname)) {
         <!-- Google translate END -->
 <?vsp } ?>
 
-<?vsp if (val_serviceId is not null) { ?>
-        <div id="loggedin">
-            Logged in as <a href="<?=sprintf('%s', idUrl) ?>"><?=sprintf('%V', idName) ?></a>&nbsp;|&nbsp;
-            <a href="<?=sprintf('/val/logout.vsp?returnto=%U', pageUrl) ?>">Logout</a></p>
-        </div>
-<?vsp } else { ?>
-        <div id="login">
-            <a href="<?=sprintf('login.vsp?returnto=%U', pageUrl) ?>">Login</a>
-        </div>
+<?vsp if (0 <> val_vad_present) { ?>
+<?vsp     if (val_serviceId is not null) { ?>
+            <div id="loggedin">
+                Logged in as <a href="<?=sprintf('%s', idUrl) ?>"><?=sprintf('%V', idName) ?></a>&nbsp;|&nbsp;
+                <a href="<?=sprintf('/val/logout.vsp?returnto=%U', pageUrl) ?>">Logout</a></p>
+            </div>
+<?vsp     } else { ?>
+            <div id="login">
+                <a href="<?=sprintf('login.vsp?returnto=%U', pageUrl) ?>">Login</a>
+            </div>
+<?vsp     } ?>
 <?vsp } ?>
 
         <div id="MENU">
