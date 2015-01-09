@@ -203,28 +203,30 @@
           idName := coalesce (VAL.DBA.get_profile_name (val_serviceId), val_serviceId);
         }
  
-        if (not val_isRealUser or not VAL.DBA.is_admin_user (val_uname)) {
-          if (not VAL.DBA.check_access_mode_for_resource (
-            serviceId=>val_serviceId,
-            resource=>'urn:virtuoso:access:pivotviewer',
-            realm=>val_realm,
-            scope=>'urn:virtuoso:val:scopes:pivotviewer',
-            mode=>VAL.DBA.oplacl_iri ('Read'),
-            webidGraph=>val_webidGraph,
-            certificate=>val_cert,
-            honorScopeState=>1)
-          ) {
-                connection_set ('__val_denied_service_id__', val_serviceId);
-                connection_set ('__val_req_acl_mode__', VAL.DBA.oplacl_iri ('Read'));
-              
-                if (val_serviceId is null)
-                  http_status_set(401);
-                else
-                  http_status_set(403);
-              
-                return '';
-            }
-        }
+        if (VAL.DBA.acls_enabled_for_scope ('urn:virtuoso:val:scopes:pivotviewer')) {
+          if (not val_isRealUser or not VAL.DBA.is_admin_user (val_uname)) {
+            if (not VAL.DBA.check_access_mode_for_resource (
+              serviceId=>val_serviceId,
+              resource=>'urn:virtuoso:access:pivotviewer',
+              realm=>val_realm,
+              scope=>'urn:virtuoso:val:scopes:pivotviewer',
+              mode=>VAL.DBA.oplacl_iri ('Read'),
+              webidGraph=>val_webidGraph,
+              certificate=>val_cert,
+              honorScopeState=>1)
+            ) {
+                  connection_set ('__val_denied_service_id__', val_serviceId);
+                  connection_set ('__val_req_acl_mode__', VAL.DBA.oplacl_iri ('Read'));
+                
+                  if (val_serviceId is null)
+                    http_status_set(401);
+                  else
+                    http_status_set(403);
+                
+                  return '';
+              }
+          }
+      }
     }
 
 ?>
