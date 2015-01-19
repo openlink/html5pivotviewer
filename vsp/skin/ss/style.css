@@ -48,7 +48,7 @@ body {
 
 #HD img {
     border:0 none;
-    margin:2px 0 0 5px;
+    margin:12px 0 0 12px;
     padding:0;
     vertical-align:middle;
     float:left;
@@ -57,7 +57,7 @@ body {
 img.masthead_logo { }
 
 #HD_L {
-    width:150px;
+    width:170px;
     clear:left;
     float:left}
 

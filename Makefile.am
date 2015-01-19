@@ -78,6 +78,7 @@ EXTRA_DIST = \
 	vsp/*.sql \
 	vsp/*.vsp \
 	vsp/*.vspx \
+	vsp/*.ico \
 	vsp/scripts/*.js \
 	vsp/skin/i/*.png \
 	vsp/skin/ss/*.css

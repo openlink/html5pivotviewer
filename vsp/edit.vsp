@@ -152,6 +152,7 @@
 
 <head profile="http://www.w3.org/1999/xhtml/vocab">
     <title>Pivot Edit</title>
+    <link rel="shortcut icon" href="favicon.ico"></link>
     <link rel="stylesheet" type="text/css" href="<?=skinpfx?>ss/style.css" media="screen"/>
 
    <script type="text/javascript" src="scripts/oplpivot.js"></script>
