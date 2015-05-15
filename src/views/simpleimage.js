@@ -93,7 +93,11 @@ PivotViewer.Views.SimpleImageController = PivotViewer.Views.IImageController.sub
           }
         }
       }
-      return null;
+      return function (facetItem, context, x, y, width, height) {
+            context.beginPath();
+            context.fillStyle = "Black";
+            context.fillRect(x, y, width, height);
+        };
     },
     GetWidthForImage: function( id, height ) {
         for (var i = 0; i < this._items.length; i++) {
