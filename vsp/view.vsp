@@ -11,7 +11,7 @@
 --
 --   This file is part of the html5 pivotviewer project
 --
---   Copyright (C) 2012-2014 OpenLink Software
+--   Copyright (C) 2012-2015 OpenLink Software
 --
 --   This project is free software; you can redistribute it and/or modify it
 --   under the terms of the GNU General Public License as published by the
@@ -233,7 +233,7 @@
 
 <head profile="http://www.w3.org/1999/xhtml/vocab">
     <title>Pivot Viewer</title>
-    <meta name="Copyright" content="&copy; 2012-2014 OpenLink Software" />
+    <meta name="Copyright" content="&copy; 2012-2015 OpenLink Software" />
     <meta name="Keywords" content="OpenLink Virtuoso HTML5 PivotViewer" />
     <meta name="Robots" content="index,nofollow" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
@@ -489,7 +489,7 @@
       </div> <!-- #ft_t -->
        <div class="notranslate" id="copyright">
 <?vsp
-       http('Copyright &copy; 2012-2014 <a href="http://www.openlinksw.com/virtuoso">OpenLink Virtuoso</a>');
+       http('Copyright &copy; 2012-2015 <a href="http://www.openlinksw.com/virtuoso">OpenLink Virtuoso</a>');
        http(sprintf (' version %s, on %s (%s), ', sys_stat('st_dbms_ver'), sys_stat('st_build_opsys_id'), host_id()));
        if (1 = sys_stat('cl_run_local_only'))
            http('Single Server Edition');
