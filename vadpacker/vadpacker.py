@@ -3,7 +3,7 @@
 
 #
 # VADPacker - A small tool to create Virtuoso VAD packages
-# Copyright (C) 2013-2015 OpenLink Software <opensource@openlinksw.com>
+# Copyright (C) 2013-2016 OpenLink Software <opensource@openlinksw.com>
 #
 # This project is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
