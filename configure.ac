@@ -27,7 +27,7 @@ AC_INIT(
 )
 AC_CONFIG_MACRO_DIR([admin])
 AC_CONFIG_AUX_DIR([admin])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 
 # --------------------------------------------------------------
 # Check for python (vadpacker)
