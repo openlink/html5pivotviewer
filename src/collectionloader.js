@@ -24,12 +24,39 @@ PivotViewer.Models.Loaders.ICollectionLoader = Object.subClass({
 
 //CXML loader
 PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLoader.subClass({
-    init: function (CXMLUri, proxy) {
+    init: function (CXMLUri, proxy, allowHosts, allowedHosts) {
         this.CXMLUriNoProxy = CXMLUri;
         if (proxy)
             this.CXMLUri = proxy + CXMLUri;
         else 
             this.CXMLUri = CXMLUri;
+        this.allowHosts = allowHosts;
+        //var this.allowedHosts = [];
+        this.allowedHosts = allowedHosts.split(',');
+    },
+    CheckAllowedServer: function () {
+     var host;
+     if (this.CXMLUri.startsWith ('http://')) {
+       host = this.CXMLUri.substring(7, this.CXMLUri.indexOf('/' , 7));
+     } else if (this.CXMLUri.startsWith ('https://')) {
+       host = this.CXMLUri.substring(8, this.CXMLUri.indexOf('/' , 8));
+     }
+
+     // Do we have an allowed list?
+     if (this.allowHosts) {
+       for (var i = 0; i < this.allowedHosts.length; i++) {
+         if (host == this.allowedHosts[i] || this.allowedHosts[i] == '*')
+           return true;
+       }
+     }
+
+     if (host == 'localhost' || (host.includes(':') && host.startsWith('localhost:')) ||
+           host == '127.0.0.1' || (host.includes(':') && host.startsWith('127.0.0.1:')) ||
+           host == location.host) {
+           return true;
+     } else {
+         return false;
+     }
     },
     LoadCollection: function (collection) {
         var collection = collection;
@@ -37,6 +64,13 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
 
         collection.CollectionBaseNoProxy = this.CXMLUriNoProxy;
         collection.CollectionBase = this.CXMLUri;
+
+        // Before loading check that the server that the collection is loaded from is either 
+        // localhost or whitelisted.
+        if (this.CheckAllowedServer() == false) {
+          throw "Collection is not hosted on an allowed server";
+          return;
+        }
 
         $.ajax({
             type: "GET",

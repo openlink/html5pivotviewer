@@ -329,4 +329,12 @@ DB.DBA.VHOST_DEFINE (
 	 is_default_host=>0
 );
 
+create procedure
+DB.DBA.PV_exec_no_error (in expr varchar)
+{
+  declare state, message, meta, result any;
+  exec(expr, state, message, vector(), 0, meta, result);
+}
+;
 
+DB.DBA.PV_exec_no_error ('CREATE TABLE DB.DBA.PV_COLLECTION_HOST_SAFELIST(HOST varchar)');

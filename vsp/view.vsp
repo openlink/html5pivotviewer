@@ -40,6 +40,8 @@
     declare _addthis_key varchar;
     declare _urchin_key varchar; 
     declare _use_proxying varchar;
+    declare _allow_servers varchar;
+    declare _allowedServers varchar;
 
     declare val_vad_present int;
     declare val_serviceId, val_sid, val_realm, val_uname varchar;
@@ -79,6 +81,19 @@
     if ('false' = _use_proxying) _use_proxying := 0;
     if ('no' = _use_proxying) _use_proxying := 0;
     if ('0' = _use_proxying) _use_proxying := 0;
+
+    _allow_servers := registry_get ('_pivot_allow_servers');
+    if ('0' = _allow_servers) _allow_servers := '';
+ 
+    _allowedServers := '';
+    if (_allow_servers = '1') { 
+      for (select HOST from DB.DBA.PV_COLLECTION_HOST_SAFELIST) do {
+        _allowedServers := _allowedServers || HOST || ',';
+      }
+      if (ends_with(_allowedServers, ','))
+        _allowedServers := substring(_allowedServers, 1, length(_allowedServers) - 1);
+      --log_message (_allowedServers);
+    }
 
     _collUriFromQuery := {?'url'};
     _collUriFromBox := get_keyword ('collectionUri', params, '');
@@ -431,6 +446,10 @@
 	  http (_c_link);
 	  http ('", "');
 	  http (_proxy);
+	  http ('", "');
+	  http (_allow_servers);
+	  http ('", "');
+	  http (_allowedServers);
 	  http ('"), ViewerState: "');
 	  http (_bookmark);
 	  http ('"});\n });\n ');

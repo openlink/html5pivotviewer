@@ -44,6 +44,68 @@
 		<td>
 		    <div>
 			<v:form name="frm1" method="POST" type="simple" action="">
+                            <strong>Collection Source:</strong> <br /><br />
+                            For security reasons, by default, collections may only be loaded from the server that is hosting the viewer. <br /><br />
+			    Allow collections to be loaded from server in the allowed list: <v:check-box name="allowThirdPartyServers" initial-checked="--case registry_get ('_pivot_allow_servers') when '1' then 1  else 0 end " /><br/><br/>
+			    List of allowed servers for loading collections or use * to allow collections to be loaded from any server<br/>
+                            
+                            <v:data-grid name="hostSafelist" nrows="8" sql="select * from DB.DBA.PV_COLLECTION_HOST_SAFELIST"  scrollable="1" cursor-type="static" edit="1" initial-enable="1"> 
+                                <v:template name="t1" type="frame">
+                                    <table border="0" cellspacing="0" cellpadding="5" class="listing">
+                                        <tr class="listing_header_row">
+                                          <th>Allowed Collection Hosts </th>
+                                          <th></th>
+                                        </tr>
+                                    <v:rowset/>
+                                    </table>
+                                    <v:form type="add"/>
+                                    <div>
+                                        <v:button name="hostSafelist_prev" action="simple" value="&lt;&lt;"/>
+                                        <v:button name="hostSafelist_next" action="simple" value="&gt;&gt;"/>
+                                    </div>
+                                </v:template>
+                                <v:template name="t2" type="row">
+                                    <tr>
+                                        <td>
+                                            <v:label name="label1" value="--(control.vc_parent as vspx_row_template).te_rowset[0]"/>
+                                        </td> 
+                                        <td>
+                                            <v:button name="hostSafelist_delete" action="simple" value="Delete">
+                                                <v:on-post>
+                                                    delete from DB.DBA.PV_COLLECTION_HOST_SAFELIST where HOST = self.hostSafelist.dg_current_row.te_rowset[0];
+                                                    self.hostSafelist.vc_data_bind (e);
+                                                </v:on-post>
+                                            </v:button>
+                                        </td> 
+                                    </tr>
+                                </v:template>
+                                <v:template name="t3" type="if-not-exists">
+                                    <table border="0" cellspacing="0" cellpadding="5" class="listing">
+                                        <tr class="listing_header_row">
+                                          <th>Allowed Collection Hosts </th>
+                                          <th></th>
+                                        </tr>
+                                    </table>
+                                    <v:form type="update" name="a11" table="DB.DBA.PV_COLLECTION_HOST_SAFELIST" if-not-exists="insert">
+                                        <v:key column="HOST" value="--''" default="null"/>
+                                        <v:template name="t71" type="if-exists">
+                                            <v:button name="b31" action="submit" value="Add"/>
+                                            <v:text xhtml_size="50" name="c_id21" column="HOST"/>
+                                        </v:template>
+                                    </v:form>
+                                </v:template>
+                                <v:template name="t6" type="add">
+                                    <v:form type="update" name="a1" table="DB.DBA.PV_COLLECTION_HOST_SAFELIST" if-not-exists="insert">
+                                        <v:key column="HOST" value="--''" default="null"/>
+                                        <v:template name="t7" type="if-exists">
+                                            <v:button name="b3" action="submit" value="Add"/>
+                                            <v:text xhtml_size="50" name="c_id2" column="HOST"/>
+                                        </v:template>
+                                    </v:form>
+                                </v:template>
+                            </v:data-grid>
+                            <br /><br /> 
+                            <strong>Social Bookmarking</strong> <br /><br />
 			    Add This social bookmarking key: <v:text name="addThis" value="--registry_get ('_pivot_AddThis')" /><br/><br/>
                             <strong>Mapping Service:</strong> <v:radio-group name="mapservice" >
                             <ul style="list-style: none;"><li><v:radio-button name="map_google" value="Google" initial-checked="--case registry_get ('_pivot_MapService') when 'Google' then 1  else 0 end " />Google (requires an API key)</li>
@@ -60,6 +122,10 @@
 			    Use proxying for dynamic queries: <v:check-box name="useProxy" initial-checked="--case registry_get ('_pivot_use_proxying') when '1' then 1  else 0 end " /><br/><br/>
 			    <v:button action="simple" name="set" value="Set">
 				<v:on-post><![CDATA[
+                                    if (self.allowThirdPartyServers.ufl_selected) 
+                                      registry_set ('_pivot_allow_servers', '1');
+                                    else
+                                      registry_set ('_pivot_allow_servers', '0');
 				    registry_set ('_pivot_AddThis', self.addThis.ufl_value);
                                     if (self.map_google.ufl_selected) { 
 				        registry_set ('_pivot_MapService', 'Google');

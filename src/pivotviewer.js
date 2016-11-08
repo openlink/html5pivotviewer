@@ -199,14 +199,24 @@
                 }
 
                 //Collection loader
-                if (options.Loader == undefined && defaultOptions.Loader == undefined)
+                try {
+                  if (options.Loader == undefined && defaultOptions.Loader == undefined)
                     throw "Collection loader is undefined.";
-                if (options.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader)
-                    options.Loader.LoadCollection(PivotCollection);
-                else if (defaultOptions.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader)
-                    defaultOptions.Loader.LoadCollection(PivotCollection);
-                else
-                    throw "Collection loader does not inherit from PivotViewer.Models.Loaders.ICollectionLoader.";
+                  if (options.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader) 
+                      options.Loader.LoadCollection(PivotCollection);
+                   else if (defaultOptions.Loader instanceof PivotViewer.Models.Loaders.ICollectionLoader) 
+                      defaultOptions.Loader.LoadCollection(PivotCollection);
+                   else
+                      throw "Collection loader does not inherit from PivotViewer.Models.Loaders.ICollectionLoader.";
+                } catch (err) { 
+                    var msg = '';
+                    msg = msg + err;
+                    //Make sure throbber is removed else everyone thinks the app is still running
+                    $('.pv-loading').remove();
+
+                    $('.pv-wrapper').append("<div id=\"pv-loading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                    window.open("#pv-loading-error","_self")
+                }
  
                 //Image controller
                 if (options.ImageController == undefined && defaultOptions.ImageController == undefined)
