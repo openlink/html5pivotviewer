@@ -30,9 +30,13 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
             this.CXMLUri = proxy + CXMLUri;
         else 
             this.CXMLUri = CXMLUri;
-        this.allowHosts = allowHosts;
+        if (allowHosts)
+          this.allowHosts = allowHosts;
+        else 
+          this.allowHosts = false;
         //var this.allowedHosts = [];
-        this.allowedHosts = allowedHosts.split(',');
+        if (allowedHosts)
+          this.allowedHosts = allowedHosts.split(',');
     },
     CheckAllowedServer: function () {
      var host;
@@ -40,7 +44,8 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
        host = this.CXMLUri.substring(7, this.CXMLUri.indexOf('/' , 7));
      } else if (this.CXMLUri.startsWith ('https://')) {
        host = this.CXMLUri.substring(8, this.CXMLUri.indexOf('/' , 8));
-     }
+     } else
+       return true;
 
      // Do we have an allowed list?
      if (this.allowHosts) {
