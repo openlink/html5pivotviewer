@@ -68,6 +68,7 @@
  
         init: function (options) {
             _self = this;
+            _self.empty();
             _self.addClass('pv-wrapper');
             InitPreloader();
 
