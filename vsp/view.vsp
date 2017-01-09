@@ -94,6 +94,7 @@
         _allowedServers := substring(_allowedServers, 1, length(_allowedServers) - 1);
       --log_message (_allowedServers);
     }
+    --if ('' = _allowedServers) _allowedServers := '0';
 
     _collUriFromQuery := {?'url'};
     _collUriFromBox := get_keyword ('collectionUri', params, '');
@@ -446,10 +447,14 @@
 	  http (_c_link);
 	  http ('", "');
 	  http (_proxy);
+if (_allow_servers) {
 	  http ('", "');
 	  http (_allow_servers);
+}
+if (_allowedServers) {
 	  http ('", "');
 	  http (_allowedServers);
+}
 	  http ('"), ViewerState: "');
 	  http (_bookmark);
 	  http ('"});\n });\n ');

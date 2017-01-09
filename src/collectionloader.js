@@ -24,7 +24,7 @@ PivotViewer.Models.Loaders.ICollectionLoader = Object.subClass({
 
 //CXML loader
 PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLoader.subClass({
-    init: function (CXMLUri, proxy, allowHosts, allowedHosts) {
+    init: function (CXMLUri, proxy, allowHosts, allowedHostsParam) {
         this.CXMLUriNoProxy = CXMLUri;
         if (proxy)
             this.CXMLUri = proxy + CXMLUri;
@@ -34,9 +34,9 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
           this.allowHosts = allowHosts;
         else 
           this.allowHosts = false;
-        //var this.allowedHosts = [];
-        if (allowedHosts)
-          this.allowedHosts = allowedHosts.split(',');
+        this.allowedHosts = [];
+        if (allowedHostsParam)
+          this.allowedHosts = allowedHostsParam.split(',');
     },
     CheckAllowedServer: function () {
      var host;
