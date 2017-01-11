@@ -61,7 +61,7 @@ a { font-weight:normal; }
 	pointer-events: auto;
 	background: rgba(0,0,0,0.8);
 }
-.pv-modal-dialog > div { width: 300px; position: relative;margin: 10% auto;padding: 5px 20px 13px 20px;border-radius: 10px;background: #fff;background: -moz-linear-gradient(#fff, #999);background: -webkit-linear-gradient(#fff, #999);background: -o-linear-gradient(#fff, #999);background: -ms-linear-gradient(#fff, #999);}
+.pv-modal-dialog > div { width: 700px; position: relative;margin: 10% auto;padding: 5px 20px 13px 20px;border-radius: 10px;background: #fff;background: -moz-linear-gradient(#fff, #999);background: -webkit-linear-gradient(#fff, #999);background: -o-linear-gradient(#fff, #999);background: -ms-linear-gradient(#fff, #999);}
 .pv-modal-dialog-close {
 	background: #606061;
 	color: #FFFFFF;

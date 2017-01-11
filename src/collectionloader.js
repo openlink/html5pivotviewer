@@ -81,6 +81,7 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
             type: "GET",
             url: this.CXMLUri,
             dataType: "xml",
+	    crossDomain : true,
             success: function (xml) {
                 Debug.Log('CXML loaded');
                 var collectionRoot = $(xml).find("Collection")[0];
@@ -293,13 +294,36 @@ PivotViewer.Models.Loaders.CXMLLoader = PivotViewer.Models.Loaders.ICollectionLo
                 //Make sure throbber is removed else everyone thinks the app is still running
                 $('.pv-loading').remove();
 
+		var state = {
+			endpoint:	this.url,
+			httpCode:	jqXHR.status,
+			status:		jqXHR.statusText,
+			message:	errorThrown,
+			response:	jqXHR.responseText,
+		}
+
+		var p = document.createElement('a');
+		p.href = this.url;
+
+		state.endpoint = p.protocol + '//' + p.host + p.pathname;
+
+		if (state.status === 'timeout') {
+		  state.message = "Timeout loading collection document";
+		} else if (state.status === 'error') {
+		  if (this.crossDomain && (p.hostname !== window.location.hostname)) {
+		    state.message = "Possible issue with CORS settings on the endpoint"
+		  }
+		} 
+
                 //Display a message so the user knows something is wrong
                 var msg = '';
-                msg = msg + 'Error loading CXML Collection<br><br>';
-                msg = msg + 'URL        : ' + this.url + '<br>';
-                msg = msg + 'Status : ' + jqXHR.status + ' ' + errorThrown + '<br>';
-                msg = msg + 'Details    : ' + jqXHR.responseText + '<br>';
-                msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                msg = msg + 'Error loading CXML Collection:<br><br><table>';
+		msg = msg + '<colgroup><col style="white-space:nowrap;"><col></colgroup>';
+                msg = msg + '<tr><td>Endpoint</td><td>' + state.endpoint + '</td></tr>';
+                msg = msg + '<tr><td>Status</td><td>' + state.httpCode + '</td></tr>';
+                msg = msg + '<tr><td>Error</td><td> ' + state.message  + '</td></tr>';
+                msg = msg + '<tr><td style="vertical-align:top">Details</td><td>' + state.response + '</td></tr>';
+                msg = msg + '</table><br>Pivot Viewer cannot continue until this problem is resolved<br>';
                 $('.pv-wrapper').append("<div id=\"pv-loading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
                 var t=setTimeout(function(){window.open("#pv-loading-error","_self")},1000)
             }
