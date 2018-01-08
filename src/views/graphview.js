@@ -212,7 +212,7 @@ PivotViewer.Views.GraphView = PivotViewer.Views.TileBasedView.subClass({
         if (!Modernizr.canvas)
             return;
 
-        Debug.Log('Graph View Filtered: ' + currentFilter.length);
+        PivotViewer.Debug.Log('Graph View Filtered: ' + currentFilter.length);
 
         this.changingView = false;
         if (changingView) {

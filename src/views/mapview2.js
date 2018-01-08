@@ -113,7 +113,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         if (!Modernizr.canvas)
             return;
 
-        Debug.Log('Map View Filtered: ' + currentFilter.length);
+        PivotViewer.Debug.Log('Map View Filtered: ' + currentFilter.length);
 
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
@@ -692,7 +692,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                 wkt.read(this.geometryValue.replace('\n', '').replace('\r', '').replace('\t', ''));
             } catch (e2) {
                 if (e2.name === 'WKTError') {
-                    Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
+                    PivotViewer.Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
                     //return;
                     geometryOK = false;
                 }
@@ -901,7 +901,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                     areaWkt.read(areaValue.replace('\n', '').replace('\r', '').replace('\t', ''));
                 } catch (e2) {
                     if (e2.name === 'WKTError') {
-                        Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
+                        PivotViewer.Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
                         //return;
                         geometryOK = false;
                     }

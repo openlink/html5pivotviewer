@@ -91,10 +91,10 @@
                    _mapService = "Google";
                 } else if (options.MapService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
                    _mapService = "OpenStreetMap";
-                   Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
+                   PivotViewer.Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
                 } else if (options.MapService == undefined && defaultOptions.MapService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
                    _mapService = "OpenStreetMap";
-                   Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
+                   PivotViewer.Debug.Log('Google maps selected but no API key supplied.  Reverting to OpenStreetMaps');
                 } else
                    _mapService = "OpenStreetMap";
  
@@ -127,10 +127,10 @@
                    _geocodeService = "Google";
                 } else if (options.GeocodeService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
                    _geocodeService = "Nominatim";
-                   Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
+                   PivotViewer.Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
                 } else if (options.GeocodeService == undefined && defaultOptions.GeocodeService == "Google" && options.GoogleAPIKey == undefined && defaultOptions.GoogleAPIKey == undefined) {
                    _geocodeService = "Nominatim";
-                   Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
+                   PivotViewer.Debug.Log('Google geocode service selected but no API key supplied.  Reverting to Nominatim');
                 } else
                    _geocodeService == "Nominatim";
  
@@ -232,14 +232,14 @@
             })
             .fail (function (jqxhr, textStatus, error) {
                 var err = textStatus + ", " + error;
-                Debug.Log ("Getting defaults file failed: " + err);
+                PivotViewer.Debug.Log ("Getting defaults file failed: " + err);
             });
         },
         show: function () {
-            Debug.Log('Show');
+            PivotViewer.Debug.Log('Show');
         },
         hide: function () {
-            Debug.Log('Hide');
+            PivotViewer.Debug.Log('Hide');
         }
     };
 
@@ -917,7 +917,7 @@
         if (_viewerState.Facet != null) {
             $('.pv-toolbarpanel-sort option[value=' + CleanName(_viewerState.Facet) + ']').prop('selected', 'selected');
 	    _currentSort = $('.pv-toolbarpanel-sort :selected').attr('label');
-            Debug.Log('current sort ' + _currentSort );
+            PivotViewer.Debug.Log('current sort ' + _currentSort );
 	}
 
         //Filters
@@ -1016,7 +1016,7 @@
         var foundItemsCount = [];
         var selectedFacets = [];
         var sort = $('.pv-toolbarpanel-sort option:selected').attr('label');
-        Debug.Log('sort ' + sort );
+        PivotViewer.Debug.Log('sort ' + sort );
 
         if (!changingView)
             _selectedItem = "";
@@ -1972,7 +1972,7 @@
         //Sort change
         $('.pv-toolbarpanel-sort').on('change', function (e) {
 	    _currentSort = $('.pv-toolbarpanel-sort option:selected').attr('label');
-            Debug.Log('sort change _currentSort ' + _currentSort );
+            PivotViewer.Debug.Log('sort change _currentSort ' + _currentSort );
             FilterCollection(false);
         });
         //Facet sort
@@ -2300,7 +2300,7 @@
                     $.publish("/PivotViewer/Views/Canvas/Drag", [_mouseMove]);
                 }
             }
-            catch (err) { Debug.Log(err.message); }
+            catch (err) { PivotViewer.Debug.Log(err.message); }
         });
         canvas.on("touchend", function (evt) {
             var orig = evt.originalEvent;

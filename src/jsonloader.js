@@ -23,7 +23,7 @@ PivotViewer.Models.Loaders.JSONLoader = PivotViewer.Models.Loaders.ICollectionLo
 
         var jqXHR = $.getJSON(this.JSONUri) 
         .done(function(data) {
-            Debug.Log('JSON loaded');
+            PivotViewer.Debug.Log('JSON loaded');
 
             if (data.FacetCategories == undefined || data.Items == undefined) {
                 //Make sure throbber is removed else everyone thinks the app is still running

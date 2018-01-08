@@ -48,7 +48,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         if (!Modernizr.canvas)
             return;
 
-        Debug.Log('Table View Filtered: ' + currentFilter.length);
+        PivotViewer.Debug.Log('Table View Filtered: ' + currentFilter.length);
 
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
@@ -96,7 +96,7 @@ PivotViewer.Views.TableView = PivotViewer.Views.IPivotViewerView.subClass({
         return 'Table View';
     },
     CellClick: function (columnId, cells) {
-        Debug.Log('CellClick');
+        PivotViewer.Debug.Log('CellClick');
         if (columnId == 'pv-key') {
             // selected item name need to get the id and publish selected event 
             //var selectedItemName = cells[0].innerHTML;

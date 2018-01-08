@@ -22,5 +22,4 @@ PivotViewer.Models = {};
 PivotViewer.Models.Loaders = {};
 PivotViewer.Utils = {};
 PivotViewer.Views = {};
-//Debug
-var Debug = Debug || {};
+PivotViewer.Debug = {};

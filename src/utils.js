@@ -14,7 +14,7 @@
 //  GNU General Public License v2 (see COPYING)
 //
 
-Debug.Log = function (message) {
+PivotViewer.Debug.Log = function (message) {
     if (window.console && window.console.log && typeof debug != "undefined" && debug == true) {
         window.console.log(message);
     }

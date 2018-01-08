@@ -40,7 +40,7 @@ PivotViewer.Views.TimeView = PivotViewer.Views.IPivotViewerView.subClass({
         if (!Modernizr.canvas)
             return;
 
-        Debug.Log('Timeline View Filtered: ' + currentFilter.length);
+        PivotViewer.Debug.Log('Timeline View Filtered: ' + currentFilter.length);
 
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();

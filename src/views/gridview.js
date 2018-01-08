@@ -192,7 +192,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         if (!Modernizr.canvas)
             return;
 
-        Debug.Log('Grid View Filtered: ' + currentFilter.length);
+        PivotViewer.Debug.Log('Grid View Filtered: ' + currentFilter.length);
 
         this.changingView = false;
         if (changingView) {
@@ -271,7 +271,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         if (!changingFromNonTileView || (changeViewSelectedItem == "")) {
             var pt1Timeout = 0;
             //zoom out first
-            Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
+            PivotViewer.Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
               var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
               if (value > 0) { 
                 this.selected = selectedItem = "";
