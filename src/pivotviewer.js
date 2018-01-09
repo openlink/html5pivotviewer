@@ -287,6 +287,7 @@
         //Hardcoding the value for the width of the viewcontrols images (145=29*5) as the webkit browsers 
         //do not know the size of the images at this point.
         var controlsWidth = $('.pv-toolbarpanel').innerWidth() - ($('.pv-toolbarpanel-brandimage').outerWidth(true) + 25 + $('.pv-toolbarpanel-name').outerWidth(true) + $('.pv-toolbarpanel-zoomcontrols').outerWidth(true) + 145 + $('.pv-toolbarpanel-sortcontrols').outerWidth(true));
+        controlsWidth -= 30; //width of the item count
 
         $('.pv-toolbarpanel-facetbreadcrumb').css('width', controlsWidth + 'px');
 
@@ -317,6 +318,8 @@
             }
         }
 
+        //display tile count
+        UpdateItemCount();
     };
 
     InitUI = function () {
@@ -327,6 +330,7 @@
         if (brandImage.length > 0)
             toolbarPanel += "<img class='pv-toolbarpanel-brandimage' src='" + brandImage + "'></img>";
         toolbarPanel += "<span class='pv-toolbarpanel-name'>" + PivotCollection.CollectionName + "</span>";
+        toolbarPanel += "<span class='pv-toolbarpanel-itemcount'></span>";
         toolbarPanel += "<div class='pv-toolbarpanel-facetbreadcrumb'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-zoomcontrols'><div class='pv-toolbarpanel-zoomslider'></div>";
         toolbarPanel += "<div class='pv-toolbarpanel-timelineselector'></div>";
@@ -1362,6 +1366,9 @@
         }
         _filterItems = sortedFilter;
 
+        //Update item count
+        UpdateItemCount();
+
 	// Update the bookmark
         UpdateBookmark ();
 
@@ -1637,6 +1644,12 @@
             }
         }
         bc.append(bcItems);
+    };
+
+    UpdateItemCount = function(){
+        var $itemCount = $('.pv-toolbarpanel-itemcount');
+        $itemCount.empty();
+        $itemCount.append(_filterItems.length);
     };
 
     DeselectInfoPanel = function () {
