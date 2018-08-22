@@ -262,32 +262,21 @@ DB.DBA.PV_make_qr_code (in data_to_qrcode any, in src_width int := 120, in src_h
 }
 ;
 
-DB.DBA.VHOST_REMOVE (
-	 lhost=>'*ini*',
-	 vhost=>'*ini*',
-	 lpath=>'/HtmlPivotViewer'
-);
+
+create procedure
+DB.DBA.PV_exec_no_error (in expr varchar)
+{
+  declare state, message, meta, result any;
+  exec(expr, state, message, vector(), 0, meta, result);
+}
+;
+
+DB.DBA.PV_exec_no_error ('CREATE TABLE DB.DBA.PV_COLLECTION_HOST_SAFELIST(HOST varchar)');
 
 
-DB.DBA.VHOST_DEFINE (
-	 lhost=>'*ini*',
-	 vhost=>'*ini*',
-	 lpath=>'/HtmlPivotViewer',
-	 ppath=>'/DAV/VAD/html5pivotviewer/',
-	 is_dav=>1,
-	 def_page=>'view.vsp',
-	 vsp_user=>'dba',
-	 ses_vars=>0,
-	 opts=>vector (
-	    'executable', 'yes', 
-	    'browse_sheet', '', 
-	    'url_rewrite', 'http_rule_pv5_list_1',
-	    '401_page', '40x.vsp',
-	    '403_page', '40x.vsp'),
-	 is_default_host=>0
-);
-
-
+--
+--  Rewrite rules
+--
 DB.DBA.URLREWRITE_CREATE_RULELIST (
 	'http_rule_pv5_list_1',
 	1,
@@ -310,31 +299,105 @@ DB.DBA.URLREWRITE_CREATE_REGEX_RULE (
 	''
 );
 
-DB.DBA.VHOST_REMOVE (
-	 lhost=>'*ini*',
-	 vhost=>'*ini*',
-	 lpath=>'/HtmlPivotViewer/defaults'
-);
 
+--
+--  Add endpoint
+--
+DB.DBA.ADD_DEFAULT_VHOST (
+	 lpath=>'/HtmlPivotViewer',
+	 ppath=>'/DAV/VAD/html5pivotviewer/',
+	 is_dav=>1,
+	 def_page=>'view.vsp',
+	 vsp_user=>'dba',
+	 ses_vars=>0,
+	 opts=>vector (
+	    'executable', 'yes',
+	    'browse_sheet', '',
+	    'url_rewrite', 'http_rule_pv5_list_1',
+	    '401_page', '40x.vsp',
+	    '403_page', '40x.vsp'),
+	 is_default_host=>0,
+	 overwrite=>1
+)
+;
 
-DB.DBA.VHOST_DEFINE (
-	 lhost=>'*ini*',
-	 vhost=>'*ini*',
+DB.DBA.ADD_DEFAULT_VHOST (
 	 lpath=>'/HtmlPivotViewer/defaults',
 	 ppath=>'/DAV/VAD/html5pivotviewer/',
 	 is_dav=>1,
 	 def_page=>'defaults.vsp',
 	 vsp_user=>'dba',
 	 ses_vars=>0,
-	 is_default_host=>0
-);
+	 is_default_host=>0,
+	 overwrite=>1
+)
+;
 
-create procedure
-DB.DBA.PV_exec_no_error (in expr varchar)
+
+create procedure PIVOT_CREATE_VHOST(
+    in vhost varchar,
+    in lhost varchar)
 {
-  declare state, message, meta, result any;
-  exec(expr, state, message, vector(), 0, meta, result);
+   declare endpoints any;
+
+   --
+   --  Endpoints we want to expose
+   --
+   endpoints := vector (
+	 '/HtmlPivotViewer',
+	 '/HtmlPivotViewer/defaults'
+        );
+
+    --
+    --  Install VDIRs from defaults
+    --
+    for (select
+            HPD_LPATH,
+            HPD_PPATH,
+            HPD_STORE_AS_DAV,
+            HPD_DIR_BROWSEABLE,
+            HPD_DEFAULT,
+            HPD_REALM,
+            HPD_AUTH_FUNC,
+            HPD_POSTPROCESS_FUNC,
+            HPD_RUN_VSP_AS,
+            HPD_RUN_SOAP_AS,
+            HPD_PERSIST_SES_VARS,
+            HPD_SOAP_OPTIONS,
+            HPD_AUTH_OPTIONS,
+            HPD_OPTIONS,
+            HPD_IS_DEFAULT_HOST
+        from DB.DBA.HTTP_PATH_DEFAULT where HPD_LPATH in (endpoints)) do
+        {
+            DB.DBA.VHOST_REMOVE (
+                vhost=>vhost,
+                lhost=>lhost,
+                lpath=>HPD_LPATH);
+
+            DB.DBA.VHOST_DEFINE (
+                vhost=>vhost,
+                lhost=>lhost,
+                lpath=>HPD_LPATH,
+                ppath=>HPD_PPATH,
+                is_dav=>HPD_STORE_AS_DAV,
+                is_brws=>HPD_DIR_BROWSEABLE,
+                def_page=>HPD_DEFAULT,
+                auth_fn=>HPD_AUTH_FUNC,
+                realm=>HPD_REALM,
+                ppr_fn=>HPD_POSTPROCESS_FUNC,
+                vsp_user=>HPD_RUN_VSP_AS,
+                soap_user=>HPD_RUN_SOAP_AS,
+                ses_vars=>HPD_PERSIST_SES_VARS,
+                soap_opts=>deserialize (HPD_SOAP_OPTIONS),
+                auth_opts=>deserialize (HPD_AUTH_OPTIONS),
+                opts=>deserialize (HPD_OPTIONS),
+                is_default_host=>HPD_IS_DEFAULT_HOST);
+        }
 }
 ;
 
-DB.DBA.PV_exec_no_error ('CREATE TABLE DB.DBA.PV_COLLECTION_HOST_SAFELIST(HOST varchar)');
+DB.DBA.PIVOT_CREATE_VHOST('*ini*', '*ini*')
+;
+
+DB.DBA.PIVOT_CREATE_VHOST('*sslini*', '*sslini*')
+;
