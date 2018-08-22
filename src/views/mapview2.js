@@ -647,6 +647,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         var centreLoc;
         var zoom = 8;
         var gotLoc = false;
+        var gotBookmarkZoom = false;
 
         centreLat = parseFloat(this.mapCentreX);
         centreLng = parseFloat(this.mapCentreY);
@@ -656,7 +657,10 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         }
         bookmarkZoom = parseInt(this.mapZoom);
         if (!isNaN(bookmarkZoom)) 
+        {
             zoom = bookmarkZoom;
+            gotBookmarkZoom = true;
+        }
 
         // Currently map type not supported in this view
         //if (this.mapType && this.mapType != "")
@@ -725,7 +729,10 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         } );
 
         this.CreateMarkers();
-        this.RefitBounds();
+        if (!gotBookmarkZoom)
+          this.RefitBounds();
+        else
+	  this.map.setView(centreLoc,zoom);
         this.GetOverlay();
         this.CreateLegend();
     },
@@ -871,7 +878,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
         var mapSize = this.map.getSize();
         var width = mapSize.x;
         var height = mapSize.y;
-        if (this.overlayBaseImageUrl != "") {
+        if (this.overlayBaseImageUrl != "" && this.overlayBaseImageUrl != 0) {
           if (this.overlay && this.map.hasLayer(this.overlay)) 
               this.map.removeLayer(this.overlay);
           var overlayImageUrl = this.overlayBaseImageUrl+ "&bbox=" + west + "," + south + "," + east + "," + north + "&width=" + width + "&height=" + height ;
