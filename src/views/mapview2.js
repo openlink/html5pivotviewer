@@ -268,7 +268,7 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                                            latitude = value.substring(value.indexOf(' ', 6) + 1, value.indexOf(')') - (value.indexOf(' ') + 1));
                                            if (latitude != "NaN" && longitude != "NaN") {
                                                var lat = parseFloat(latitude);
-                                               var lon = parseFloat(logitude);
+                                               var lon = parseFloat(longitude);
                                                if (!isNaN(lat) && ! isNaN(lon)) {
                                                    var newLoc = new L.LatLng(lat, lon);
                                                    locList.push({id: itemId, loc: newLoc, title: itemName});
