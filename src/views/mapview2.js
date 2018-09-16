@@ -271,8 +271,8 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                                                var lon = parseFloat(longitude);
                                                if (!isNaN(lat) && ! isNaN(lon)) {
                                                    var newLoc = new L.LatLng(lat, lon);
-                                                   locList.push({id: itemId, loc: newLoc, title: itemName});
-                                                   inScopeList.push({id: itemId, loc: newLoc, title: itemName});
+                                                   this.locList.push({id: itemId, loc: newLoc, title: itemName});
+                                                   this.inScopeLocList.push({id: itemId, loc: newLoc, title: itemName});
                                                    gotLocation = true;
                                                    break;
                                                }
@@ -286,8 +286,8 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
                                            if (!isNaN(lat) && !isNaN(lon)) {
                                                //ok, have co-ordinate pair
                                                var newLoc = new L.LatLng(lat, lon);
-                                               locList.push({id: itemId, loc: newLoc, title: itemName});
-                                               inScopeList.push({id: itemId, loc: newLoc, title: itemName});
+                                               this.locList.push({id: itemId, loc: newLoc, title: itemName});
+                                               this.inScopeLocList.push({id: itemId, loc: newLoc, title: itemName});
                                                gotLocation = true;
                                                break;
                                            } else
