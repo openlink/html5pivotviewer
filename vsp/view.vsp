@@ -188,10 +188,10 @@
 	links := 'Link:';
 	links := links || '  ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'text/xml', 'CXML');
 	if (_dynamic_collection = 1) {
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'text/rdf+n3',          'N3/Turtle');
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+xml',  'RDF/XML');
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+json', 'RDF/JSON');
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/atom+xml', 'ODATA/Atom');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'text/rdf+n3',          'N3/Turtle');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+xml',  'RDF/XML');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+json', 'RDF/JSON');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/atom+xml', 'ODATA/Atom');
 	}
 	links := links || '\r\n';
 
