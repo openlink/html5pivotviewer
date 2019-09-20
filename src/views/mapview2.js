@@ -864,6 +864,8 @@ PivotViewer.Views.MapView2 = PivotViewer.Views.IPivotViewerView.subClass({
             }
             bounds = new L.LatLngBounds(markerPos);
         
+            //Seems to fix issue where map not actually loaded at this point
+            this.map.invalidateSize();
             //now fit the map to the newly inclusive bounds
             this.map.fitBounds(bounds);
         }
