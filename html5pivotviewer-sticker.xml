@@ -5,7 +5,7 @@
   <name package="html5pivotviewer">
     <prop name="Title" value="HTML5 Pivotviewer"/>
     <prop name="Developer" value="OpenLink Software"/>
-    <prop name="Copyright" value="(C) 2012-2019 OpenLink Software"/>
+    <prop name="Copyright" value="(C) 2012-2020 OpenLink Software"/>
     <prop name="Download" value="http://www.openlinksw.com/virtuoso"/>
   </name>
   <version package="$VERSION$">
