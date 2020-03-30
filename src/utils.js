@@ -109,6 +109,11 @@ PivotViewer.Utils.Histogram = function (values) {
     return { Histogram: histogram, Min: min, Max: max, BinCount: bins };
 };
 
+PivotViewer.Utils.StripVirtcxml = function (value) {
+    if (value.startsWith ('virtcxml:Facet'))
+    return value.substr(14);
+};
+
 // A simple class creation library.
 // From Secrets of the JavaScript Ninja
 // Inspired by base2 and Prototype

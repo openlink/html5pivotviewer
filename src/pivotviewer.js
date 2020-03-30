@@ -505,8 +505,8 @@
             if (i == activeNumber && controlVisibility == 'none')
               activeNumber++;
 
-            facets[i + 1] = "<h3 style='display:" + controlVisibility + "'><a href='#' title=" + PivotCollection.FacetCategories[i].Name + ">";
-            facets[i + 1] += PivotCollection.FacetCategories[i].Name;
+            facets[i + 1] = "<h3 style='display:" + controlVisibility + "'><a href='#' title=" + PivotViewer.Utils.StripVirtcxml(PivotCollection.FacetCategories[i].Name) + ">";
+            facets[i + 1] += PivotViewer.Utils.StripVirtcxml(PivotCollection.FacetCategories[i].Name);
             facets[i + 1] += "</a><div class='pv-filterpanel-accordion-heading-clear' facetType='" + PivotCollection.FacetCategories[i].Type + "'>&nbsp;</div></h3>";
             facets[i + 1] += "<div style='display:" + controlVisibility + "' style='height:30%' id='pv-cat-" + CleanName(PivotCollection.FacetCategories[i].Name) + "'>";
 
@@ -588,7 +588,7 @@
 
             facets[i + 1] += "</div>";
             //Add to sort
-            sort[i] = "<option value='" + CleanName(PivotCollection.FacetCategories[i].Name) + "' label='" + PivotCollection.FacetCategories[i].Name + "'>" + PivotCollection.FacetCategories[i].Name + "</option>";
+            sort[i] = "<option value='" + CleanName(PivotCollection.FacetCategories[i].Name) + "' label='" + PivotViewer.Utils.StripVirtcxml(PivotCollection.FacetCategories[i].Name) + "'>" + PivotViewer.Utils.StripVirtcxml(PivotCollection.FacetCategories[i].Name) + "</option>";
         }
         facets[facets.length] = "</div>";
         $(".pv-filterpanel").append(facets.join(''));
@@ -789,7 +789,7 @@
         for (var i = 0; i < _views.length; i++) {
             try {
                 if (_views[i] instanceof PivotViewer.Views.IPivotViewerView) {
-                    _views[i].Setup(width, height, offsetX, offsetY, _tileController.GetMaxTileRatio());
+                    _views[i].Setup(width, height, offsetX, offsetY, _tileController.GetMaxTileRatio(), _nameMapping);
                     viewPanel.append("<div class='pv-viewpanel-view' id='pv-viewpanel-view-" + i + "'>" + _views[i].GetUI() + "</div>");
                     $('.pv-toolbarpanel-viewcontrols').append("<div class='pv-toolbarpanel-view' id='pv-toolbarpanel-view-" + i + "' title='" + _views[i].GetViewName() + "'><img id='pv-viewpanel-view-" + i + "-image' src='" + _views[i].GetButtonImage() + "' alt='" + _views[i].GetViewName() + "' /></div>");
                 } else {
@@ -1015,7 +1015,7 @@
         var filterItems = [];
         var foundItemsCount = [];
         var selectedFacets = [];
-        var sort = $('.pv-toolbarpanel-sort option:selected').attr('label');
+        var sort = _nameMapping[$('.pv-toolbarpanel-sort option:selected').attr('value')];
         PivotViewer.Debug.Log('sort ' + sort );
 
         if (!changingView)
@@ -1854,7 +1854,7 @@
                 }
 
                 if (IsMetaDataVisible) {
-                    detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title' pv-detail-item-title='" + selectedItem.Facets[i].Name + "'>" + selectedItem.Facets[i].Name + "</div>";
+                    detailDOM[detailDOMIndex] = "<div class='pv-infopanel-detail " + (alternate ? "detail-dark" : "detail-light") + "'><div class='pv-infopanel-detail-item detail-item-title' pv-detail-item-title='" + selectedItem.Facets[i].Name + "'>" + PivotViewer.Utils.StripVirtcxml(selectedItem.Facets[i].Name) + "</div>";
                     for (var j = 0; j < selectedItem.Facets[i].FacetValues.length; j++) {
                         detailDOM[detailDOMIndex] += "<div pv-detail-item-value='" + selectedItem.Facets[i].FacetValues[j].Value + "' class='pv-infopanel-detail-item detail-item-value" + (IsFilterVisible ? " detail-item-value-filter" : "") + "'>";
                         if (selectedItem.Facets[i].FacetValues[j].Href != null)
