@@ -1,7 +1,7 @@
 /*
  *   This file is part of the html5 pivotviewer project
  *
- *   Copyright (C) 2012-2013 OpenLink Software
+ *   Copyright (C) 2012-2020 OpenLink Software
  *
  *   This project is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -16,42 +16,6 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
-
-function onSilverlightError(sender, args)
-{
-	var appSource = "";
-	if (sender != null && sender != 0) {
-		appSource = sender.getHost().Source;
-	}
-
-	var errorType = args.ErrorType;
-	var iErrorCode = args.ErrorCode;
-
-	if (errorType == "ImageError" || errorType == "MediaError") {
-		return;
-	}
-
-	var errMsg = "Unhandled Error in Silverlight Application " +  appSource + "\n" ;
-
-	errMsg += "Code: "+ iErrorCode + "    \n";
-	errMsg += "Category: " + errorType + "       \n";
-	errMsg += "Message: " + args.ErrorMessage + "     \n";
-
-	if (errorType == "ParserError") {
-		errMsg += "File: " + args.xamlFile + "     \n";
-		errMsg += "Line: " + args.lineNumber + "     \n";
-		errMsg += "Position: " + args.charPosition + "     \n";
-	}
-	else if (errorType == "RuntimeError") {
-		if (args.lineNumber != 0) {
-			errMsg += "Line: " + args.lineNumber + "     \n";
-			errMsg += "Position: " +  args.charPosition + "     \n";
-		}
-		errMsg += "MethodName: " + args.methodName + "     \n";
-	}
-
-	throw new Error(errMsg);
-}
 
 function SetBookmark(collectionBaseUri, bookmark, title)
 {
@@ -111,6 +75,14 @@ function SetBookmark(collectionBaseUri, bookmark, title)
 	if (el) {
 		el.href = edit_bookmark;
 	}
+
+	//
+	//  Update QR Code
+	//
+//	el = document.getElementById ("qrcode_img");
+//	if (el) {
+//		el.src = new_qrcode;
+//	}
 }
 
 function pivotviewer_post ()
@@ -156,5 +128,5 @@ function pivotviewer_resize()
 
 	//  Now resize the pivotviewer control
 	myElement = document.getElementById ("MD");
-	if (myElement) { myElement.style.height = (myHeight - 110) + "px"; }
+	if (myElement) { myElement.style.height = (myHeight - 120) + "px"; }
 }

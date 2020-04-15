@@ -8,7 +8,7 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2020 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -46,7 +46,9 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
         $.ajax({
             type: "GET",
             url: deepzoomCollection,
+	    crossDomain: true,
             dataType: "xml",
+	    
             success: function (xml) {
                 var collection = $(xml).find("Collection");
                 that._tileSize = $(collection).attr("TileSize");
@@ -108,17 +110,53 @@ PivotViewer.Views.DeepZoomImageController = PivotViewer.Views.IImageController.s
                 //Make sure throbber is removed else everyone thinks the app is still running
                 $('.pv-loading').remove();
 
-                //Throw an alert so the user knows something is wrong
+		var state = {
+			endpoint:	this.url,
+			httpCode:	jqXHR.status,
+			status:		jqXHR.statusText,
+			message:	errorThrown,
+			response:	jqXHR.responseText,
+		}
+
+		var p = document.createElement('a');
+		p.href = this.url;
+
+		state.endpoint = p.protocol + '//' + p.host + p.pathname;
+
+		if (state.status === 'timeout') {
+		  state.message = "Timeout loading collection document";
+		} else if (state.status === 'error') {
+		  if (this.crossDomain && (p.hostname !== window.location.hostname)) {
+		    state.message = "Possible issue with CORS settings on the endpoint"
+		  }
+		} 
+
+                //Display a message so the user knows something is wrong
                 var msg = '';
-                msg = msg + 'Error loading from DeepZoom Cache<br><br>';
-                msg = msg + 'URL        : ' + this.url + '<br>';
-                msg = msg + 'Status : ' + jqXHR.status + ' ' + errorThrown + '<br>';
-                msg = msg + 'Details    : ' + jqXHR.responseText + '<br>';
-                msg = msg + '<br>Pivot Viewer cannot continue until this problem is resolved<br>';
-                $('.pv-wrapper').append("<div id=\"pv-dzloading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
-                var t=setTimeout(function(){window.open("#pv-dzloading-error","_self")},1000)
+                msg = msg + 'Error loading DeepZoom Cache:<br><br><table>';
+		msg = msg + '<colgroup><col style="white-space:nowrap;"><col></colgroup>';
+                msg = msg + '<tr><td>Endpoint</td><td>' + state.endpoint + '</td></tr>';
+                msg = msg + '<tr><td>Status</td><td>' + state.httpCode + '</td></tr>';
+                msg = msg + '<tr><td>Error</td><td> ' + state.message  + '</td></tr>';
+                msg = msg + '<tr><td style="vertical-align:top">Details</td><td>' + state.response + '</td></tr>';
+                msg = msg + '</table><br>Pivot Viewer cannot continue until this problem is resolved<br>';
+                $('.pv-wrapper').append("<div id=\"pv-loading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+                var t=setTimeout(function(){window.open("#pv-loading-error","_self")},1000);
             }
         });
+    },
+
+    GetImages: function (id, width, height) {
+        //Determine level
+        var biggest = width > height ? width : height;
+        var thisLevel = Math.ceil(Math.log(biggest) / Math.log(2));
+
+        if (thisLevel == Infinity || thisLevel == -Infinity)
+            thisLevel = 0;
+
+        //TODO: Look at caching last image to avoid using _controller
+        this._level = thisLevel;
+        return this.GetImagesAtLevel(id, thisLevel);
     },
 
     GetImagesAtLevel: function (id, level) {

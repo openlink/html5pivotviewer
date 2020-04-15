@@ -1,0 +1,9 @@
+<?vsp
+  connection_set ('__val_req_res__', 'urn:virtuoso:access:pivotviewer');
+  connection_set ('__val_req_acl_scope__', 'urn:virtuoso:val:scopes:pivotviewer');
+  connection_set ('__val_req_res_label__', 'HtmlPivotViewer');
+  connection_set ('__val_auth_page__', '/HtmlPivotViewer/login.vsp');
+  if (http_param ('error.msg'))
+    connection_set ('__val_err_msg__', http_param ('error.msg'));
+?>
+<?include /DAV/VAD/val/authenticate.vsp ?>

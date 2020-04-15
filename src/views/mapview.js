@@ -8,7 +8,7 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2020 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -23,6 +23,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.inScopeLocList = Array();
         this.map; 
         this.markers = Array();
+        this.overlay;
+        this.overlayBaseImageUrl = "";
         this.selectedItemId;
         this.geocodeList = Array();
         this.itemsToGeocode = Array();
@@ -37,7 +39,32 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.mapCentreX = "";
         this.mapCentreY = "";
         this.applyBookmark = false;
+        this.geocodeService = "";
+        this.geometryValue = "";
+        this.areaValues = Array();
+        this.areaObj;
         var that = this;
+        this.buckets = [];
+        this.iconFiles = [
+            'http://maps.google.com/mapfiles/ms/icons/red.png',
+            'http://maps.google.com/mapfiles/ms/icons/yellow.png',
+            'http://maps.google.com/mapfiles/ms/icons/green.png',
+            'http://maps.google.com/mapfiles/ms/icons/blue.png',
+            'http://maps.google.com/mapfiles/ms/icons/purple.png',
+            'http://maps.google.com/mapfiles/ms/icons/orange.png',
+            'http://maps.google.com/mapfiles/ms/icons/pink.png',
+            'http://maps.google.com/mapfiles/ms/icons/lightblue.png',
+            'http://maps.google.com/mapfiles/ms/icons/grey.png'];
+        this.iconFilesSelected = [
+            'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/orange-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/pink-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/ltblue-dot.png',
+            'http://maps.google.com/mapfiles/ms/icons/grey-dot.png'];
     },
     Setup: function (width, height, offsetX, offsetY, tileMaxRatio) { 
         this.width = width;
@@ -60,13 +87,21 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         if (!Modernizr.canvas)
             return;
 
-        Debug.Log('Map View Filtered: ' + currentFilter.length);
+        PivotViewer.Debug.Log('Map View Filtered: ' + currentFilter.length);
 
         if (changingView) {
             $('.pv-viewarea-canvas').fadeOut();
             $('.pv-tableview-table').fadeOut();
+            $('.pv-mapview2-canvas').fadeOut();
+            $('.pv-timeview-canvas').fadeOut();
+            $('.pv-toolbarpanel-sort').fadeIn();
+            $('.pv-toolbarpanel-timelineselector').fadeOut();
             $('.pv-toolbarpanel-zoomslider').fadeOut();
+            $('.pv-toolbarpanel-maplegend').fadeIn();
+            if (!selectedItem)
+                $('.pv-mapview-legend').show('slide', {direction: 'up'});
             $('.pv-toolbarpanel-zoomcontrols').css('border-width', '0');
+            $('#MAIN_BODY').css('overflow', 'auto');
             $('.pv-mapview-canvas').fadeIn(function(){
                 if (selectedItem)
                     $.publish("/PivotViewer/Views/Item/Selected", [{id: selectedItem.Id, bkt: 0}]);
@@ -75,12 +110,60 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 
         //Check for location information
 
-        this.tiles = dzTiles;
+        this.sortFacet = sortFacet;
+        //this.tiles = dzTiles;
         this.currentFilter = currentFilter;
         this.selectedItemId = "";
 
+        //Sort and bucketize so items can be grouped using coloured pins
+        this.tiles = dzTiles.sort(this.SortBy(this.sortFacet, false, function (a) {
+            return $.isNumeric(a) ? a : a.toUpperCase();
+        }, stringFacets));
+
+        this.buckets = this.Bucketize(dzTiles, currentFilter, this.sortFacet, stringFacets);
+
         //Empty the inScope item list
         this.inScopeLocList = [];        
+
+        //Clear legend info in toolbar
+        $('.pv-toolbarpanel-maplegend').empty();
+        if (!changingView && !selectedItem) 
+            $('.pv-mapview-legend').show('slide', {direction: 'up'});
+
+        //Check for geometry facet
+        //This should contain a geometry definition im WKT that applies to the whole collection
+        //E.g. where a geometry filter has been applied
+        var gotGeometry = false;
+        for (var i = 0; i < currentFilter.length && !gotGeometry; i++) {
+            for (var j = 0; j < this.tiles.length && !gotGeometry; j++) { 
+                if (this.tiles[j].facetItem.Id == currentFilter[i]) {
+                    for (k = 0; k < this.tiles[j].facetItem.Facets.length; k++) {
+                        if (this.tiles[j].facetItem.Facets[k].Name.toUpperCase().indexOf("GEOMETRY") >= 0) {
+                            //If multiple values just use the first one for now...
+                            this.geometryValue = this.tiles[j].facetItem.Facets[k].FacetValues[0].Value;
+                            gotGeometry = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        //Check for area facet
+        //This should contain a geometry definition im WKT that applies to an individual item
+        for (var i = 0; i < currentFilter.length; i++) {
+            for (var j = 0; j < this.tiles.length; j++) { 
+                if (this.tiles[j].facetItem.Id == currentFilter[i]) {
+                    for (k = 0; k < this.tiles[j].facetItem.Facets.length; k++) {
+                        if (this.tiles[j].facetItem.Facets[k].Name.toUpperCase().indexOf("AREA") >= 0) {
+                            var areaValue = this.tiles[j].facetItem.Facets[k].FacetValues[0].Value;
+                            this.areaValues.push({id: this.tiles[j].facetItem.Id, area: areaValue});
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         //Create a list of in scope locations
         for (var i = 0; i < currentFilter.length; i++) {
@@ -155,11 +238,11 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                        var invalidCoordinates = false;
                                   
                                        if (value.toUpperCase().indexOf("POINT(") == 0 ) {
-                                           longitude = value.substring(6, value.indexOf(' ', 6) - 6);
-                                           latitude = value.substring(value.indexOf(' ', 6) + 1, value.indexOf(')') - (value.indexOf(' ') + 1));
+                                           longitude = value.substring(7, value.indexOf(' ', 7));
+                                           latitude  = value.substring(value.indexOf(' ', 7) + 1, value.indexOf(')', 7));
                                            if (latitude != "NaN" && longitude != "NaN") {
                                                var lat = parseFloat(latitude);
-                                               var lon = parseFloat(logitude);
+                                               var lon = parseFloat(longitude);
                                                if (!isNaN(lat) && ! isNaN(lon)) {
                                                    var newLoc = new google.maps.LatLng(lat, lon);
                                                    locList.push({id: itemId, loc: newLoc, title: itemName});
@@ -229,15 +312,17 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                                   if (this.localStorage) {
                                                       var newLatLng;
                                                       var newLoc = JSON.parse(localStorage.getItem(geoLoc));
-                                                      var lat = parseFloat(newLoc.lat);
-                                                      var lng = parseFloat(newLoc.lng);
-                                                      if (!NaN(lat) && !NaN(lng)) {
-                                                          newLatLng = new google.maps.LatLng(lat, lng);
-                                                          // Add it to local cache
-                                                          this.locCache.push({locName: geoLoc, loc: newLatLng});
-                                                          this.locList.push({id: itemId, loc: newLatLng, title: itemName});
-                                                          this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
-                                                          gotLocation = true;
+                                                      if (newLoc) {
+                                                          var lat = parseFloat(newLoc.lat);
+                                                          var lng = parseFloat(newLoc.lng);
+                                                          if (!NaN(lat) && !NaN(lng)) {
+                                                              newLatLng = new google.maps.LatLng(lat, lng);
+                                                              // Add it to local cache
+                                                              this.locCache.push({locName: geoLoc, loc: newLatLng});
+                                                              this.locList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                              this.inScopeLocList.push({id: itemId, loc: newLatLng, title: itemName});
+                                                              gotLocation = true;
+                                                          }
                                                       }
                                                   }
                                                   if (!gotLocation) {
@@ -245,8 +330,8 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
                                                       // Add location to list for geocoding (will need to keep itemId name with it)
                                                       if (g < 1000) {//limiting the number of items to geocode at once to 1000 for now
                                                           var foundIt = false;
-                                                          for (var g = 0; g < this.geocodeList.length; g++) {
-                                                              if (this.geocodeList[g] == geoLoc) {
+                                                          for (var gl = 0; gl < this.geocodeList.length; gl++) {
+                                                              if (this.geocodeList[gl] == geoLoc) {
                                                                   foundIt = true;
                                                                   break;
                                                               }
@@ -301,92 +386,229 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
     GetViewName: function () { return 'Map View'; },
     MakeGeocodeCallBack: function(locName) {
         var that = this;
-        var geocodeCallBack = function(results, status) {
-            var dummy = new google.maps.LatLng(0, 0);
-            var loc = dummy;
-            
-            if (status == google.maps.GeocoderStatus.OK) 
-                var loc = results[0].geometry.location;
-            else 
+        if (this.geocodeService == "Google"){
+            var geocodeCallBack = function(results, status) {
+                var dummy = new google.maps.LatLng(0, 0);
                 var loc = dummy;
+                
+                if (status == google.maps.GeocoderStatus.OK) 
+                    var loc = results[0].geometry.location;
+                else 
+                    var loc = dummy;
 
-            // Add to local cache
-            that.locCache.push ({locName: locName, loc: loc});
-
-            // Add to persistent cache
-            if (this.localStorage) {
-                var newLoc = {
-                    lat: loc.lat(),
-                    lng: loc.lng()
-                };
-                localStorage.setItem(locName, JSON.stringify(newLoc));
-            }
-
-            // Find items that have that location
-            for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
-                var itemId = that.itemsToGeocode[i].id;
-                var value = that.itemsToGeocode[i].locName;
-                var title = that.itemsToGeocode[i].title;
-                if (value == locName) {
-                    that.locList.push({id: itemId, loc:loc, title: title});
-                    if (loc.lat() != 0 || loc.lng() != 0)
-                         that.inScopeLocList.push({id:itemId, loc:loc, title: title});
+                // Add to local cache
+                that.locCache.push ({locName: locName, loc: loc});
+       
+                // Add to persistent cache
+                if (this.localStorage) {
+                    var newLoc = {
+                        lat: loc.lat(),
+                        lng: loc.lng()
+                    };
+                    localStorage.setItem(locName, JSON.stringify(newLoc));
                 }
-            }
-
-            var doneGeocoding = true;
-            for (var g = 0; g < that.geocodeList.length; g++) {
-                var value = that.geocodeList[g];
-                var currentLocNotFound = true;
-                for (var c = 0; c < that.locCache.length; c++) {
-                    if (that.locCache[c].locName == value) {
-                        currentLocNotFound = false;
-                        break;
+       
+                // Find items that have that location
+                for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
+                    var itemId = that.itemsToGeocode[i].id;
+                    var value = that.itemsToGeocode[i].locName;
+                    var title = that.itemsToGeocode[i].title;
+                    if (value == locName) {
+                        that.locList.push({id: itemId, loc:loc, title: title});
+                        if (loc.lat() != 0 || loc.lng() != 0)
+                             that.inScopeLocList.push({id:itemId, loc:loc, title: title});
                     }
                 }
-                if (currentLocNotFound) {
-                   doneGeocoding = false;
-                   break;
-               }
-            }
-            // If geocoding has taken more than 20 secs then try to set
-            // the bookmark.  Otherwise, if the time taken is more than 
-            // 2 secs make the pins we have so far
-            var now = new Date();
-            if ((now.getTime() - that.geocodeZero.getTime())/1000 > 20) {
-                that.RedrawMarkers(that.selectedItemId);
-                that.startGeocode = new Date();
-            } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
-                that.RedrawMarkers(that.selectedItemId);
-                that.RefitBounds();
-                that.startGeocode = new Date();
-            }
-
-            // If the geocodeResults array is totally filled, make the pins.
-            if (doneGeocoding || that.geocodeList.Count == 0)
-            {
-               //change cursor back ?
-               that.geocodeList = [];
-               if (that.inScopeLocList.Count == 0) {
-                   this.ShowMapError();
-                   return;
-               } else {
-                   that.CreateMap(that.selectedItemId);
-                   if (that.applyBookmark) {
-                       that.SetBookmark();
-                       that.applyBookmark = false;
+       
+                var doneGeocoding = true;
+                for (var g = 0; g < that.geocodeList.length; g++) {
+                    var value = that.geocodeList[g];
+                    var currentLocNotFound = true;
+                    for (var c = 0; c < that.locCache.length; c++) {
+                        if (that.locCache[c].locName == value) {
+                            currentLocNotFound = false;
+                            break;
+                        }
+                    }
+                    if (currentLocNotFound) {
+                       doneGeocoding = false;
+                       break;
+                   }
+                }
+                // If geocoding has taken more than 20 secs then try to set
+                // the bookmark.  Otherwise, if the time taken is more than 
+                // 2 secs make the pins we have so far
+                var now = new Date();
+                if ((now.getTime() - that.geocodeZero.getTime())/1000 > 20) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.startGeocode = new Date();
+                } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.RefitBounds();
+        	    that.GetOverlay();
+                    that.startGeocode = new Date();
+                }
+       
+                // If the geocodeResults array is totally filled, make the pins.
+                if (doneGeocoding || that.geocodeList.Count == 0)
+                {
+                   //change cursor back ?
+                   that.geocodeList = [];
+                   if (that.inScopeLocList.Count == 0) {
+                       this.ShowMapError();
+                       return;
+                   } else {
+                       that.CreateMap(that.selectedItemId);
+                       if (that.applyBookmark) {
+                           that.SetBookmark();
+                           that.applyBookmark = false;
+                       }
                    }
                }
-           }
+            }
+        } else {
+            var geocodeCallBack = function(xml) {
+                //var dummy = new L.LatLng(0, 0);
+                var dummy = new google.maps.LatLng(0, 0);
+                var loc = dummy;
+                var results = $(xml).find("searchresults");
+                var place = $(xml).find("place");
+ 
+                if (place) {
+                    var lat = $(place).attr("lat");
+                    var lon = $(place).attr("lon");
+                    if (lat && lon)
+                      loc = new google.maps.LatLng(lat, lon);
+                }
+
+                // Add to local cache
+                that.locCache.push ({locName: locName, loc: loc});
+       
+                // Add to persistent cache
+                if (this.localStorage) {
+                    var newLoc = {
+                        lat: loc.lat(),
+                        lng: loc.lng()
+                    };
+                    localStorage.setItem(locName, JSON.stringify(newLoc));
+                }
+       
+                // Find items that have that location
+                for (var i = 0; i < that.itemsToGeocode.length; i++ ) {
+                    var itemId = that.itemsToGeocode[i].id;
+                    var value = that.itemsToGeocode[i].locName;
+                    var title = that.itemsToGeocode[i].title;
+                    if (value == locName) {
+                        that.locList.push({id: itemId, loc:loc, title: title});
+                        if (loc.lat() != 0 || loc.lng() != 0)
+                             that.inScopeLocList.push({id:itemId, loc:loc, title: title});
+                    }
+                }
+       
+                var doneGeocoding = true;
+                for (var g = 0; g < that.geocodeList.length; g++) {
+                    var value = that.geocodeList[g];
+                    var currentLocNotFound = true;
+                    for (var c = 0; c < that.locCache.length; c++) {
+                        if (that.locCache[c].locName == value) {
+                            currentLocNotFound = false;
+                            break;
+                        }
+                    }
+                    if (currentLocNotFound) {
+                       doneGeocoding = false;
+                       break;
+                   }
+                }
+                // If geocoding has taken more than 20 secs then try to set
+                // the bookmark.  Otherwise, if the time taken is more than 
+                // 2 secs make the pins we have so far
+                var now = new Date();
+                if ((now.getTime() - that.geocodeZero.getTime())/1000 > 20) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.startGeocode = new Date();
+                } else if ((now.getTime() - that.startGeocode.getTime())/1000 > 2) {
+                    that.RedrawMarkers(that.selectedItemId);
+                    that.RefitBounds();
+                    that.startGeocode = new Date();
+                }
+       
+                // If the geocodeResults array is totally filled, make the pins.
+                if (doneGeocoding || that.geocodeList.Count == 0)
+                {
+                   //change cursor back ?
+                   that.geocodeList = [];
+                   if (that.inScopeLocList.Count == 0) {
+                       this.ShowMapError();
+                       return;
+                   } else {
+                       that.CreateMap(that.selectedItemId);
+                       if (that.applyBookmark) {
+                           that.SetBookmark();
+                           that.applyBookmark = false;
+                       }
+                   }
+               }
+            }
+
         }
         return geocodeCallBack;
     },
+    Geocode: function (locName, callbackFunction) {
+        if (this.geocodeService == "Google"){
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode( {address: locName}, callbackFunction);
+        } else {
+            var that = this;
+            var nominatimUrl = "http://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(locName) + "&format=xml";
+            $.ajax({
+                type: "GET",
+                url: nominatimUrl,
+	        crossDomain: true,
+                success: callbackFunction,
+                error: function(jqXHR, textStatus, errorThrown) {
+
+		    var state = {
+			    endpoint:	this.url,
+			    httpCode:	jqXHR.status,
+			    status:	jqXHR.statusText,
+			    message:	errorThrown,
+			    response:	jqXHR.responseText,
+		    }
+
+		    var p = document.createElement('a');
+		    p.href = this.url;
+
+		    state.endpoint = p.protocol + '//' + p.host + p.pathname;
+
+		    if (state.status === 'timeout') {
+		      state.message = "Timeout loading collection document";
+		    } else if (state.status === 'error') {
+		      if (this.crossDomain && (p.hostname !== window.location.hostname)) {
+			state.message = "Possible issue with CORS settings on the endpoint"
+		      }
+		    } 
+
+		    //Display a message so the user knows something is wrong
+		    var msg = '';
+		    msg = msg + 'Error loading GeoCoding Data:<br><br><table>';
+		    msg = msg + '<colgroup><col style="white-space:nowrap;"><col></colgroup>';
+		    msg = msg + '<tr><td>Endpoint</td><td>' + state.endpoint + '</td></tr>';
+		    msg = msg + '<tr><td>Status</td><td>' + state.httpCode + '</td></tr>';
+		    msg = msg + '<tr><td>Error</td><td> ' + state.message  + '</td></tr>';
+		    msg = msg + '<tr><td style="vertical-align:top">Details</td><td>' + state.response + '</td></tr>';
+		    msg = msg + '</table><br>Pivot Viewer cannot continue until this problem is resolved<br>';
+		    $('.pv-wrapper').append("<div id=\"pv-loading-error\" class=\"pv-modal-dialog\"><div><a href=\"#pv-modal-dialog-close\" title=\"Close\" class=\"pv-modal-dialog-close\">X</a><h2>HTML5 PivotViewer</h2><p>" + msg + "</p></div></div>");
+		    var t=setTimeout(function(){window.open("#pv-loading-error","_self")},1000);
+                }
+            });
+        }
+    },
     GetLocationsFromNames: function () {
-        var geocoder = new google.maps.Geocoder();
         var that = this;
         for (l = 0; l < this.itemsToGeocode.length; l ++) {
            var locName = this.itemsToGeocode[l].locName;
-           geocoder.geocode( {address: locName}, this.MakeGeocodeCallBack(locName));
+           this.Geocode(locName, this.MakeGeocodeCallBack(locName));
         }
         // Change cursor?
         this.startGeocode = new Date();
@@ -402,7 +624,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 
         centreLat = parseFloat(this.mapCentreX);
         centreLng = parseFloat(this.mapCentreY);
-        if (!isNaN(centreLat) && !isNaN(centreLng)) {
+        if ((!isNaN(centreLat) && !isNaN(centreLng)) && (centreLat != 0 && centreLng != 0)) {
             centreLoc = new google.maps.LatLng(centreLat, centreLng);
             gotLoc = true;
         }
@@ -413,13 +635,38 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         if (this.mapType && this.mapType != "")
             type = this.mapType;
 
-        //this.map = new google.maps.Map(document.getElementById('pv-map-canvas'), mapOptions);
         this.map = new google.maps.Map(document.getElementById('pv-map-canvas'));
 
         if (gotLoc)
             this.map.panTo(centreLoc);
         else if (this.selectedItemId) 
             this.CentreOnSelected (this.selectedItemId);
+
+        //Add geometry to map using wicket library for reading WKT
+        var geometryOK = true;
+        var wkt = new Wkt.Wkt();
+        try { // Catch any malformed WKT strings
+            wkt.read(this.geometryValue);
+        } catch (e1) {
+            try {
+                wkt.read(this.geometryValue.replace('\n', '').replace('\r', '').replace('\t', ''));
+            } catch (e2) {
+                if (e2.name === 'WKTError') {
+                    PivotViewer.Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
+                    //return;
+                    geometryOK = false;
+                }
+            }
+        }
+        if (geometryOK) {
+            var obj = wkt.toObject(this.map.defaults);
+            if (Wkt.isArray(obj)) {
+                for (var o = 0; o < obj.length; o++) { 
+                    obj[o].setMap(this.map);
+                }
+            } else 
+                obj.setMap(this.map);
+        }
 
         this.map.setMapTypeId(type);
         this.map.setZoom(zoom);
@@ -432,16 +679,22 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         google.maps.event.addListener( this.map, 'zoom_changed', function() { 
             that.SetMapZoom(that.map.getZoom());
             $.publish("/PivotViewer/Views/Item/Updated", null);
+            that.GetOverlay();
         } );
         google.maps.event.addListener( this.map, 'center_changed', function() { 
             var centre = that.map.getCenter();
-            that.SetMapCentreX(centre.lat());
-            that.SetMapCentreY(centre.lng());
-            $.publish("/PivotViewer/Views/Item/Updated", null);
+            if (centre) {
+                that.SetMapCentreX(centre.lat());
+                that.SetMapCentreY(centre.lng());
+                $.publish("/PivotViewer/Views/Item/Updated", null);
+                that.GetOverlay();
+            }
         } );
 
         this.CreateMarkers();
         this.RefitBounds();
+        this.GetOverlay();
+        this.CreateLegend();
     },
     SetFacetCategories: function (collection) {
         this.categories = collection.FacetCategories;
@@ -453,6 +706,24 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         }
         // should never get here...
         return "not set";
+    },
+    SetGeocodeService: function (service) {
+        this.geocodeService = service;
+    },
+    GetBucketNumber: function (id) {
+        for (var i = 0; i < this.buckets.length; i++) {
+            if ($.inArray(id, this.buckets[i].Ids) >= 0) 
+                return i;
+        }
+        return 0;
+    },
+    GetIconForSortValue: function (id) {
+        var icon;
+        for (var i = 0; i < this.buckets.length; i++) {
+            if ($.inArray(id, this.buckets[i].Ids) >= 0) 
+                icon = this.iconFiles[i];
+        }
+        return icon;
     },
     CreateMarkers: function () {
         var that = this;
@@ -467,26 +738,54 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
             marker = new google.maps.Marker({
                 position: this.inScopeLocList[i].loc,
                 map: this.map,
-                icon: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
                 title: this.inScopeLocList[i].title,
             });
 
+            // Set icon image depending on value of the sort facet
+            var bucket = this.GetBucketNumber(this.inScopeLocList[i].id);
+            marker.setIcon(this.iconFiles[bucket]);
+
             if (this.inScopeLocList[i].id ==  this.selectedItemId) {
-                marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+                marker.setIcon(this.iconFilesSelected[bucket]);
                 marker.setZIndex(1000000000);
+                $('.pv-toolbarpanel-maplegend').empty();
+                $('.pv-toolbarpanel-maplegend').css( 'overflow', 'hidden');
+                $('.pv-toolbarpanel-maplegend').css( 'text-overflow', 'ellipsis');
+                var toolbarContent;
+                toolbarContent = "<img style='height:15px;width:auto' src='" + that.iconFiles[bucket] + "'></img>";
+                if (that.buckets[bucket].startRange == that.buckets[bucket].endRange)
+                  toolbarContent += that.buckets[bucket].startRange; 
+                else
+                  toolbarContent += that.buckets[bucket].startRange + " to " + that.buckets[bucket].endRange; 
+                $('.pv-toolbarpanel-maplegend').append(toolbarContent);
             }
 
             google.maps.event.addListener(marker, 'click', (function(marker, i) {
                 return function() {
                     if (that.selectedItemId == that.inScopeLocList[i].id) {
-                        marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+                        var bucket = that.GetBucketNumber(that.inScopeLocList[i].id);
+                        marker.setIcon(that.iconFiles[bucket]);
+                        selectedTile = null;
                         that.selectedItemId = "";
+                        that.RefitBounds();
+        		that.GetOverlay();
+                        $('.pv-toolbarpanel-maplegend').empty();
+                        $('.pv-mapview-legend').show('slide', {direction: 'up'});
                         $.publish("/PivotViewer/Views/Update/GridSelection", [{selectedItem: that.selectedItemId,  selectedTile: selectedTile}]);
                     } else {
                         that.selectedItemId = that.inScopeLocList[i].id;
+                        var bucket = that.GetBucketNumber(that.inScopeLocList[i].id);
                         for (var j = 0; j < that.tiles.length; j++) { 
                             if (that.tiles[j].facetItem.Id == that.selectedItemId) {
                                 selectedTile = that.tiles[j];
+                                $('.pv-toolbarpanel-maplegend').empty();
+                                var toolbarContent;
+                                toolbarContent = "<img style='height:15px;width:auto' src='" + that.iconFiles[bucket] + "'></img>";
+                                if (that.buckets[bucket].startRange == that.buckets[bucket].endRange)
+                                  toolbarContent += that.buckets[bucket].startRange; 
+                                else
+                                  toolbarContent += that.buckets[bucket].startRange + " to " + that.buckets[bucket].endRange; 
+                                $('.pv-toolbarpanel-maplegend').append(toolbarContent);
                                 $.publish("/PivotViewer/Views/Update/GridSelection", [{selectedItem: that.selectedItemId,  selectedTile: selectedTile}]);
                                 break;
                             }
@@ -511,6 +810,62 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         if (this.currentFilter.length == 1 && this.map.getZoom() > 15)
             this.map.setZoom(15);
     },
+    GetOverlay: function () {
+        // Get the boundary and use to get image to overlay
+        var mapBounds = this.map.getBounds();
+        if (mapBounds) {
+          var southWest = mapBounds.getSouthWest();
+          var northEast = mapBounds.getNorthEast();
+          var width = $('#pv-map-canvas').width();
+          var height = $('#pv-map-canvas').height();
+          if (this.overlayBaseImageUrl != "") {
+            if (this.overlay) 
+                this.overlay.setMap(null);
+            var overlayImageUrl = this.overlayBaseImageUrl+ "&bbox=" + southWest.lng() + "," + southWest.lat() + "," + northEast.lng() + "," + northEast.lat() + "&width=" + width + "&height=" + height ;
+            this.overlay = new google.maps.GroundOverlay (overlayImageUrl, mapBounds, {opacity: 0.4});
+            this.overlay.setMap(this.map);
+          }
+        }
+    },
+    DrawArea: function (selectedItemId) {
+        var areaValue;
+        var areaWkt = new Wkt.Wkt();
+
+        //clear existing area object
+        if (this.areaObj)
+          this.areaObj.setMap(null);
+        for (var i = 0; i < this.areaValues.length; i++) {
+           if (this.areaValues[i].id == selectedItemId) {
+              areaValue = this.areaValues[i].area;
+              break;
+           }
+        }
+        if (areaValue) {
+            var geometryOK = true;
+            try { // Catch any malformed WKT strings
+                areaWkt.read(areaValue);
+            } catch (e1) {
+                try {
+                    areaWkt.read(areaValue.replace('\n', '').replace('\r', '').replace('\t', ''));
+                } catch (e2) {
+                    if (e2.name === 'WKTError') {
+                        PivotViewer.Debug.Log('Wicket could not understand the WKT string you entered. Check that you have parentheses balanced, and try removing tabs and newline characters.');
+                        //return;
+                        geometryOK = false;
+                    }
+                }
+            }
+            if (geometryOK) {
+                this.areaObj = areaWkt.toObject({strokeColor:'#990000',fillColor:'#EEFFCC',fillOpacity:0.6});
+                if (Wkt.isArray(this.areaObj)) {
+                    for (var o = 0; o < this.areaObj.length; o++) { 
+                        this.areaObj[o].setMap(this.map);
+                    }
+                } else 
+                    this.areaObj.setMap(this.map);
+            }
+        }
+    },
     RedrawMarkers: function (selectedItemId) {
         this.selectedItemId = selectedItemId;
 
@@ -522,6 +877,7 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
 
         this.CreateMarkers();
         this.CentreOnSelected (selectedItemId);
+        this.DrawArea(selectedItemId);
     },
     ShowMapError: function () {
         var msg = '';
@@ -604,4 +960,151 @@ PivotViewer.Views.MapView = PivotViewer.Views.IPivotViewerView.subClass({
         this.map.setMapTypeId(type);
         this.map.setZoom(zoom);
     },
+    SetOverlayBaseUrl: function(baseUrl) {
+        this.overlayBaseImageUrl = baseUrl;
+    },
+    CreateLegend: function() {
+        // Get width of the info panel (width of icon image = 30 )
+        var width = $('.pv-mapview-legend').width() - 32;
+        $('.pv-mapview-legend').empty();
+        $('.pv-mapview-legend').append("<div class='pv-legend-heading' style='height:28px' title='" + this.sortFacet + "'>" + this.sortFacet + "</div>");
+        var tableContent = "<table id='pv-legend-data' style='color:#484848;'>";
+        for (var i = 0; i < this.buckets.length; i++) {
+            tableContent += "<tr><td><img src='" + this.iconFiles[i] + "'></img></td>";
+            if (this.buckets[i].startRange == this.buckets[i].endRange)
+              tableContent += "<td><div style='overflow:hidden;white-space:nowrap;width:" + width + "px;text-overflow:ellipsis'>" + this.buckets[i].startRange + "</div></td></tr>"; 
+            else
+              tableContent += "<td><div style='overflow:hidden;white-space:nowrap;width:" + width + "px;text-overflow:ellipsis'>" + this.buckets[i].startRange + " to " + this.buckets[i].endRange + "</div></td></tr>"; 
+        }
+        tableContent +="</table>";
+        $('.pv-mapview-legend').append(tableContent);
+    },
+    //Groups into buckets based on first n chars
+    Bucketize: function (dzTiles, filterList, orderBy, stringFacets) {
+        var bkts = [];
+        for (var i = 0; i < dzTiles.length; i++) {
+            if ($.inArray(dzTiles[i].facetItem.Id, filterList) >= 0) {
+                var hasValue = false;
+                for (var j = 0; j < dzTiles[i].facetItem.Facets.length; j++) {
+                    if (dzTiles[i].facetItem.Facets[j].Name == orderBy && dzTiles[i].facetItem.Facets[j].FacetValues.length > 0) {
+
+                        for (var m = 0; m < dzTiles[i].facetItem.Facets[j].FacetValues.length; m++) { 
+                            var val = dzTiles[i].facetItem.Facets[j].FacetValues[m].Value;
+
+                            var found = false;
+                            for (var k = 0; k < bkts.length; k++) {
+//this needs fixing to handle the whole range...
+                                if (bkts[k].startRange == val) {
+                                    // If item is not already in the bucket add it
+                                    if ($.inArray(dzTiles[i].facetItem.Id, bkts[k].Ids) < 0)
+                                        bkts[k].Ids.push(dzTiles[i].facetItem.Id);
+                                    found = true;
+                                }
+                            }
+                            if (!found)
+                                bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id], Values: [val] });
+
+                            hasValue = true;
+                        }
+                    }
+                }
+                //If not hasValue then add it as a (no info) item
+                if (!hasValue) {
+                    var val = "(no info)";
+                    var found = false;
+                    for (var k = 0; k < bkts.length; k++) {
+                        if (bkts[k].startRange == val) {
+                            bkts[k].Ids.push(dzTiles[i].facetItem.Id);
+                            bkts[k].Values.push(val);
+                            found = true;
+                        }
+                    }
+                    if (!found)
+                        bkts.push({ startRange: val, endRange: val, Ids: [dzTiles[i].facetItem.Id], Values: [val] });
+                }
+            }
+        }
+
+	// If orderBy is one of the string filters then only include buckets that are in the filter
+	if ( stringFacets.length > 0 ) {
+	    var sortIndex;
+	    for ( var f = 0; f < stringFacets.length; f++ ) {
+	        if ( stringFacets[f].facet == orderBy ) {
+		    sortIndex = f;
+		    break;
+	        }
+            }
+	    if ( sortIndex != undefined  && sortIndex >= 0 ) {
+	        var newBktsArray = [];
+	        var filterValues = stringFacets[sortIndex].facetValue;
+	        for ( var b = 0; b < bkts.length; b ++ ) {
+		    var valueIndex = $.inArray(bkts[b].startRange, filterValues ); 
+		    if (valueIndex >= 0 )
+		        newBktsArray.push(bkts[b]);
+	        }
+	        bkts = newBktsArray;
+	    }
+	}
+
+        var current = 0;
+        while (bkts.length > 8) {
+            if (current < bkts.length - 1) {
+                bkts[current].endRange = bkts[current + 1].endRange;
+                for (var i = 0; i < bkts[current + 1].Ids.length; i++) {
+                    if ($.inArray(bkts[current+1].Ids[i], bkts[current].Ids) < 0) 
+                        bkts[current].Ids.push(bkts[current + 1].Ids[i]);
+                        if ($.inArray(bkts[current + 1].endRange, bkts[current].Values) < 0) 
+                            bkts[current].Values.push(bkts[current + 1].endRange);
+                }
+                bkts.splice(current + 1, 1);
+                current++;
+            } else
+                current = 0;
+        }
+
+        return bkts;
+    },
+	//http://stackoverflow.com/questions/979256/how-to-sort-an-array-of-javascript-objects
+    SortBy: function (field, reverse, primer, filterValues) {
+
+	var key = function (x, filterValues) {
+		if (primer) {
+			for (var i = x.facetItem.Facets.length - 1; i > -1; i -= 1) {
+				if (x.facetItem.Facets[i].Name == field && x.facetItem.Facets[i].FacetValues.length > 0) {
+                                    // If a numeric value could check if value is within filter 
+                                    // bounds but will have been done already
+                                    if ($.isNumeric(x.facetItem.Facets[i].FacetValues[0].Value) )
+				            return primer(x.facetItem.Facets[i].FacetValues[0].Value);
+                                    // If a string facet then could have a number of values.  Only
+                                    // sort on values in the filter 
+                                    else {                      
+                                        for (var j = 0; j < x.facetItem.Facets[i].FacetValues.length; j++) {
+                                            // Has a filter been set? If so, and it is the same facet as the sort
+                                            // then sort on the items in the filter where possible (otherwise just 
+                                            // use the first value.?
+                                            if (filterValues.length > 0) {
+                                                for (var k = 0; k < filterValues.length; k++) {
+                                                    if (filterValues[k].facet == field) {
+                                                         for (var l = 0; l < filterValues[k].facetValue.length; l++) {
+                                                             if ( x.facetItem.Facets[i].FacetValues[j].Value == filterValues[k].facetValue[l]) {  
+				                                 return primer(x.facetItem.Facets[i].FacetValues[j].Value);
+                                                             }
+                                                         }
+                                                     } 
+                                                }
+                                            } 
+                                        }
+                                        return primer(x.facetItem.Facets[i].FacetValues[0].Value);
+                                    }
+                                }
+			}
+		}
+		return null;
+	};
+
+	return function (a, b) {
+		var A = key(a, filterValues), B = key(b, filterValues);
+		return (A < B ? -1 : (A > B ? 1 : 0)) * [1, -1][+!!reverse];
+	}
+    }
 });

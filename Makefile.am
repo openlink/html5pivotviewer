@@ -6,7 +6,7 @@
 #    enquiries@lobsterpot.com.au
 #
 #  Enhancements:
-#    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+#    Copyright (C) 2012-2020 OpenLink Software - http://www.openlinksw.com/
 #
 #  This software is licensed under the terms of the
 #  GNU General Public License v2 (see COPYING)
@@ -24,6 +24,7 @@ SOURCES		= \
 	$(srcdir)/src/utils.js \
 	$(srcdir)/src/models.js \
 	$(srcdir)/src/collectionloader.js \
+	$(srcdir)/src/jsonloader.js \
 	$(srcdir)/src/views/ipivotviewerview.js \
 	$(srcdir)/src/views/tilebasedview.js \
 	$(srcdir)/src/views/dataview.js \
@@ -32,9 +33,12 @@ SOURCES		= \
 	$(srcdir)/src/views/iimagecontroller.js \
 	$(srcdir)/src/views/LoadImageSetHelper.js \
 	$(srcdir)/src/views/mapview.js \
+	$(srcdir)/src/views/mapview2.js \
+	$(srcdir)/src/views/timeview.js \
 	$(srcdir)/src/views/tableview.js \
 	$(srcdir)/src/views/tilecontroller.js \
 	$(srcdir)/src/views/deepzoom.js \
+	$(srcdir)/src/views/simpleimage.js \
 	$(srcdir)/src/pivotviewer.js
 
 vad_DATA = html5pivotviewer_dav.vad
@@ -73,10 +77,12 @@ EXTRA_DIST = \
 	vadpacker \
 	vsp/*.sql \
 	vsp/*.vsp \
+	vsp/*.vspx \
+	vsp/*.ico \
 	vsp/scripts/*.js \
 	vsp/skin/i/*.png \
 	vsp/skin/ss/*.css
 
-.PHONY: changeLog
+.PHONY: changelog
 changelog:
 	git2cl > ChangeLog

@@ -11,7 +11,7 @@
 --
 --   This file is part of the html5 pivotviewer project
 --
---   Copyright (C) 2012-2013 OpenLink Software
+--   Copyright (C) 2012-2020 OpenLink Software
 --
 --   This project is free software; you can redistribute it and/or modify it
 --   under the terms of the GNU General Public License as published by the
@@ -29,22 +29,36 @@
 
     declare _collectionUri, _collUriFromQuery, _collUriFromBox  varchar;
     declare links varchar;
-    declare skinpfx varchar;
     declare _no_input_box varchar;
-    declare _addthis_key varchar;
-    declare _urchin_key varchar;
-    declare _bingmaps_key varchar;
-    declare _googlemaps_key varchar;
     declare _desc_qr, _desc_res_uri varchar;
+    declare qrimg any;
+
+    -- Application config values
+    declare skinpfx varchar;
     declare _enable_translation varchar;
     declare _translation_source_lang varchar;
-    declare _translation_dest_lang varchar;
+    declare _addthis_key varchar;
+    declare _urchin_key varchar; 
+    declare _use_proxying varchar;
+    declare _allow_servers varchar;
+    declare _allowedServers varchar;
+
+    declare val_vad_present int;
+    declare val_serviceId, val_sid, val_realm, val_uname varchar;
+    declare val_isRealUser integer;
+    declare val_webidGraph, val_cert varchar;
+    declare pageUrl, idName, idUrl varchar;
+
+    val_vad_present := 0;
+    if (__proc_exists ('VAL.DBA.username_for_online_account') is not null) 
+      val_vad_present := 1;
 
     _collectionUri := '';
     _collUriFromQuery := '';
     _collUriFromBox := '';
     _no_input_box := '';
 
+    -- Get application config settings from database
     skinpfx := registry_get ('_pivot_SkinPrefix');
     if (skinpfx = 0) skinpfx := 'skin/';
 
@@ -54,17 +68,33 @@
 
     _urchin_key := registry_get ('_pivot_urchinTracker');
 
-    _bingmaps_key := registry_get ('_pivot_BingMapsKey');
-    if (0 = _bingmaps_key) _bingmaps_Key := '';
-
-    _googlemaps_key := registry_get ('_pivot_GoogleMapsKey');
-    if (0 = _googlemaps_key) _googlemaps_Key := '';
-
     _enable_translation := registry_get ('_pivot_enableTranslation');
     if ('false' = _enable_translation) _enable_translation := 0;
     if ('no' = _enable_translation) _enable_translation := 0;
+    if ('0' = _enable_translation) _enable_translation := 0;
+
     _translation_source_lang := registry_get ('_pivot_transSourceLang');
     if (0 = _translation_source_lang) _translation_source_lang := 'en';
+    if ('0' = _translation_source_lang) _translation_source_lang := 'en';
+
+    _use_proxying := registry_get ('_pivot_use_proxying');
+    if ('false' = _use_proxying) _use_proxying := 0;
+    if ('no' = _use_proxying) _use_proxying := 0;
+    if ('0' = _use_proxying) _use_proxying := 0;
+
+    _allow_servers := registry_get ('_pivot_allow_servers');
+    if ('0' = _allow_servers) _allow_servers := '';
+ 
+    _allowedServers := '';
+    if (_allow_servers = '1') { 
+      for (select HOST from DB.DBA.PV_COLLECTION_HOST_SAFELIST) do {
+        _allowedServers := _allowedServers || HOST || ',';
+      }
+      if (ends_with(_allowedServers, ','))
+        _allowedServers := substring(_allowedServers, 1, length(_allowedServers) - 1);
+      --log_message (_allowedServers);
+    }
+    --if ('' = _allowedServers) _allowedServers := '0';
 
     _collUriFromQuery := {?'url'};
     _collUriFromBox := get_keyword ('collectionUri', params, '');
@@ -134,13 +164,11 @@
 	}
 
  	--
-	--  Create a proxy link for silverlight for dynamic queries
+	--  If proxying is enabled, create a proxy link for dynamic queries
 	--
-	if (_dynamic_collection = 1) {
-		-- _p_link := sprintf ('%s://%s/proxy?url=%U', _proto, _host, _c_link);
+	if ( 0 <> _use_proxying AND _dynamic_collection = 1) {
 		_proxy := sprintf ('%s://%s/proxy?url=', _proto, _host);
 	} else {
-		-- _p_link := _c_link;
 		_proxy := '';
 	}
 
@@ -160,28 +188,78 @@
 	links := 'Link:';
 	links := links || '  ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'text/xml', 'CXML');
 	if (_dynamic_collection = 1) {
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'text/rdf+n3',          'N3/Turtle');
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+xml',  'RDF/XML');
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+json', 'RDF/JSON');
-	    links := links || ',\n ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/atom+xml', 'ODATA/Atom');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'text/rdf+n3',          'N3/Turtle');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+xml',  'RDF/XML');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/rdf+json', 'RDF/JSON');
+	    links := links || ', ' || DB.DBA.PV_GEN_LINK (1, _c_link, 'application/atom+xml', 'ODATA/Atom');
 	}
 	links := links || '\r\n';
 
 	http_header (http_header_get () || links);
     }
+
+    -- if the VAL vad is installed check login details and access control
+    if (val_vad_present) {
+        pageUrl := sprintf('%s://%s/HtmlPivotViewer', _proto, _host );
+        if (_collectionUri <> '')
+          pageUrl := sprintf('%s/?url=%U', pageUrl, _c_link);
+ 
+        -- Important since "realm" is an "inout" parameter!
+        val_realm := null;
+ 
+        VAL.DBA.authentication_details_for_connection (
+          sid=>val_sid,
+          serviceId=>val_serviceId,
+          uname=>val_uname,
+          isRealUser=>val_isRealUser,
+          realm=>val_realm);
+ 
+        if (val_serviceId is not null) {
+          idUrl := VAL.DBA.get_profile_url (val_serviceId);
+          idName := coalesce (VAL.DBA.get_profile_name (val_serviceId), val_serviceId);
+        }
+ 
+        if (VAL.DBA.acls_enabled_for_scope ('urn:virtuoso:val:scopes:pivotviewer')) {
+          if (not val_isRealUser or not VAL.DBA.is_admin_user (val_uname)) {
+            if (not VAL.DBA.check_access_mode_for_resource (
+              serviceId=>val_serviceId,
+              resource=>'urn:virtuoso:access:pivotviewer',
+              realm=>val_realm,
+              scope=>'urn:virtuoso:val:scopes:pivotviewer',
+              mode=>VAL.DBA.oplacl_iri ('Read'),
+              webidGraph=>val_webidGraph,
+              certificate=>val_cert,
+              honorScopeState=>1)
+            ) {
+                  connection_set ('__val_denied_service_id__', val_serviceId);
+                  connection_set ('__val_req_acl_mode__', VAL.DBA.oplacl_iri ('Read'));
+                
+                  if (val_serviceId is null)
+                    http_status_set(401);
+                  else
+                    http_status_set(403);
+                
+                  return '';
+              }
+          }
+      }
+    }
+
 ?>
 
 <head profile="http://www.w3.org/1999/xhtml/vocab">
     <title>Pivot Viewer</title>
-    <meta name="Copyright" content="&copy; 2013 OpenLink Software" />
+    <meta name="Copyright" content="&copy; 2012-2020 OpenLink Software" />
     <meta name="Keywords" content="OpenLink Virtuoso HTML5 PivotViewer" />
     <meta name="Robots" content="index,nofollow" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
     <meta http-equiv="Cache-Control" content="no-cache" />
     <meta http-equiv="Pragma" content="no-cache" />
+    <link rel="shortcut icon" href="favicon.ico"></link>
     <link href="<?=skinpfx?>ss/style.css" rel="stylesheet" type="text/css" media="screen"/>
     <link href="style/tooltipster.css" rel="stylesheet" type="text/css" media="screen" />
     <link href="style/pivotviewer.css" rel="stylesheet" type="text/css" media="screen" />
+    <link href="style/leaflet.css" rel="stylesheet" type="text/css" media="screen" />
 <?vsp
     if (_link is not null) {
 	http(DB.DBA.PV_GEN_LINK (2, _link, 'text/cxml', 'CXML'));
@@ -203,17 +281,28 @@
 	}
     }
 ?>
+    <script>
+     Timeline_ajax_url="scripts/timeline_ajax/simile-ajax-api.js";
+     Timeline_urlPrefix='scripts/timeline_js/';       
+     Timeline_parameters='bundle=true';
+    </script>
+    <script src="scripts/timeline_js/timeline-api.js"    
+     type="text/javascript">
+    </script>
+    <script>SimileAjax.History.enabled = false;</script>
 
     <script src="scripts/oplpivot.js" type="text/javascript"></script>
-    <script src="scripts/jquery-1.7.1.min.js" type="text/javascript"></script>
-    <script src="scripts/jquery-ui-1.8.17.custom.min.js" type="text/javascript"></script>
-    <script src="scripts/modernizr.custom.65936.js" type="text/javascript"></script>
+    <script src="scripts/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="scripts/jquery-ui-1.10.4.custom.min.js" type="text/javascript"></script>
+    <script src="scripts/modernizr.custom.93916.js" type="text/javascript"></script>
     <script src="scripts/easing.js" type="text/javascript"></script>
     <script src="scripts/jquery.mousewheel.min.js" type="text/javascript"></script>
     <script src="scripts/jquery.tooltipster.min.js" type="text/javascript"></script>
     <script src="scripts/colResizable-1.3.min.js" type="text/javascript"></script>
     <script src="scripts/purl.js" type="text/javascript"></script>
     <script src="scripts/pivotviewer.min.js" type="text/javascript"></script>
+    <script src="scripts/leaflet-0.6.4.js" type="text/javascript"></script>
+    <script src="scripts/wicket.min.js" type="text/javascript"></script>
 
 <?vsp if (0 <> _addthis_key) { ?>
     <!--  AddThis Support -->
@@ -264,15 +353,52 @@
         <!-- Google translate END -->
 <?vsp } ?>
 
+<?vsp if (0 <> val_vad_present) { ?>
+<?vsp     if (val_serviceId is not null) { ?>
+            <div id="loggedin">
+                Logged in as <a href="<?=sprintf('%s', idUrl) ?>"><?=sprintf('%V', idName) ?></a>&nbsp;|&nbsp;
+                <a href="<?=sprintf('/val/logout.vsp?returnto=%U', pageUrl) ?>">Logout</a></p>
+            </div>
+<?vsp     } else { ?>
+            <div id="login">
+                <a href="<?=sprintf('login.vsp?returnto=%U', pageUrl) ?>">Login</a>
+            </div>
+<?vsp     } ?>
+<?vsp } ?>
+
         <div id="MENU">
+            <script type="text/javascript">
+              function dialogOpen() {
+                var el = document.getElementById ("permalink");
+                var img = document.getElementById("qrcode_img");
+                var pl = el.href;
+                $.ajax({url:document.location.origin + "/c/qrcode?data_to_qrcode=" + encodeURI(pl), success:function(data){
+                  img.src = data;
+                }});
+                $("#qrpopup").dialog('open');
+              }             
+            </script>
+
           <a id="newlink" href="/HtmlPivotViewer/">New</a>&nbsp;|&nbsp;
 <?vsp if (_c_link is not null) { ?>
           <a id="editlink" href="<?=sprintf('/HtmlPivotViewer/edit.vsp?url=%U', _c_link) ?>">Edit</a>&nbsp;|&nbsp;
           <a id="permalink" href="<?=sprintf('/HtmlPivotViewer/?url=%U', _c_link) ?>">Permalink</a>
+          <img id="qrthumb" onclick="dialogOpen()" title="QR Code" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></img>
+  
 <?vsp } else { ?>
           <a id="editlink" href="/HtmlPivotViewer/edit.vsp">Edit</a>&nbsp;|&nbsp;
           <a id="permalink" href="#">Permalink</a>
+          <img id="qrthumb" title="QR Code" onclick="dialogOpen()" alt="QRcode icon" style="margin:0 0 0 5px;height:15px; width:15px;float:right;" src="<?=skinpfx?>i/qr_thumb.png"></img>
 <?vsp } ?>
+          <div id="qrpopup" style="display:none; " title="QR Code" >
+            <div style="height:185px; width:185px;" >
+              <img id="qrcode_img" style="height:170px; width:170px; margin:8px 0px 0px 5px" alt="QRcode image" src=""/>
+            </div>
+          </div>
+
+	  <script type="text/javascript">
+              $("#qrpopup").dialog({autoOpen: false, width: 190, modal: true , resizable: false , position:["center","center"]});
+          </script>
         </div> <!-- #menu -->
 <?vsp if (0 <> _addthis_key) { ?>
 	<!-- AddThis Button BEGIN -->
@@ -303,7 +429,7 @@
 	    else
 		http('<input type="url" id="collectionUri" name="collectionUri" size="80"/>');
 	?>
-	<input type="submit" name="submit" value="Submit" />
+	<input type="submit" name="submitBtn" value="Submit" />
 	</p>
 	</form>
 
@@ -315,17 +441,23 @@
         {
 	  http ('<div id="pivotviewer" style="height:inherit;"></div>\n');
 	  http ('<script type="text/javascript">\n');
-  	  http ('var debug = true;\n');
+	  http ('var debug = true;\n');
 	  http ('$(document).ready(function () { $("#pivotviewer").PivotViewer({');
- 	  http ('Loader: new PivotViewer.Models.Loaders.CXMLLoader("');
+	  http ('Loader: new PivotViewer.Models.Loaders.CXMLLoader("');
 	  http (_c_link);
 	  http ('", "');
 	  http (_proxy);
+if (_allow_servers) {
+	  http ('", "');
+	  http (_allow_servers);
+}
+if (_allowedServers) {
+	  http ('", "');
+	  http (_allowedServers);
+}
 	  http ('"), ViewerState: "');
 	  http (_bookmark);
-          http ('", GoogleAPIKey: "');
-          http (_googlemaps_key);
-          http ('"});\n });\n ');
+	  http ('"});\n });\n ');
 	  http ('</script>');
         }
 ?>
@@ -381,7 +513,7 @@
       </div> <!-- #ft_t -->
        <div class="notranslate" id="copyright">
 <?vsp
-       http('Copyright &copy; 2013 <a href="http://www.openlinksw.com/virtuoso">OpenLink Virtuoso</a>');
+       http('Copyright &copy; 2012-2020 <a href="http://www.openlinksw.com/virtuoso">OpenLink Virtuoso</a>');
        http(sprintf (' version %s, on %s (%s), ', sys_stat('st_dbms_ver'), sys_stat('st_build_opsys_id'), host_id()));
        if (1 = sys_stat('cl_run_local_only'))
            http('Single Server Edition');

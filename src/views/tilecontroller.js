@@ -8,7 +8,7 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2020 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -240,7 +240,6 @@ PivotViewer.Views.Tile = Object.subClass({
         this._controller = TileController;
         this._imageLoaded = false;
         this._selected = false;
-        this._level = 0;
         this._images = null;
         this._locations = [];
     },
@@ -251,21 +250,10 @@ PivotViewer.Views.Tile = Object.subClass({
 
     Draw: function (loc) {
         //Is the tile destination in visible area?
-        //If not, then re-use the old level images
         if (this.destinationVisible) {
-            //Determine level
-            var biggest = this.width > this.height ? this.width : this.height;
-            var thisLevel = Math.ceil(Math.log(biggest) / Math.log(2));
-
-
-            if (thisLevel == Infinity || thisLevel == -Infinity)
-                thisLevel = 0;
-
-            //TODO: Look at caching last image to avoid using _controller
-            this._level = thisLevel;
-            //if(this._level > 6)
-                this._images = this._controller.GetImagesAtLevel(this.facetItem.Img, this._level);
+            this._images = this._controller.GetImages(this.facetItem.Img, this.width, this.height);
         }
+
         if (this._images != null) {
             if (typeof this._images == "function") {
                 //A DrawLevel function returned - invoke
@@ -275,44 +263,49 @@ PivotViewer.Views.Tile = Object.subClass({
             else if (this._images.length > 0 && this._images[0] instanceof Image) {
                 //if the collection contains an image
                 var completeImageHeight = this._controller.GetHeight(this.facetItem.Img);
-                //var completeImageWidth = this._controller.GetWidth(this.facetItem.Img);
-                //var levelWidth = Math.ceil(completeImageWidth / Math.pow(2, this._controller.GetMaxLevel(this.facetItem.Img) - this._level));
-
                 var displayHeight = this.height - 8;
                 var displayWidth = Math.ceil(this._controller.GetWidthForImage(this.facetItem.Img, displayHeight));
-               
                 //Narrower images need to be centered 
                 blankWidth = (this.width - 8) - displayWidth;
-                for (var i = 0; i < this._images.length; i++) {
-                    // We need to know where individual image tiles go
-                    var source = this._images[i].src;
-                    var tileSize = this._controller._tileSize;
-                    var n = source.match(/[0-9]+_[0-9]+/g);
-                    var xPosition = parseInt(n[n.length - 1].substring(0, n[n.length - 1].indexOf("_")));
-                    var yPosition = parseInt(n[n.length - 1].substring(n[n.length - 1].indexOf("_") + 1));
 
-                    //Get image level
-                    n = source.match (/_files\/[0-9]+\//g);
-                    var imageLevel = parseInt(n[0].substring(7, n[0].length - 1));
-                    var levelHeight = Math.ceil(completeImageHeight / Math.pow(2, this._controller.GetMaxLevel(this.facetItem.Img) - imageLevel));
-
-                    //Image will need to be scaled to get the displayHeight
-                    var scale = displayHeight / levelHeight;
-               
-                    // handle overlap 
-                    overlap = this._controller.GetOverlap(this.facetItem.Img);
-
-                    var offsetx = (Math.floor(blankWidth/2)) + 4 + xPosition * Math.floor((tileSize - overlap)  * scale);
-                    var offsety = 4 + Math.floor((yPosition * (tileSize - overlap)  * scale));
-
-                    var imageTileHeight = Math.ceil(this._images[i].height * scale);
-                    var imageTileWidth = Math.ceil(this._images[i].width * scale);
-
-                    // Creates a grid artfact across the image so comment out for now
-                    //only clearing a small portion of the canvas
-                    //this.context.fillRect(offsetx + this.x, offsety + this.y, imageTileWidth, imageTileHeight);
-                    this.context.drawImage(this._images[i], offsetx + this._locations[loc].x , offsety + this._locations[loc].y, imageTileWidth, imageTileHeight);
+                // Handle displaying the deepzoom image tiles (move to deepzoom.js)
+                if (this._controller instanceof PivotViewer.Views.DeepZoomImageController) {
+                    for (var i = 0; i < this._images.length; i++) {
+                        // We need to know where individual image tiles go
+                        var source = this._images[i].src;
+                        var tileSize = this._controller._tileSize;
+                        var n = source.match(/[0-9]+_[0-9]+/g);
+                        var xPosition = parseInt(n[n.length - 1].substring(0, n[n.length - 1].indexOf("_")));
+                        var yPosition = parseInt(n[n.length - 1].substring(n[n.length - 1].indexOf("_") + 1));
+            
+                        //Get image level
+                        n = source.match (/_files\/[0-9]+\//g);
+                        var imageLevel = parseInt(n[0].substring(7, n[0].length - 1));
+                        var levelHeight = Math.ceil(completeImageHeight / Math.pow(2, this._controller.GetMaxLevel(this.facetItem.Img) - imageLevel));
+            
+                        //Image will need to be scaled to get the displayHeight
+                        var scale = displayHeight / levelHeight;
+                    
+                        // handle overlap 
+                        overlap = this._controller.GetOverlap(this.facetItem.Img);
+            
+                        var offsetx = (Math.floor(blankWidth/2)) + 4 + xPosition * Math.floor((tileSize - overlap)  * scale);
+                        var offsety = 4 + Math.floor((yPosition * (tileSize - overlap)  * scale));
+            
+                        var imageTileHeight = Math.ceil(this._images[i].height * scale);
+                        var imageTileWidth = Math.ceil(this._images[i].width * scale);
+            
+                        // Creates a grid artfact across the image so comment out for now
+                        //only clearing a small portion of the canvas
+                        //this.context.fillRect(offsetx + this.x, offsety + this.y, imageTileWidth, imageTileHeight);
+                        this.context.drawImage(this._images[i], offsetx + this._locations[loc].x , offsety + this._locations[loc].y, imageTileWidth, imageTileHeight);
+                    }
+                } else {
+                    var offsetx = (Math.floor(blankWidth/2)) + 4;
+                    var offsety = 4;
+                    this.context.drawImage(this._images[0], offsetx + this._locations[loc].x , offsety + this._locations[loc].y, displayWidth, displayHeight);
                 }
+                
                 if (this._selected) {
                     //draw a blue border
                     this.context.beginPath();

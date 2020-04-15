@@ -8,13 +8,13 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2020 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
 //
 
-Debug.Log = function (message) {
+PivotViewer.Debug.Log = function (message) {
     if (window.console && window.console.log && typeof debug != "undefined" && debug == true) {
         window.console.log(message);
     }
@@ -107,6 +107,11 @@ PivotViewer.Utils.Histogram = function (values) {
         }
     }
     return { Histogram: histogram, Min: min, Max: max, BinCount: bins };
+};
+
+PivotViewer.Utils.StripVirtcxml = function (value) {
+    if (value.startsWith ('virtcxml:Facet'))
+    return value.substr(14);
 };
 
 // A simple class creation library.

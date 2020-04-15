@@ -8,7 +8,7 @@
 //    enquiries@lobsterpot.com.au
 //
 //  Enhancements:
-//    Copyright (C) 2012-2013 OpenLink Software - http://www.openlinksw.com/
+//    Copyright (C) 2012-2020 OpenLink Software - http://www.openlinksw.com/
 //
 //  This software is licensed under the terms of the
 //  GNU General Public License v2 (see COPYING)
@@ -192,7 +192,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         if (!Modernizr.canvas)
             return;
 
-        Debug.Log('Grid View Filtered: ' + currentFilter.length);
+        PivotViewer.Debug.Log('Grid View Filtered: ' + currentFilter.length);
 
         this.changingView = false;
         if (changingView) {
@@ -209,8 +209,34 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
             }
             if ($('.pv-mapview-canvas').is(':visible')){
                 changingFromNonTileView = true;
+                $('.pv-toolbarpanel-maplegend').fadeOut(400, function(){
+                    $('.pv-toolbarpanel-zoomslider').fadeIn();
+                    $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                });
+                $('.pv-mapview-legend').hide('slide', {direction: 'up'});
                 $('.pv-mapview-canvas').fadeOut();
-                //this.selected = changeViewSelectedItem;
+                this.selected = "";
+                $('.pv-viewarea-canvas').fadeIn(function(){
+                    $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+                });
+            }
+            if ($('.pv-timeview-canvas').is(':visible')){
+                changingFromNonTileView = true;
+                $('.pv-timeview-canvas').fadeOut();
+                this.selected = "";
+                $('.pv-toolbarpanel-timelineselector').fadeOut();
+                $('.pv-toolbarpanel-maplegend').fadeOut();
+                $('.pv-toolbarpanel-sort').fadeIn();
+                $('.pv-toolbarpanel-zoomslider').fadeIn();
+                $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
+                $('#MAIN_BODY').css('overflow', 'auto');
+                $('.pv-viewarea-canvas').fadeIn(function(){
+                    $.publish("/PivotViewer/Views/ChangeTo/Grid", [{Item: changeViewSelectedItem}]);
+                });
+            }
+            if ($('.pv-mapview2-canvas').is(':visible')){
+                changingFromNonTileView = true;
+                $('.pv-mapview2-canvas').fadeOut();
                 this.selected = "";
                 $('.pv-toolbarpanel-zoomslider').fadeIn();
                 $('.pv-toolbarpanel-zoomcontrols').css('border-width', '1px');
@@ -245,7 +271,7 @@ PivotViewer.Views.GridView = PivotViewer.Views.TileBasedView.subClass({
         if (!changingFromNonTileView || (changeViewSelectedItem == "")) {
             var pt1Timeout = 0;
             //zoom out first
-            Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
+            PivotViewer.Debug.Log("this.currentWidth: " + this.currentWidth + " this.width: " + this.width);
               var value = $('.pv-toolbarpanel-zoomslider').slider('option', 'value');
               if (value > 0) { 
                 this.selected = selectedItem = "";

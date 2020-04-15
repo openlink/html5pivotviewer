@@ -1,0 +1,4 @@
+<?vsp
+  connection_set ('__val_auth_page__', '/HtmlPivotViewer/login.vsp');
+?>
+<?include /DAV/VAD/val/authenticate.vsp ?>

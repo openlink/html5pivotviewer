@@ -1,7 +1,7 @@
 --
 --   This file is part of the html5 pivotviewer project
 --
---   Copyright (C) 2012-2013 OpenLink Software
+--   Copyright (C) 2012-2020 OpenLink Software
 --
 --   This project is free software; you can redistribute it and/or modify it
 --   under the terms of the GNU General Public License as published by the
@@ -80,7 +80,10 @@ DB.DBA.PV_GEN_INPUT (in _name varchar, in _type varchar, in _label varchar, in _
 		_vec := vector (
 			'',                   'No link out',
 			'121',                'External resource link',
-			'LOCAL_TTL',          'External description resource (TTL)',
+                        'DESCRIBE',           'External Description Link',
+                        'ABOUT_RDF',          'External Sponged Data Link (RDF)',
+                        'ABOUT_HTML',         'External Sponged Data Link (HTML)',
+                        'LOCAL_TTL',          'External Description Resource (TTL)',
 			'LOCAL_NTRIPLES',     'External description resource (NTRIPLES)',
 			'LOCAL_JSON',         'External description resource (JSON)',
 			'LOCAL_XML',          'External description resource (RDF/XML)'
@@ -99,6 +102,9 @@ DB.DBA.PV_GEN_INPUT (in _name varchar, in _type varchar, in _label varchar, in _
 			'',                   'Local Faceted Navigation Links',
 			'121',                'External Resource Links',
 			'LOCAL_PIVOT',        'External Faceted Navigation Links',
+                        'DESCRIBE',           'External Description Links',
+                        'ABOUT_RDF',          'External Sponged Data Links (RDF)',
+                        'ABOUT_HTML',         'External Sponged Data Links (HTML)',
 			'LOCAL_TTL',          'External Faceted Description Resource (TTL)',
 			'LOCAL_CXML',         'External Faceted Description Resource (CXML)',
 			'LOCAL_NTRIPLES',     'External description resource (NTRIPLES)',
@@ -235,27 +241,42 @@ DB.DBA.PV_URL_REW (in par varchar, in fmt varchar, in val varchar) returns varch
 };
 
 
-DB.DBA.VHOST_REMOVE (
-	 lhost=>'*ini*',
-	 vhost=>'*ini*',
-	 lpath=>'/HtmlPivotViewer'
-);
+create procedure
+DB.DBA.PV_make_qr_code (in data_to_qrcode any, in src_width int := 120, in src_height int := 120, in qr_scale int := 4) __SOAP_HTTP 'text/plain'
+{
+  declare qrcode_bytes, mixed_content, content varchar;
+  declare qrcode any;
+
+  if (__proc_exists ('QRcode encodeString8bit', 2) is null)
+    return null;
+
+  declare exit handler for sqlstate '*' { return null; };
+
+  content := "IM CreateImageBlob" (src_width, src_height, 'white', 'jpg');
+  qrcode := "QRcode encodeString8bit" (data_to_qrcode);
+  qrcode_bytes := aref_set_0 (qrcode, 0);
+  mixed_content := "IM PasteQRcode" (qrcode_bytes, qrcode[1], qrcode[2], qr_scale, qr_scale, 0, 0, cast (content as varchar), length (content));
+  mixed_content := encode_base64 (cast (mixed_content as varchar));
+  mixed_content := replace (mixed_content, '\r\n', '');
+  return 'data:image/jpg;base64,' || mixed_content;
+}
+;
 
 
-DB.DBA.VHOST_DEFINE (
-	 lhost=>'*ini*',
-	 vhost=>'*ini*',
-	 lpath=>'/HtmlPivotViewer',
-	 ppath=>'/DAV/VAD/html5pivotviewer/',
-	 is_dav=>1,
-	 def_page=>'view.vsp',
-	 vsp_user=>'dba',
-	 ses_vars=>0,
-	 opts=>vector ('executable', 'yes', 'browse_sheet', '', 'url_rewrite', 'http_rule_pv5_list_1'),
-	 is_default_host=>0
-);
+create procedure
+DB.DBA.PV_exec_no_error (in expr varchar)
+{
+  declare state, message, meta, result any;
+  exec(expr, state, message, vector(), 0, meta, result);
+}
+;
+
+DB.DBA.PV_exec_no_error ('CREATE TABLE DB.DBA.PV_COLLECTION_HOST_SAFELIST(HOST varchar)');
 
 
+--
+--  Rewrite rules
+--
 DB.DBA.URLREWRITE_CREATE_RULELIST (
 	'http_rule_pv5_list_1',
 	1,
@@ -278,3 +299,105 @@ DB.DBA.URLREWRITE_CREATE_REGEX_RULE (
 	''
 );
 
+
+--
+--  Add endpoint
+--
+DB.DBA.ADD_DEFAULT_VHOST (
+	 lpath=>'/HtmlPivotViewer',
+	 ppath=>'/DAV/VAD/html5pivotviewer/',
+	 is_dav=>1,
+	 def_page=>'view.vsp',
+	 vsp_user=>'dba',
+	 ses_vars=>0,
+	 opts=>vector (
+	    'executable', 'yes',
+	    'browse_sheet', '',
+	    'url_rewrite', 'http_rule_pv5_list_1',
+	    '401_page', '40x.vsp',
+	    '403_page', '40x.vsp'),
+	 is_default_host=>0,
+	 overwrite=>1
+)
+;
+
+DB.DBA.ADD_DEFAULT_VHOST (
+	 lpath=>'/HtmlPivotViewer/defaults',
+	 ppath=>'/DAV/VAD/html5pivotviewer/',
+	 is_dav=>1,
+	 def_page=>'defaults.vsp',
+	 vsp_user=>'dba',
+	 ses_vars=>0,
+	 is_default_host=>0,
+	 overwrite=>1
+)
+;
+
+
+create procedure PIVOT_CREATE_VHOST(
+    in vhost varchar,
+    in lhost varchar)
+{
+   declare endpoints any;
+
+   --
+   --  Endpoints we want to expose
+   --
+   endpoints := vector (
+	 '/HtmlPivotViewer',
+	 '/HtmlPivotViewer/defaults'
+        );
+
+    --
+    --  Install VDIRs from defaults
+    --
+    for (select
+            HPD_LPATH,
+            HPD_PPATH,
+            HPD_STORE_AS_DAV,
+            HPD_DIR_BROWSEABLE,
+            HPD_DEFAULT,
+            HPD_REALM,
+            HPD_AUTH_FUNC,
+            HPD_POSTPROCESS_FUNC,
+            HPD_RUN_VSP_AS,
+            HPD_RUN_SOAP_AS,
+            HPD_PERSIST_SES_VARS,
+            HPD_SOAP_OPTIONS,
+            HPD_AUTH_OPTIONS,
+            HPD_OPTIONS,
+            HPD_IS_DEFAULT_HOST
+        from DB.DBA.HTTP_PATH_DEFAULT where HPD_LPATH in (endpoints)) do
+        {
+            DB.DBA.VHOST_REMOVE (
+                vhost=>vhost,
+                lhost=>lhost,
+                lpath=>HPD_LPATH);
+
+            DB.DBA.VHOST_DEFINE (
+                vhost=>vhost,
+                lhost=>lhost,
+                lpath=>HPD_LPATH,
+                ppath=>HPD_PPATH,
+                is_dav=>HPD_STORE_AS_DAV,
+                is_brws=>HPD_DIR_BROWSEABLE,
+                def_page=>HPD_DEFAULT,
+                auth_fn=>HPD_AUTH_FUNC,
+                realm=>HPD_REALM,
+                ppr_fn=>HPD_POSTPROCESS_FUNC,
+                vsp_user=>HPD_RUN_VSP_AS,
+                soap_user=>HPD_RUN_SOAP_AS,
+                ses_vars=>HPD_PERSIST_SES_VARS,
+                soap_opts=>deserialize (HPD_SOAP_OPTIONS),
+                auth_opts=>deserialize (HPD_AUTH_OPTIONS),
+                opts=>deserialize (HPD_OPTIONS),
+                is_default_host=>HPD_IS_DEFAULT_HOST);
+        }
+}
+;
+
+DB.DBA.PIVOT_CREATE_VHOST('*ini*', '*ini*')
+;
+
+DB.DBA.PIVOT_CREATE_VHOST('*sslini*', '*sslini*')
+;

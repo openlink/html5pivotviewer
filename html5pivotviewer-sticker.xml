@@ -5,7 +5,7 @@
   <name package="html5pivotviewer">
     <prop name="Title" value="HTML5 Pivotviewer"/>
     <prop name="Developer" value="OpenLink Software"/>
-    <prop name="Copyright" value="(C) 2013 OpenLink Software"/>
+    <prop name="Copyright" value="(C) 2012-2020 OpenLink Software"/>
     <prop name="Download" value="http://www.openlinksw.com/virtuoso"/>
   </name>
   <version package="$VERSION$">
@@ -19,6 +19,10 @@
   <sql purpose="post-install">
     <![CDATA[
     DB.DBA.VAD_LOAD_SQL_FILE('/DAV/VAD/html5pivotviewer/mkpivot.sql', 1, 'report', 1);
+    if (VAD_CHECK_VERSION('VAL') is not null) 
+      {
+        DB.DBA.VAD_LOAD_SQL_FILE('/DAV/VAD/html5pivotviewer/setupacl.sql', 1, 'report', 1);
+      }
     ]]>
   </sql>
 </procedures>
@@ -35,10 +39,24 @@
   <file source_uri="vsp/scripts/*.js" target_uri="html5pivotviewer/scripts/$f$" />
   <file source_uri="vsp/*.vsp" target_uri="html5pivotviewer/$f$" />
   <file source_uri="vsp/*.sql" target_uri="html5pivotviewer/$f$" />
+  <file source_uri="vsp/*.ico" target_uri="html5pivotviewer/$f$" />
+  <file source_uri="*.json" target_uri="html5pivotviewer/$f$" />
+  <file source_uri="vsp/vad_html5pivotviewer_config.vspx" target_uri="conductor/$f$" />
   <file source_uri="pivotviewer.min.js" target_uri="html5pivotviewer/scripts/$f$" />
   <file source_uri="style/*.css" target_uri="html5pivotviewer/" />
   <file source_uri="lib/**/*.js" target_uri="html5pivotviewer/scripts/$f$" />
+  <file source_uri="lib/leaflet/images/*.png" target_uri="html5pivotviewer/scripts/images/$f$" />
   <file source_uri="lib/**/*.css" target_uri="html5pivotviewer/style/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/*" target_uri="html5pivotviewer/scripts/timeline_ajax/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/content/*" target_uri="html5pivotviewer/scripts/timeline_ajax/content/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/images/*" target_uri="html5pivotviewer/scripts/timeline_ajax/images/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/scripts/*" target_uri="html5pivotviewer/scripts/timeline_ajax/scripts/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_ajax/styles/*" target_uri="html5pivotviewer/scripts/timeline_ajax/styles/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/*" target_uri="html5pivotviewer/scripts/timeline_js/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/images/*" target_uri="html5pivotviewer/scripts/timeline_js/images/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/scripts/*" target_uri="html5pivotviewer/scripts/timeline_js/scripts/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/scripts/l10n/*" target_uri="html5pivotviewer/scripts/timeline_js/scripts/l10n/$f$" />
+  <file source_uri="lib/simile-timeline/timeline_js/scripts/l10n/en/*" target_uri="html5pivotviewer/scripts/timeline_js/scripts/l10n/en/$f$" />
 </resources>
 <registry>
 </registry>

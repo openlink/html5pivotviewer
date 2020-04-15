@@ -1,7 +1,7 @@
 /*
  *   This file is part of the html5 pivotviewer project
  *
- *   Copyright (C) 2012-2013 OpenLink Software
+ *   Copyright (C) 2012-2020 OpenLink Software
  *
  *   This project is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -42,13 +42,13 @@ body {
     background-image:url("../i/bg_header.png");
     border-bottom:1px solid #222266;
     float:left;
-    height:60px;
+    height:80px;
     width:100%;
 }
 
 #HD img {
     border:0 none;
-    margin:2px 0 0 5px;
+    margin:12px 0 0 12px;
     padding:0;
     vertical-align:middle;
     float:left;
@@ -57,7 +57,7 @@ body {
 img.masthead_logo { }
 
 #HD_L {
-    width:150px;
+    width:170px;
     clear:left;
     float:left}
 
@@ -98,11 +98,26 @@ img.masthead_logo { }
     text-align: right;
 }
 
+#loggedin {
+    height: 21px;
+    float: right;
+    text-align: right;
+    font-size: 10pt
+}
+
+#login {
+    height: 21px;
+    float: right;
+    text-align: right;
+    font-size: 10pt
+}
+
 #MENU {
     float: right;
     clear: right;
     text-align: right;
     color: #fff;
+    margin-top: 8px;
     font-size: 10pt}
 
 #MENU a {
@@ -138,6 +153,82 @@ a.logo {
     float:left;
 }
 
+.goog-te-banner-frame{visibility:hidden !important;}
+#MAIN_BODY{top:0px !important;}
+
+#google_translate_element {
+        float: left;
+}
+#google_translate_element .goog-te-gadget-simple {
+        height: 21px;
+        font-size: 8pt;
+        padding: 0px;
+        border:1px solid #C7D7DF !important;
+        border-radius: 5px;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+}
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value {
+        color:#3e83a4 !important;
+}
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value img{
+        float: none;
+        margin: 0 0 0 0;
+}
+#google_translate_element .goog-te-gadget-icon {
+        float: none;
+        margin: 1px 0 0 1px;
+        height: 19px;
+        width: 19px;
+}
+.modalDialog {
+	position: fixed;
+	font-family: Arial, Helvetica, sans-serif;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: rgba(0,0,0,0.8);
+	z-index: 99999;
+	opacity:0;
+	-webkit-transition: opacity 400ms ease-in;
+	-moz-transition: opacity 400ms ease-in;
+	transition: opacity 400ms ease-in;
+	pointer-events: none;
+}
+.modalDialog:target {
+	opacity:1;
+	pointer-events: auto;
+}
+.modalDialog > div {
+	position: relative;
+	margin: 10% auto;
+	padding: 5px 20px 13px 20px;
+	border-radius: 10px;
+	background: #fff;
+	background: -moz-linear-gradient(#fff, #999);
+	background: -webkit-linear-gradient(#fff, #999);
+	background: -o-linear-gradient(#fff, #999);
+}
+.close {
+	background: #606061;
+	color: #FFFFFF;
+	line-height: 25px;
+	position: absolute;
+	right: -12px;
+	text-align: center;
+	top: -10px;
+	width: 24px;
+	text-decoration: none;
+	font-weight: bold;
+	-webkit-border-radius: 12px;
+	-moz-border-radius: 12px;
+	border-radius: 12px;
+	-moz-box-shadow: 1px 1px 3px #000;
+	-webkit-box-shadow: 1px 1px 3px #000;
+	box-shadow: 1px 1px 3px #000;
+}
+.close:hover { background: #00d9ff; }
 #MD {
     background-color:#E9F2F7;
     float:left;
@@ -152,6 +243,7 @@ a.logo {
     float:left;
     padding-top:10px;
     text-align:center;
+    height: 28px;
     width:100%;
 }
 
@@ -472,3 +564,238 @@ div#dbg_output {
 #editform input:-moz-placeholder {
 color: #A6A6A6;
 }
+
+/*! jQuery UI - v1.10.4 - 2014-10-29
+* http://jqueryui.com
+* Includes: jquery.ui.core.css, jquery.ui.resizable.css, jquery.ui.selectable.css, jquery.ui.button.css, jquery.ui.dialog.css, jquery.ui.menu.css, jquery.ui.theme.css
+* Copyright 2014 jQuery Foundation and other contributors; Licensed MIT */
+.ui-front {
+        z-index: 100;
+}
+.ui-state-disabled {
+        cursor: default !important;
+}
+.ui-icon {
+        display: block;
+        text-indent: -99999px;
+        overflow: hidden;
+        background-repeat: no-repeat;
+}
+/* Overlays */
+.ui-widget-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+}
+
+.ui-selectable-helper {
+        position: absolute;
+        z-index: 100;
+        border: 1px dotted black;
+}
+.ui-button {
+        display: inline-block;
+        position: relative;
+        padding: 0;
+        line-height: normal;
+        margin-right: .1em;
+        cursor: pointer;
+        vertical-align: middle;
+        text-align: center;
+        overflow: visible; /* removes extra width in IE */
+}
+.ui-button,
+.ui-button:link,
+.ui-button:visited,
+.ui-button:hover,
+.ui-button:active {
+        text-decoration: none;
+}
+/* to make room for the icon, a width needs to be set here */
+.ui-button-icon-only {
+        width: 2.2em;
+}
+/* button elements seem to need a little more width */
+button.ui-button-icon-only {
+        width: 2.4em;
+}
+.ui-button-icons-only {
+        width: 3.4em;
+}
+button.ui-button-icons-only {
+        width: 3.7em;
+}
+
+/* button text element */
+.ui-button .ui-button-text {
+        display: block;
+        line-height: normal;
+}
+.ui-button-text-only .ui-button-text {
+        padding: .4em 1em;
+}
+.ui-button-icon-only .ui-button-text,
+.ui-button-icons-only .ui-button-text {
+        padding: .4em;
+        text-indent: -9999999px;
+}
+.ui-button-text-icon-primary .ui-button-text,
+.ui-button-text-icons .ui-button-text {
+        padding: .4em 1em .4em 2.1em;
+}
+.ui-button-text-icon-secondary .ui-button-text,
+.ui-button-text-icons .ui-button-text {
+        padding: .4em 2.1em .4em 1em;
+}
+.ui-button-text-icons .ui-button-text {
+        padding-left: 2.1em;
+        padding-right: 2.1em;
+}
+/* no icon support for input elements, provide padding by default */
+input.ui-button {
+        padding: .4em 1em;
+}
+
+/* button icon element(s) */
+.ui-button-icon-only .ui-icon,
+.ui-button-text-icon-primary .ui-icon,
+.ui-button-text-icon-secondary .ui-icon,
+.ui-button-text-icons .ui-icon,
+.ui-button-icons-only .ui-icon {
+        position: absolute;
+        top: 50%;
+        margin-top: -8px;
+}
+.ui-button-icon-only .ui-icon {
+        left: 50%;
+        margin-left: -8px;
+}
+.ui-button-text-icon-primary .ui-button-icon-primary,
+.ui-button-text-icons .ui-button-icon-primary,
+.ui-button-icons-only .ui-button-icon-primary {
+        left: .5em;
+}
+.ui-button-text-icon-secondary .ui-button-icon-secondary,
+.ui-button-text-icons .ui-button-icon-secondary,
+.ui-button-icons-only .ui-button-icon-secondary {
+        right: .5em;
+}
+
+/* button sets */
+.ui-buttonset {
+        margin-right: 7px;
+}
+.ui-buttonset .ui-button {
+        margin-left: 0;
+        margin-right: -.3em;
+}
+
+/* workarounds */
+/* reset extra padding in Firefox, see h5bp.com/l */
+input.ui-button::-moz-focus-inner,
+button.ui-button::-moz-focus-inner {
+        border: 0;
+        padding: 0;
+}
+.ui-dialog {
+        overflow: hidden;
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 0;
+        outline: 0;
+        border-radius: 10px;
+}
+.ui-dialog .ui-dialog-titlebar {
+        position: relative;
+}
+.ui-dialog .ui-dialog-title {
+        float: center;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+}
+.ui-dialog .ui-dialog-titlebar-close {
+        position: absolute;
+        right: .3em;
+        top: 50%;
+        width: 16px;
+        margin: -10px 0 0 0;
+        padding: 1px;
+        height: 16px;
+}
+.ui-dialog .ui-dialog-content {
+        position: relative;
+        border: 0;
+        padding: 0;
+        background: #fff;
+        background: -moz-linear-gradient(#fff, #999);
+        background: -webkit-linear-gradient(#fff, #999);
+        background: -o-linear-gradient(#fff, #999);
+        background: -ms-linear-gradient(#fff, #999);
+        border-radius: 10px;
+        overflow: auto;
+}
+.ui-dialog .ui-dialog-buttonpane {
+        text-align: left;
+        border-width: 1px 0 0 0;
+        background-image: none;
+        margin-top: .5em;
+        padding: .3em 1em .5em .4em;
+}
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+        float: right;
+}
+.ui-dialog .ui-dialog-buttonpane button {
+        margin: .5em .4em .5em 0;
+        cursor: pointer;
+}
+.ui-dialog .ui-resizable-se {
+        width: 12px;
+        height: 12px;
+        right: -5px;
+        bottom: -5px;
+        background-position: 16px 16px;
+}
+.ui-draggable .ui-dialog-titlebar {cursor: move;}
+
+/* states and images */
+.ui-icon {width: 16px;height: 16px;}
+.ui-icon,
+.ui-state-default .ui-icon {background-image: url("../i/ui-icons_ef8c08_256x240.png");}
+
+/* positioning */
+.ui-icon-circle-triangle-e { background-position: -48px -192px; }
+.ui-icon-circle-triangle-s { background-position: -64px -192px; }
+.ui-icon-circle-triangle-w { background-position: -80px -192px; }
+.ui-icon-circle-triangle-n { background-position: -96px -192px; }
+.ui-icon-blank { background-position: 16px 16px; }
+.ui-icon-close { background-position: -80px -128px; }
+.ui-icon-closethick { background-position: -96px -128px; }
+
+/* Overlays */
+.ui-widget-overlay {
+        opacity:1;
+        -webkit-transition: opacity 400ms ease-in;
+        -moz-transition: opacity 400ms ease-in;
+        transition: opacity 400ms ease-in;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        pointer-events: auto;
+        background: rgba(0,0,0,0.8);
+}
+.ui-widget-shadow {
+        margin: -5px 0 0 -5px;
+        padding: 5px;
+        background: #000000 url("images/ui-bg_flat_10_000000_40x100.png") 50% 50% repeat-x;
+        opacity: .2;
+        filter: Alpha(Opacity=20);
+        border-radius: 5px;
+}
+
+

@@ -1,14 +1,31 @@
-Oct 04 2013, V1.00.0:
+April 15 2020, V1.1:
+====================
 
- * Added new view to display collection data as a table.
- * Added new view to display collection data on a map.
-   NOTE: Requires Google Maps API key.
- * Improved image display - higher resolution images are assembled
-   from multiple deepzoom tiles and all images are now displayed with
-   the correct aspect ratio.
- * Added support for creating permalinks that include item and view
-   selection.
- * Added new html example file to the project
- * Improved error handling
- * Added support for jquery 1.9.1 and jquery-ui 1.10.2
- * Graph view filtering now works for numeric data as well as strings
+ * Added support for VAL authentication
+ * Added support for registering endpoints to both http and https
+ * Added an option to limit/allow collections hosted on third party servers
+ * Removed virtcxml:Facet from the beginning of displayed facet names
+ * Fixed issue with map tiles
+ * Fixed issues with graph pane permalinks
+ * Fixed use single line for Link: header
+ * Fixed parsing POINT(lng lat)
+ * Fixed issue when collection not accessed via http
+ * Fixed getting jpeg image size after image is loaded
+ * Fixed issue when reloading a page with pivotviewer embedded
+ * Improved reporting of CORS errors.
+
+
+June 04 2014, V?.??.?:
+======================
+
+ * Added timeline view
+ * Added support for maps using OpenStreetMap as well as Google maps.
+ * Added geometry display to Mapview
+ * Added support for multiple areas plotted on a map
+ * Added grouping items in mapview using colored pins
+ * Added the option to add WMS overlay to the map.
+ * Added filtering using a custom date range
+ * Added batch file to make pivotviewer.js on Windows
+ * Added new examples
+ * Fixed bug in sorting
+ * Improved handling of datetime data
