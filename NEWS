@@ -1,4 +1,22 @@
+April 15 2020, V1.1:
+====================
+
+ * Added support for VAL authentication
+ * Added support for registering endpoints to both http and https
+ * Added an option to limit/allow collections hosted on third party servers
+ * Removed virtcxml:Facet from the beginning of displayed facet names
+ * Fixed issue with map tiles
+ * Fixed issues with graph pane permalinks
+ * Fixed use single line for Link: header
+ * Fixed parsing POINT(lng lat)
+ * Fixed issue when collection not accessed via http
+ * Fixed getting jpeg image size after image is loaded
+ * Fixed issue when reloading a page with pivotviewer embedded
+ * Improved reporting of CORS errors.
+
+
 June 04 2014, V?.??.?:
+======================
 
  * Added timeline view
  * Added support for maps using OpenStreetMap as well as Google maps.
