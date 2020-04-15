@@ -83,6 +83,6 @@ EXTRA_DIST = \
 	vsp/skin/i/*.png \
 	vsp/skin/ss/*.css
 
-.PHONY: changeLog
+.PHONY: changelog
 changelog:
 	git2cl > ChangeLog
