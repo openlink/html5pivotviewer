@@ -111,7 +111,9 @@ PivotViewer.Utils.Histogram = function (values) {
 
 PivotViewer.Utils.StripVirtcxml = function (value) {
     if (value.startsWith ('virtcxml:Facet'))
-    return value.substr(14);
+      return value.substr(14);
+    else 
+      return value;
 };
 
 // A simple class creation library.
