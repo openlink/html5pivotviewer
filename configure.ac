@@ -32,7 +32,34 @@ AM_INIT_AUTOMAKE([foreign])
 # --------------------------------------------------------------
 # Check for python (vadpacker)
 # --------------------------------------------------------------
-AM_PATH_PYTHON([2.5])
+AM_PATH_PYTHON([2.7])
+
+
+# --------------------------------------------------------------
+# Check for vadpacker as distributed with Virtuoso
+# Allow a manual override
+# --------------------------------------------------------------
+AC_ARG_WITH(
+  [vadpacker],
+  [AS_HELP_STRING(
+    [--with-vadpacker=DIR],
+    [Specify the full path to the vadpacker script to use. If not provided configure will search the PATH.])],
+    [
+	case "$withval" in
+	yes|no)
+		vadpacker_dir=$srcdir/vadpacker
+		;;
+	*)
+		vadpacker_dir="$withval"
+		;;
+	esac
+    ],[vadpacker_dir=$srcdir/vadpacker])
+
+abs_vadpacker_dir=`cd "$vadpacker_dir" && pwd`
+AC_PATH_PROG([VADPACKER], [vadpacker.py], notfound, ["$abs_vadpacker_dir:$PATH"])
+if test "x$VADPACKER" = "xnotfound"; then
+  AC_MSG_ERROR([cannot find vadpacker.py. Consider using --with-vadpacker=DIR])
+fi
 
 
 # --------------------------------------------------------------
@@ -73,6 +100,7 @@ echo "VAD version:           `./gen_version.sh`"
 echo "VAD install directory: $vaddir"
 echo ""
 echo "Python:                $PYTHON ($PYTHON_VERSION)"
+echo "Vadpacker:             $VADPACKER"
 echo ""
 echo "${B}Next Steps:${N}"
 echo "Build the PivotViewer vad package via:"

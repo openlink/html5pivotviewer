@@ -1,9 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 #
 # VADPacker - A small tool to create Virtuoso VAD packages
-# Copyright (C) 2013-2020 OpenLink Software <opensource@openlinksw.com>
+# Copyright (C) 2012-2020 OpenLink Software <opensource@openlinksw.com>
 #
 # This project is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -19,54 +19,93 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
+from __future__ import print_function
+
 import hashlib
 import struct
 import os
-import elementtree.ElementTree as ET
 import sys
 import optparse
 import datetime
 import re
 import glob
-import subprocess;
+import subprocess
 
+
+#
+#  Use xml.etree.ElementTree on python > 2.6
+#
+try:
+    import xml.etree.ElementTree as ET
+except ImportError:
+    import elementtree.ElementTree as ET
+
+
+#
+#  Setup logging
+#
+# set up logging to file - see previous section for more details
+import logging
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%m-%d %H:%M',
+                    filename='vadpacker.log',
+                    filemode='w')
+
+
+#
+#  Define a handler which writes INFO messages and higher to the sys.stderr
+#
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(levelname)s: %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+
+
+
+#
 # settings
+#
 verbose = False
 prefix = ""
 targetprefix = ""
 
+
+#
 # Our hash
+#
 ctx = hashlib.md5()
 
 def zshglob(pattern):
-  """
-  Some additional globbing inspired by the ZSH shell:
-  - **/ matches any depth dir
-  """
-  if '`' in pattern:
+    """
+    Some additional globbing inspired by the ZSH shell:
+    - **/ matches any depth dir
+    """
+    if '`' in pattern:
     # We execute a shell command to generate the list of files
-    try:
-      return subprocess.check_output(pattern.replace('`', ''), shell=True).splitlines()
-    except OSError as e:
-      print >> sys.stderr, 'Failed to execute file glob shell command: %s: "%s"' % (pattern.replace('`', ''), e);
-      exit(1)
-  elif '**/' in pattern:
-    # here we need to glob in every possible subdir
-    # if we for example have pattern "a/**/b/*.txt"
-    # we need to find every subdir of a/ and run glob("a/subdir/b/*.txt")
-    # this includes subsubdirs like glob("a/subdir/subsub/b/*.txt")
-    baseDir = pattern[:pattern.find('**/')]
-    restDir = pattern[pattern.find('**/')+2:]
+        try:
+            return subprocess.check_output(pattern.replace('`', ''), shell=True).splitlines()
+        except OSError as e:
+            logging.error('Failed to execute file glob shell command: %s: "%s"' % (pattern.replace('`', ''), e))
+            exit(1)
+    elif '**/' in pattern:
+        # here we need to glob in every possible subdir
+        # if we for example have pattern "a/**/b/*.txt"
+        # we need to find every subdir of a/ and run glob("a/subdir/b/*.txt")
+        # this includes subsubdirs like glob("a/subdir/subsub/b/*.txt")
+        baseDir = pattern[:pattern.find('**/')]
+        restDir = pattern[pattern.find('**/')+3:]
 
-    # We start with no subdirs
-    r = glob.glob(baseDir + restDir)
+        # We start with no subdirs
+        r = sorted(glob.glob(baseDir + restDir))
 
-    # And then run through all the subdirs we find
-    for path in [x[0] for x in os.walk(baseDir or '.')]:
-      r += glob.glob(path.lstrip('./') + restDir)
-    return [f for f in r if os.path.isfile(f)]
-  else:
-    return [f for f in glob.glob(pattern) if os.path.isfile(f)]
+        # And then run through all the subdirs we find
+        for path in sorted([x[0] for x in os.walk(baseDir or '.')]):
+            r += sorted(glob.glob(path.lstrip('./') + '/' + restDir))
+        return [f for f in r if os.path.isfile(f)]
+    else:
+        return [f for f in sorted(glob.glob(pattern)) if os.path.isfile(f)]
 
 
 def vadWriteChar(s, val):
@@ -110,17 +149,18 @@ def vadWriteString(s, val):
     ctx -- The hash object to update.
     """
     vadWriteLong(s, len(val))
-    s.write(val)
-    ctx.update(val)
+    bytes2 = val.encode()
+    s.write(bytes2)
+    ctx.update(bytes2)
 
 
 def vadWriteRow(s, name, data):
     # write the row name
-    vadWriteChar(s, chr(182))
+    vadWriteChar(s, b'\xb6')
     vadWriteString(s, name)
 
     # write the row contents
-    vadWriteChar(s, chr(223))
+    vadWriteChar(s, b'\xdf')
     vadWriteString(s, data)
 
 
@@ -136,13 +176,13 @@ def vadWriteFile(s, name, fname):
     fname -- The path of the local file.
     ctx -- The hash object to update.
     """
-    with open(fname) as f:
+    with open(fname, 'rb') as f:
         # write the row name
-        vadWriteChar(s, chr(182))
+        vadWriteChar(s, b'\xb6')
         vadWriteString(s, name)
 
         # write the row contents
-        vadWriteChar(s, chr(223))
+        vadWriteChar(s, b'\xdf')
 
         # write the file size
         vadWriteLong(s, os.path.getsize(fname))
@@ -169,7 +209,7 @@ def createSticker(stickerUrl, variables, files):
     global targetprefix
     global prefix
     if len(prefix) > 0 and not prefix.endswith('/'):
-      prefix = prefix + '/'
+        prefix = prefix + '/'
 
     # Remember already added resources to avoid duplicates
     allResources = []
@@ -183,7 +223,7 @@ def createSticker(stickerUrl, variables, files):
         sticker = stickerFile.read()
         # replace all given variables
         for key in variables:
-            tmpSticker = sticker.replace('$%s$' % key, variables[key]);
+            tmpSticker = sticker.replace('$%s$' % key, variables[key])
             if tmpSticker != sticker:
                 usedVariables.append(key)
             sticker = tmpSticker
@@ -193,8 +233,8 @@ def createSticker(stickerUrl, variables, files):
 
     # See if any of the given variables was not used and print a warning about it
     for key in variables:
-      if key not in usedVariables:
-        print >> sys.stderr, 'WARNING: Unused sticker variable: "%s"' % key
+        if key not in usedVariables:
+            logging.warning('WARNING: Unused sticker variable: "%s"' % key)
 
     # Change the working dir to the root of the sticker file
     os.chdir(os.path.dirname(os.path.abspath(stickerUrl)))
@@ -215,16 +255,16 @@ def createSticker(stickerUrl, variables, files):
         # and add a new line for each globbed one
         for path in zshglob(prefix + sourceUri):
             # The stripped path takes the prefix into account which is never used in target URLs
-            strippedPath = path[len(prefix):];
-            targetUri = targetUri.replace('$f$', os.path.split(path)[1]);
-            targetUri = targetUri.replace('$p$', strippedPath);
+            strippedPath = path[len(prefix):]
+            targetUri = targetUri.replace('$f$', os.path.split(path)[1])
+            targetUri = targetUri.replace('$p$', strippedPath)
             if targetUri.endswith('/'):
                 targetUri += strippedPath
             if(targetUri in allResources):
                 targetUri = f.get("target_uri")
                 continue
             allResources.append(targetUri)
-            resources += '  <file overwrite="%s" type="%s" source="data" source_uri="%s" target_uri="%s" dav_owner="%s" dav_grp="%s" dav_perm="%s" makepath="yes"/>\n' % (overwrite, resType, path, targetUri, owner, grp, perms or getDefaultPerms(path));
+            resources += '  <file overwrite="%s" type="%s" source="data" source_uri="%s" target_uri="%s" dav_owner="%s" dav_grp="%s" dav_perm="%s" makepath="yes"/>\n' % (overwrite, resType, path, targetUri, owner, grp, perms or getDefaultPerms(path))
             targetUri = f.get("target_uri")
 
     # Create the XML blob of additional files to add
@@ -239,7 +279,7 @@ def createSticker(stickerUrl, variables, files):
         if(targetUri in allResources):
             continue
         allResources.append(targetUri)
-        resources += '  <file overwrite="yes" type="dav" source="data" source_uri="%s" target_uri="%s" dav_owner="dav" dav_grp="administrators" dav_perm="%s" makepath="yes"/>\n' % (f, targetUri, getDefaultPerms(f));
+        resources += '  <file overwrite="yes" type="dav" source="data" source_uri="%s" target_uri="%s" dav_owner="dav" dav_grp="administrators" dav_perm="%s" makepath="yes"/>\n' % (f, targetUri, getDefaultPerms(f))
 
     # Replace the resources in the sticker with our expanded ones the dumb way (we want to preserve the original sticker formatting if possible)
     resEx = re.compile('<resources>.*</resources>', re.DOTALL)
@@ -248,7 +288,7 @@ def createSticker(stickerUrl, variables, files):
     # Check if any variable values are missing
     missingVals = list(set(re.findall('\$([^\$]+)\$', sticker)))
     if len(missingVals) > 0:
-        print >> sys.stderr, 'Missing variable values: %s' % ', '.join(missingVals)
+        logging.error('Missing variable values: %s' % ', '.join(missingVals))
         exit(1)
 
     return sticker
@@ -269,10 +309,10 @@ def createVad(basePath, sticker, s):
         targetUri = f.get("target_uri")
         sourceUri = f.get("source_uri")
         if resSource == "dav":
-            print >> sys.stderr, "Cannot handle DAV resources"
+            logging.error("Cannot handle DAV resources")
             exit(1)
         if verbose:
-            print >> sys.stderr, "Packing file %s as %s" % (sourceUri, targetUri)
+            logging.error("Packing file %s as %s" % (sourceUri, targetUri))
         vadWriteFile(s, targetUri, sourceUri)
 
     # Write the md5 hash
@@ -285,8 +325,8 @@ def buildVariableMap(variables):
     for v in variables:
         x = v.split('=')
         if len(x) != 2:
-          print >> sys.stderr, "Invalid variable value: '%s'. Expecting 'key=val'." % v
-          exit(1)
+            logging.error("Invalid variable value: '%s'. Expecting 'key=val'." % v)
+            exit(1)
         values[x[0]] = x[1]
     return values
 
@@ -297,9 +337,9 @@ def main():
     global targetprefix
 
     # Command line args
-    optparser = optparse.OptionParser(usage="vadpacker.py [-h] --output PATH [--verbose] [--prefix PREFIX] [--targetprefix PREFIX] [--var [VAR [VAR ...]]] stickertmpl [files [files ...]]",
-                                      version="Virtuoso VAD Packer 1.1",
-                                      description="(C) 2020 OpenLink Software. Vadpacker can be used to build Virtuoso VAD packages by providing the tool with a sticker template file. Vadpacker supports variable replacement and wildcards for file resources.",
+    optparser = optparse.OptionParser(usage="vadpacker.py [-h] --output PATH [--verbose] [--prefix PREFIX] [--targetprefix PREFIX] [--var [VAR [VAR ...]]] sticker_template [files [files ...]]",
+                                      version="Virtuoso VAD Packer 1.5",
+                                      description="Copyright (C) 2012-2020 OpenLink Software. Vadpacker can be used to build Virtuoso VAD packages by providing the tool with a sticker template file. Vadpacker supports variable replacement and wildcards for file resources.",
                                       epilog="The optional list of files at the end will be packed in addition to the files in the sticker. vadpacker will create additional resource entries with default permissions (dav, administrators, 111101101NN for vsp and php pages, 110100100NN for all other files) in the packed sticker using the relative paths of the given files.")
     optparser.add_option('--output', '-o', type="string", metavar='PATH', dest='output', help='The destination VAD file.')
     optparser.add_option('--verbose', '-v', action="store_true", dest="verbose", default=False, help="Be verbose about the packing.")
@@ -314,17 +354,20 @@ def main():
     prefix = options.prefix
     targetprefix = options.targetprefix
 
+    if len(args) < 1:
+        optparser.error("missing sticker_template argument")
+
     stickerUrl = args[0]
     if verbose:
-        print >> sys.stderr, "Creating sticker file from template '%s'" % stickerUrl
+        logging.info("Creating sticker file from template '%s'" % stickerUrl)
     sticker = createSticker(stickerUrl, buildVariableMap(options.var), args[1:])
     if options.printsticker:
-        print sticker
+        print (sticker)
     else:
         # Open the target file and write the VAD
         with open(options.output, "wb") as s:
             if verbose:
-                print >> sys.stderr, "Packing VAD file '%s'" % ()
+                logging.info("Packing VAD file '%s'" % ())
             createVad(os.path.dirname(os.path.realpath(stickerUrl)), sticker, s)
 
 

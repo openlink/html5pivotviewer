@@ -54,7 +54,7 @@ pivotviewer.min.js: pivotviewer.js
 
 
 html5pivotviewer_dav.vad: $(SOURCES) $(GENERATED) Makefile html5pivotviewer-sticker.xml
-	@PYTHON@ $(top_srcdir)/vadpacker/vadpacker.py \
+	@PYTHON@ @VADPACKER@ \
 		-o html5pivotviewer_dav.vad \
 		--var="VERSION=$(GEN_VERSION)" \
 		$(srcdir)/html5pivotviewer-sticker.xml
