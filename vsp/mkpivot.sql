@@ -166,7 +166,7 @@ again:
 	--
 	--  Check HEAD to see if this is a redirect
 	--
-	http_client_ext (url=>_new_uri, headers=>_hdr, http_method=>'HEAD');
+	DB.DBA.HTTP_CLIENT_EXT (url=>_new_uri, headers=>_hdr, http_method=>'HEAD', timeout=>10);
 	_redirects := _redirects - 1;
 
 	--
