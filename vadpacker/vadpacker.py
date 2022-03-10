@@ -3,7 +3,7 @@
 
 #
 # VADPacker - A small tool to create Virtuoso VAD packages
-# Copyright (C) 2012-2021 OpenLink Software <opensource@openlinksw.com>
+# Copyright (C) 2012-2022 OpenLink Software <opensource@openlinksw.com>
 #
 # This project is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -339,7 +339,7 @@ def main():
     # Command line args
     optparser = optparse.OptionParser(usage="vadpacker.py [-h] --output PATH [--verbose] [--prefix PREFIX] [--targetprefix PREFIX] [--var [VAR [VAR ...]]] sticker_template [files [files ...]]",
                                       version="Virtuoso VAD Packer 1.5",
-                                      description="Copyright (C) 2012-2021 OpenLink Software. Vadpacker can be used to build Virtuoso VAD packages by providing the tool with a sticker template file. Vadpacker supports variable replacement and wildcards for file resources.",
+                                      description="Copyright (C) 2012-2022 OpenLink Software. Vadpacker can be used to build Virtuoso VAD packages by providing the tool with a sticker template file. Vadpacker supports variable replacement and wildcards for file resources.",
                                       epilog="The optional list of files at the end will be packed in addition to the files in the sticker. vadpacker will create additional resource entries with default permissions (dav, administrators, 111101101NN for vsp and php pages, 110100100NN for all other files) in the packed sticker using the relative paths of the given files.")
     optparser.add_option('--output', '-o', type="string", metavar='PATH', dest='output', help='The destination VAD file.')
     optparser.add_option('--verbose', '-v', action="store_true", dest="verbose", default=False, help="Be verbose about the packing.")
