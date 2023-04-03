@@ -196,6 +196,8 @@ def vadWriteFile(s, name, fname):
 
 def getDefaultPerms(f):
     executable = 0
+    if f.endswith('.sql'):
+        return "110100000NN"
     if f.endswith('.vsp') or f.endswith('.vspx') or f.endswith('.php'):
         executable = 1
     return "11%d10%d10%dNN" % (executable, executable, executable)
