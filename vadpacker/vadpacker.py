@@ -27,6 +27,7 @@ import hashlib
 import struct
 import os
 import sys
+import platform
 import optparse
 import datetime
 import re
@@ -36,21 +37,15 @@ import gzip
 
 
 #
-#  Use xml.etree.ElementTree on python > 2.6
+#  Use xml.etree.ElementTree
 #
-try:
-    import xml.etree.ElementTree as ET
-except ImportError:
-    import elementtree.ElementTree as ET
+import xml.etree.ElementTree as ET
 
 
 #
-#  Use StringIO for python 2.7
+#  Use BytesIO
 #
-try:
-    from StringIO import StringIO	# python 2.7
-except ImportError:
-    pass
+from io import BytesIO
 
 
 #
@@ -144,7 +139,7 @@ def vadWriteLong(s, val):
     val -- The value to write.
     ctx -- The hash object to update.
     """
-    be = struct.pack('>i', val)
+    be = struct.pack(str('>i'), val)
     s.write(be)
     ctx.update(be)
 
@@ -195,15 +190,14 @@ def vadWriteFile(s, name, fname, use_gz):
 
         # compress the file if requested
         if use_gz == "yes":
-            if sys.version_info[0] == 3:
-	        # Python 3.x
-                val = gzip.compress (val, compresslevel=9)
-            else:
-	        # Python 2.7
-                buf = StringIO()
-                with gzip.GzipFile(fileobj=buf, mode='wb', compresslevel=9) as f:
+            if sys.version_info > (2, 7):       # Python 2.7 and newer
+                buf = BytesIO()
+                with gzip.GzipFile(fileobj=buf, mode='wb', compresslevel=9, mtime=0) as f:
                     f.write(val)
                 val = buf.getvalue()
+            else:
+               raise Exception("use_gzip requires python 2.7 or newer")
+
             if verbose:
                 f_len = os.path.getsize(fname)
                 logging.info("compress: original size=%ld, compressed size=%ld compression=%.2f%%" %
@@ -372,39 +366,117 @@ def main():
     global prefix
     global targetprefix
 
-    # Command line args
-    optparser = optparse.OptionParser(usage="vadpacker.py [-h] --output PATH [--verbose] [--prefix PREFIX] [--targetprefix PREFIX] [--var [VAR [VAR ...]]] sticker_template [files [files ...]]",
-                                      version="Virtuoso VAD Packer 1.9",
-                                      description="Copyright (C) 2012-2024 OpenLink Software. Vadpacker can be used to build Virtuoso VAD packages by providing the tool with a sticker template file. Vadpacker supports variable replacement and wildcards for file resources.",
-                                      epilog="The optional list of files at the end will be packed in addition to the files in the sticker. vadpacker will create additional resource entries with default permissions (dav, administrators, 111101101NN for vsp and php pages, 110100100NN for all other files) in the packed sticker using the relative paths of the given files.")
-    optparser.add_option('--output', '-o', type="string", metavar='PATH', dest='output', help='The destination VAD file.')
-    optparser.add_option('--verbose', '-v', action="store_true", dest="verbose", default=False, help="Be verbose about the packing.")
-    optparser.add_option('--prefix', '-p', type="string", default="", metavar='PREFIX', dest='prefix', help='An optional prefix to be used for locating local files. This prefix is prepended to all resource source_uris in the sticker template. The final target_uri will not contain the prefix."')
-    optparser.add_option('--targetprefix', '-t', type="string", default="", metavar='PREFIX', dest='targetprefix', help='An optional prefix to be used for target_uri values in additional resource entries created through the files list."')
-    optparser.add_option('--var', type="string", metavar='VAR', dest='var', default=[], action="append", help='Set variable values to be replaced in the sticker. Example: --var="VARNAME=xyz" will replace any occurence of $VARNAME$ with "xyz"')
-    optparser.add_option('--print-sticker', action="store_true", dest="printsticker", default=False, help="Do not pack the vad, only print the final sticker to stdout.")
+    #
+    #  Check mimimal python version
+    #
+    if sys.version_info < (2, 7, 5):
+        logging.error("Vadpacker requires Python 2.7.5 or newer instead of Python %s" % platform.python_version())
+        exit (1);
 
-    # extract arguments
-    (options, args) = optparser.parse_args()
+    #
+    #  Parse command line args
+    #
+    usage="""\
+vadpacker.py [-h] --output PATH [--verbose] [--prefix PREFIX]
+[--targetprefix PREFIX] [--var [VAR [VAR ...]]] sticker_template
+[files [files ...]]"""
+    description="""\
+Copyright (C) 2012-2024 OpenLink Software. Vadpacker can be used
+to build Virtuoso VAD packages by providing the tool with a sticker
+template file. Vadpacker supports variable replacement and wildcards
+for file resources."""
+    epilog="""\
+The optional list of files at the end will be packed in addition to the
+files in the sticker.
+Vadpacker will create additional resource entries with default permissions
+(dav, administrators, 111101101NN for vsp, vspx, and php pages; 110100100NN
+for all other files) in the packed sticker using the relative paths of
+the given files."""
+
+    #  create parser
+    parser = optparse.OptionParser(
+        usage=usage,
+        version='Virtuoso VAD Packer v1.10',
+        description=description,
+        epilog=epilog
+    )
+
+    #  add options
+    parser.add_option('--output', '-o',
+         type="string", metavar='PATH', dest='output',
+         help='The destination VAD file.')
+
+    parser.add_option('--verbose', '-v',
+         action="store_true", dest="verbose", default=False,
+         help="Be verbose about the packing.")
+
+    parser.add_option('--prefix', '-p',
+         type="string", default="", metavar='PREFIX', dest='prefix',
+         help='An optional prefix to be used for locating local files. This prefix is prepended to all resource source_uris in the sticker template. The final target_uri will not contain the prefix.')
+
+    parser.add_option('--targetprefix', '-t',
+         type="string", default="", metavar='PREFIX', dest='targetprefix',
+         help='An optional prefix to be used for target_uri values in additional resource entries created through the files list.')
+
+    parser.add_option('--var',
+         type="string", metavar='VAR', dest='var', default=[], action="append",
+         help='Set variable values to be replaced in the sticker. Example: --var="VARNAME=xyz" will replace any occurence of $VARNAME$ with "xyz"')
+
+    parser.add_option('--print-sticker',
+         action="store_true", dest="printsticker", default=False,
+         help="Do not pack the vad, only print the final sticker to stdout.")
+
+    #  parse arguments
+    (options, args) = parser.parse_args()
+    if len(args) < 1:
+        parser.error("missing sticker_template argument")
+
+    #  store arguments
     verbose = options.verbose
     prefix = options.prefix
     targetprefix = options.targetprefix
-
-    if len(args) < 1:
-        optparser.error("missing sticker_template argument")
-
     stickerUrl = args[0]
-    if verbose:
-        logging.info("Creating sticker file from template '%s'" % stickerUrl)
-    sticker = createSticker(stickerUrl, buildVariableMap(options.var), args[1:])
-    if options.printsticker:
-        print (sticker)
-    else:
+
+
+    #
+    #  Parse the sticker
+    #
+    try:
+        if verbose:
+            logging.info("Creating sticker from template '%s'" % stickerUrl)
+        sticker = createSticker(stickerUrl, buildVariableMap(options.var), args[1:])
+    except Exception as ex:
+        if verbose:
+            logging.exception("Error parsing sticker template '%s': %s" % (stickerUrl, ex))
+        else:
+            logging.error("Error parsing sticker template '%s': %s" % (stickerUrl, ex))
+        exit (1)
+    finally:
+        if options.printsticker:
+            print (sticker)
+            exit (0)
+
+
+    #
+    #  Generate the VAD package
+    #
+    try:
         # Open the target file and write the VAD
         with open(options.output, "wb") as s:
             if verbose:
                 logging.info("Packing VAD file '%s'" % (options.output))
             createVad(os.path.dirname(os.path.realpath(stickerUrl)), sticker, s)
+    except Exception as ex:
+        if verbose:
+            logging.exception("Error packing VAD file '%s': %s" % (options.output, ex))
+        else:
+            logging.error("Error packing VAD file '%s': %s" % (options.output, ex))
+        logging.warning ("Removing partial VAD file")
+        os.remove (options.output)
+        exit (1)
+    finally:
+        #  success
+        logging.info ("Vadpacker completed without errors")
 
 
 if __name__ == "__main__":

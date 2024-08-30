@@ -1,3 +1,25 @@
+Aug 30, 2024, v1.10:
+  * Added exception handler to catch errors in createSticker()
+  * Added exception handler to catch errors in createVad()
+  * Fixed readability of argument parsing
+  * Fixed use mtime=0 during gzip compression
+  * Fixed use BytesIO and GzipFile for Python 2.7 and newer
+  * Removed old copy of elementtree
+  * Fixed issue with python 2.7.5
+  * Fixed check if we are running Python 2.7.5 or newer
+
+May 20, 2024, v1.9:
+  * Fixed warning of invalid escape sequence 
+
+Mar 14, 2024, v1.8:
+  * Fixed issue if source_uri is missing from sticker
+
+Oct 5, 2023, v1.7:
+  * Added support for compressed blobs
+
+Apr 3, 2023, v1.6:
+  * Fixed make sure .sql files are not readable
+
 May 10, 2020, v1.5:
   * Added support for Python 3
   * Added support for logging module

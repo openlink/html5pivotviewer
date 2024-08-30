@@ -1,4 +1,110 @@
+2024-08-30  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Updated NEWS
+
+	Updated version number to 1.10
+
+	Updated AUTHORS
+
+	Merge branch 'feature/fixes' into develop
+
+	Added exception handler to catch errors in createSticker()
+
+	Added exception handler to catch errors in createVad()
+
+	Fixed readability of argument parsing
+
+	Fixed use mtime=0 during  gzip compression
+
+	Fixed use BytesIO and GzipFile for Python 2.7 and newer
+
+	Removed old copy of elementtree
+
+	Fixed issue with python 2.7.5
+
+	Fixed check if we are running Python 2.7.5 or newer
+
+2024-05-20  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Merge tag 'v1.9' into develop
+	Tagged for release
+
+	Merge branch 'release/1.9'
+
+	Updates NEWS and ChangeLog
+
+	Updated version to 1.9
+
+	Fixed warning of invalid escape sequence
+
+2024-03-14  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Merge tag 'v1.8' into develop
+	Tagged for release
+
+	Merge branch 'release/1.8'
+
+	Updated NEWS and Changelog
+
+	Updated version to 1.8
+
+	Fixed issue if source_uri is missing from sticker
+
+2023-10-05  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Merge tag 'v1.7' into develop
+	Tagged for release
+
+	Merge branch 'release/1.7'
+
+	Updates NEWS and ChangeLog
+
+	Merge branch 'feature/gzip_content' into develop
+
+2023-10-05  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Added support for adding files as compressed blobs into the vad
+	If the sticker contains a line like this:
+
+	  <file type="$TYPE$" source_uri="owl/*.owl" target_uri="owl/$f$" gzip="yes"/>
+
+	then all the owl files from that directory will be added as owl/file.gz
+	into the DAV tree. This saves a lot of space when their content is only
+	used to seed the quad store.
+
+2023-10-05  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Fixed issues with verbose logging
+
+2023-09-14  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Fixed version to 1.6 in vadpacker.py
+
+	Fixed missing update for NEWS and Changelog
+
+2023-04-03  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Merge tag 'v1.6' into develop
+	Tagged for release
+
+	Merge branch 'release/1.6'
+
+	Fixed copyright
+
+	Fixed make sure .sql files are not readable
+
+2022-04-07  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Fixed copyright
+
 2020-05-10  Patrick van Kleef  <pkleef@openlinksw.com>
+
+	Merge tag 'v1.5' into develop
+	Tagged version 1.5 for release
+
+	Merge branch 'release/1.5'
+
+	Regenerated ChangeLog
 
 	Updated version to 1.5
 
@@ -26,6 +132,8 @@
 
 	Merge branch 'release/1.4' into develop
 
+	Merge branch 'release/1.4'
+
 	Updated version to 1.4
 
 	Updated Copyright to include 2018
@@ -34,6 +142,10 @@
 
 	Updated copyright to include 2017
 
+2016-02-25  Virtuoso Development Team  <virtdev@openlinksw.com>
+
+	Updated Copyright to 2016
+
 2016-01-11  Patrick van Kleef  <pkleef@openlinksw.com>
 
 	Updated Copyright to 2016
@@ -41,6 +153,8 @@
 2015-10-27  Patrick van Kleef  <pkleef@openlinksw.com>
 
 	Merge branch 'release/1.3' into develop
+
+	Merge branch 'release/1.3'
 
 	Updated version to 1.3
 
