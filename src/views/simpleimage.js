@@ -87,13 +87,17 @@ PivotViewer.Views.SimpleImageController = PivotViewer.Views.IImageController.sub
     GetImages: function (id, width, height) {
       // Only return image if size is big enough 
       if (width > 8 && height > 8) {
-        for (var i = 0;  this._items.length; i++){
+        for (var i = 0; i < this._items.length; i++){
           if (this._items[i].ImageId == id) {
             return this._items[i].Images; 
           }
         }
       }
-      return null;
+      return function (facetItem, context, x, y, width, height) {
+            context.beginPath();
+            context.fillStyle = "Black";
+            context.fillRect(x, y, width, height);
+        };
     },
     GetWidthForImage: function( id, height ) {
         for (var i = 0; i < this._items.length; i++) {
